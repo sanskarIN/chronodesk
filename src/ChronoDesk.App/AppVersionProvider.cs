@@ -11,14 +11,22 @@ internal static class AppVersionProvider
         var informationalVersion = assembly
             .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?
             .InformationalVersion;
+        return NormalizeDisplayVersion(informationalVersion, assembly.GetName().Version);
+    }
+
+    internal static string NormalizeDisplayVersion(
+        string? informationalVersion,
+        Version? assemblyVersion)
+    {
         if (!string.IsNullOrWhiteSpace(informationalVersion))
         {
-            var metadataSeparator = informationalVersion.IndexOf('+', StringComparison.Ordinal);
+            var trimmed = informationalVersion.Trim();
+            var metadataSeparator = trimmed.IndexOf('+', StringComparison.Ordinal);
             return metadataSeparator >= 0
-                ? informationalVersion[..metadataSeparator]
-                : informationalVersion;
+                ? trimmed[..metadataSeparator]
+                : trimmed;
         }
 
-        return assembly.GetName().Version?.ToString(3) ?? "development";
+        return assemblyVersion?.ToString(3) ?? "development";
     }
 }
