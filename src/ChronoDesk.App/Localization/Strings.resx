@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+
+  <data name="AppName" xml:space="preserve"><value>ChronoDesk</value></data>
+  <data name="Tagline" xml:space="preserve"><value>Your focused desktop time companion</value></data>
+  <data name="Credit" xml:space="preserve"><value>Made by the Sanskar</value></data>
+  <data name="Ready" xml:space="preserve"><value>Ready</value></data>
+  <data name="AppReady" xml:space="preserve"><value>ChronoDesk is ready</value></data>
+  <data name="LocalDataLoadWarning" xml:space="preserve"><value>Some local data could not be loaded</value></data>
+  <data name="ChimeStatus" xml:space="preserve"><value>Chime</value></data>
+  <data name="ChimeUnavailable" xml:space="preserve"><value>Chime unavailable on this system</value></data>
+  <data name="TimezoneAlreadyAdded" xml:space="preserve"><value>That timezone is already on the dashboard</value></data>
+  <data name="KeepOneWorldClock" xml:space="preserve"><value>Keep at least one world clock</value></data>
+  <data name="WorldClockRemoved" xml:space="preserve"><value>World clock removed</value></data>
+  <data name="SettingsExported" xml:space="preserve"><value>Settings exported</value></data>
+  <data name="SettingsImported" xml:space="preserve"><value>Settings imported</value></data>
+  <data name="SettingsReset" xml:space="preserve"><value>Settings reset to defaults</value></data>
+  <data name="AddedPrefix" xml:space="preserve"><value>Added</value></data>
+
+  <data name="ActionFocus" xml:space="preserve"><value>Focus</value></data>
+  <data name="ActionMini" xml:space="preserve"><value>Mini</value></data>
+  <data name="ActionSettings" xml:space="preserve"><value>Settings</value></data>
+  <data name="ActionAbout" xml:space="preserve"><value>About</value></data>
+  <data name="ActionRemove" xml:space="preserve"><value>Remove</value></data>
+  <data name="ActionClose" xml:space="preserve"><value>Close</value></data>
+  <data name="ActionCancel" xml:space="preserve"><value>Cancel</value></data>
+  <data name="ActionSaveChanges" xml:space="preserve"><value>Save changes</value></data>
+  <data name="ActionExportSettings" xml:space="preserve"><value>Export settings</value></data>
+  <data name="ActionImportSettings" xml:space="preserve"><value>Import settings</value></data>
+  <data name="ActionResetDefaults" xml:space="preserve"><value>Reset defaults</value></data>
+  <data name="ActionAddSelectedTimezone" xml:space="preserve"><value>Add selected timezone</value></data>
+  <data name="ActionToggleFormat" xml:space="preserve"><value>12 / 24 hour</value></data>
+  <data name="ActionToggleSeconds" xml:space="preserve"><value>Toggle seconds</value></data>
+
+  <data name="TooltipFocus" xml:space="preserve"><value>Focus clock (F11)</value></data>
+  <data name="TooltipMini" xml:space="preserve"><value>Mini clock (Ctrl+M)</value></data>
+  <data name="TooltipSettings" xml:space="preserve"><value>Settings (Ctrl+,)</value></data>
+  <data name="AutomationWindow" xml:space="preserve"><value>ChronoDesk digital clock</value></data>
+  <data name="AutomationCurrentTime" xml:space="preserve"><value>Current local time</value></data>
+  <data name="AutomationSearchTimezones" xml:space="preserve"><value>Search timezones</value></data>
+
+  <data name="WorldClocksTitle" xml:space="preserve"><value>World clocks</value></data>
+  <data name="WorldClocksDescription" xml:space="preserve"><value>Up to 24 saved timezone cards, stored locally.</value></data>
+  <data name="AddTimezoneTitle" xml:space="preserve"><value>Add a timezone</value></data>
+  <data name="AddTimezoneDescription" xml:space="preserve"><value>Search the timezone database provided by your operating system.</value></data>
+  <data name="TimezoneSearchPlaceholder" xml:space="preserve"><value>Search city, region, or timezone ID</value></data>
+  <data name="TimezoneOfflineNote" xml:space="preserve"><value>Timezone data stays offline; OS updates provide timezone database updates.</value></data>
+
+  <data name="OnboardingTitle" xml:space="preserve"><value>Welcome to ChronoDesk</value></data>
+  <data name="OnboardingIntro" xml:space="preserve"><value>A focused, private-by-default desktop clock for Windows, macOS, and Linux.</value></data>
+  <data name="OnboardingTimeTitle" xml:space="preserve"><value>Time that fits your desk</value></data>
+  <data name="OnboardingTimeBody" xml:space="preserve"><value>Switch 12/24-hour formats, show or hide seconds, tune typography and spacing, and choose a layout that works for your workspace.</value></data>
+  <data name="OnboardingWorldTitle" xml:space="preserve"><value>World clocks, fully offline</value></data>
+  <data name="OnboardingWorldBody" xml:space="preserve"><value>Add timezone cards using the timezone database installed by your operating system. Your clock list and settings remain local to your device.</value></data>
+  <data name="OnboardingAccessTitle" xml:space="preserve"><value>Focus and accessibility built in</value></data>
+  <data name="OnboardingAccessBody" xml:space="preserve"><value>Use F11 for a full-screen focus clock, Ctrl+M for mini mode, keyboard navigation, high contrast, reduced motion, and optional quiet-hours-aware chimes.</value></data>
+  <data name="OnboardingPrivacy" xml:space="preserve"><value>Nothing is uploaded and no account is required.</value></data>
+  <data name="OnboardingContinue" xml:space="preserve"><value>Start using ChronoDesk</value></data>
+
+  <data name="SettingsTitle" xml:space="preserve"><value>ChronoDesk Settings</value></data>
+  <data name="SettingsHeading" xml:space="preserve"><value>Settings</value></data>
+  <data name="SettingsDescription" xml:space="preserve"><value>Appearance, accessibility, chimes, startup, privacy, and local data.</value></data>
+  <data name="TabClock" xml:space="preserve"><value>Clock</value></data>
+  <data name="TabAppearance" xml:space="preserve"><value>Appearance</value></data>
+  <data name="TabAccessibility" xml:space="preserve"><value>Accessibility</value></data>
+  <data name="TabBehavior" xml:space="preserve"><value>Behavior</value></data>
+  <data name="TabDataPrivacy" xml:space="preserve"><value>Data &amp; Privacy</value></data>
+  <data name="ClockDisplayTitle" xml:space="preserve"><value>Clock display</value></data>
+  <data name="TimeFormatLabel" xml:space="preserve"><value>Time format</value></data>
+  <data name="Format12" xml:space="preserve"><value>12-hour</value></data>
+  <data name="Format24" xml:space="preserve"><value>24-hour</value></data>
+  <data name="ShowSeconds" xml:space="preserve"><value>Show seconds</value></data>
+  <data name="ShowDate" xml:space="preserve"><value>Show date</value></data>
+  <data name="ShowWeekday" xml:space="preserve"><value>Show weekday</value></data>
+  <data name="ShowWeekNumber" xml:space="preserve"><value>Show ISO week number</value></data>
+  <data name="ShowCalendarDetails" xml:space="preserve"><value>Show calendar details</value></data>
+  <data name="ChimeTitle" xml:space="preserve"><value>Chime</value></data>
+  <data name="EnableChime" xml:space="preserve"><value>Enable time chime</value></data>
+  <data name="IntervalLabel" xml:space="preserve"><value>Interval</value></data>
+  <data name="IntervalHourly" xml:space="preserve"><value>Hourly</value></data>
+  <data name="IntervalHalf" xml:space="preserve"><value>Every 30 minutes</value></data>
+  <data name="IntervalQuarter" xml:space="preserve"><value>Every 15 minutes</value></data>
+  <data name="QuietHoursLabel" xml:space="preserve"><value>Quiet hours</value></data>
+  <data name="QuietStartLabel" xml:space="preserve"><value>Quiet start (24h)</value></data>
+  <data name="QuietEndLabel" xml:space="preserve"><value>Quiet end (24h)</value></data>
+  <data name="ChimeNote" xml:space="preserve"><value>Chimes are local and optional. Quiet hours can cross midnight.</value></data>
+  <data name="ThemeLabel" xml:space="preserve"><value>Theme</value></data>
+  <data name="ThemeSystem" xml:space="preserve"><value>System</value></data>
+  <data name="ThemeLight" xml:space="preserve"><value>Light</value></data>
+  <data name="ThemeDark" xml:space="preserve"><value>Dark</value></data>
+  <data name="ThemeHighContrast" xml:space="preserve"><value>High contrast</value></data>
+  <data name="LayoutLabel" xml:space="preserve"><value>Clock layout</value></data>
+  <data name="LayoutCentered" xml:space="preserve"><value>Centered</value></data>
+  <data name="LayoutCompact" xml:space="preserve"><value>Compact</value></data>
+  <data name="LayoutDashboard" xml:space="preserve"><value>Dashboard</value></data>
+  <data name="FontFamilyLabel" xml:space="preserve"><value>Font family</value></data>
+  <data name="ClockSizeLabel" xml:space="preserve"><value>Clock size</value></data>
+  <data name="ContentSpacingLabel" xml:space="preserve"><value>Content spacing</value></data>
+  <data name="AccessibilityTitle" xml:space="preserve"><value>Accessibility</value></data>
+  <data name="ReducedMotion" xml:space="preserve"><value>Reduce motion and avoid non-essential animation</value></data>
+  <data name="UseHighContrast" xml:space="preserve"><value>Use high-contrast palette</value></data>
+  <data name="AccessibilityNote" xml:space="preserve"><value>ChronoDesk supports keyboard navigation, visible focus, scalable text, descriptive control names, and screen-reader-friendly labels through Avalonia accessibility semantics.</value></data>
+  <data name="KeyboardShortcutsTitle" xml:space="preserve"><value>Keyboard shortcuts</value></data>
+  <data name="ShortcutFocus" xml:space="preserve"><value>F11 — focus clock</value></data>
+  <data name="ShortcutMini" xml:space="preserve"><value>Ctrl+M — mini mode</value></data>
+  <data name="ShortcutSearch" xml:space="preserve"><value>Ctrl+K — timezone search</value></data>
+  <data name="ShortcutSettings" xml:space="preserve"><value>Ctrl+, — settings</value></data>
+  <data name="ShortcutTopmost" xml:space="preserve"><value>Ctrl+Shift+T — always on top</value></data>
+  <data name="ShortcutEscape" xml:space="preserve"><value>Esc — leave focus/mini mode</value></data>
+  <data name="WindowStartupTitle" xml:space="preserve"><value>Window and startup</value></data>
+  <data name="AlwaysOnTop" xml:space="preserve"><value>Keep the main clock always on top</value></data>
+  <data name="StartWithSystem" xml:space="preserve"><value>Start ChronoDesk when I sign in</value></data>
+  <data name="MinimizeToTray" xml:space="preserve"><value>Hide to tray when closing the main window</value></data>
+  <data name="StartupNote" xml:space="preserve"><value>Startup is disabled by default and is changed only when you save this setting.</value></data>
+  <data name="PrivateByDefaultTitle" xml:space="preserve"><value>Private by default</value></data>
+  <data name="PrivacyBody" xml:space="preserve"><value>ChronoDesk does not require an account, analytics service, cloud database, or network connection for its clock features. Settings, world clocks, and logs are stored locally.</value></data>
+  <data name="LoggingPrivacyBody" xml:space="preserve"><value>Logs intentionally redact common email and secret patterns and do not record raw settings contents.</value></data>
+  <data name="BackupRestoreTitle" xml:space="preserve"><value>Backup and restore</value></data>
+  <data name="ExportPrivacyNote" xml:space="preserve"><value>Exports contain preferences and timezone card labels only. Review files before sharing them.</value></data>
+  <data name="InvalidQuietHours" xml:space="preserve"><value>Quiet-hour times must use a valid 24-hour value such as 22:00 or 07:30.</value></data>
+  <data name="SettingsSaveError" xml:space="preserve"><value>The settings could not be saved. Check local file and startup permissions.</value></data>
+  <data name="ExportSuccess" xml:space="preserve"><value>Settings exported successfully.</value></data>
+  <data name="ExportError" xml:space="preserve"><value>Settings could not be exported to that location.</value></data>
+  <data name="ImportSuccess" xml:space="preserve"><value>Settings imported successfully. Review them before closing.</value></data>
+  <data name="ImportError" xml:space="preserve"><value>That file is not a valid supported ChronoDesk settings export.</value></data>
+  <data name="DefaultsRestored" xml:space="preserve"><value>Defaults restored.</value></data>
+  <data name="DefaultsSaveError" xml:space="preserve"><value>Defaults could not be saved.</value></data>
+  <data name="ExportDialogTitle" xml:space="preserve"><value>Export ChronoDesk settings</value></data>
+  <data name="ImportDialogTitle" xml:space="preserve"><value>Import ChronoDesk settings</value></data>
+  <data name="SettingsFileType" xml:space="preserve"><value>ChronoDesk settings</value></data>
+
+  <data name="AboutTitle" xml:space="preserve"><value>About ChronoDesk</value></data>
+  <data name="AboutDescription" xml:space="preserve"><value>A production-oriented, open-source digital clock for Windows, macOS, and Linux, built with C# .NET 9 and Avalonia UI.</value></data>
+  <data name="ProjectTitle" xml:space="preserve"><value>Project</value></data>
+  <data name="GitHubButton" xml:space="preserve"><value>GitHub — github.com/sanskarIN/chronodesk</value></data>
+  <data name="BmcButton" xml:space="preserve"><value>Buy Me a Coffee — buymeacoffee.com/sanskarIN</value></data>
+  <data name="DonationNote" xml:space="preserve"><value>Donations are optional. Every clock feature remains fully usable without donating.</value></data>
+  <data name="ContactSupportTitle" xml:space="preserve"><value>Contact &amp; support</value></data>
+  <data name="BusinessPrimary" xml:space="preserve"><value>Business — sanskarin@outlook.in</value></data>
+  <data name="BusinessSecondary" xml:space="preserve"><value>Business — sanskarin.business@gmail.com</value></data>
+  <data name="SupportAddress" xml:space="preserve"><value>Support — supportramsandesh@gmail.com</value></data>
+  <data name="LicensePrivacyTitle" xml:space="preserve"><value>License &amp; privacy</value></data>
+  <data name="LicensePrivacyBody" xml:space="preserve"><value>ChronoDesk is open source under the MIT License. Core clock features work offline and settings are stored locally. See LICENSE, PRIVACY.md, SECURITY.md, and the project documentation in the repository for details.</value></data>
+  <data name="VersionFormat" xml:space="preserve"><value>Version {0} · MIT License</value></data>
+
+  <data name="TrayShow" xml:space="preserve"><value>Show ChronoDesk</value></data>
+  <data name="TrayFocus" xml:space="preserve"><value>Toggle focus clock</value></data>
+  <data name="TrayMini" xml:space="preserve"><value>Toggle mini mode</value></data>
+  <data name="TrayQuit" xml:space="preserve"><value>Quit</value></data>
+</root>
