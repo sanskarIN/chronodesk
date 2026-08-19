@@ -66,10 +66,15 @@ Owns Avalonia composition and presentation:
 - main dashboard;
 - onboarding;
 - settings/import/export UI;
+- Settings update/About navigation;
 - About/support/funding UI;
+- `AppVersionProvider` for user-facing semantic version identity;
+- `ExternalLinkLauncher` for centralized HTTPS/mailto navigation policy;
 - focus/mini mode and keyboard handling.
 
 UI event handlers remain thin where deterministic interaction testing is useful. Settings save/reset handlers delegate to internal async operations so headless tests can await the same production logic instead of simulating timing around `async void` event handlers.
+
+The Settings **Updates & About** surface deliberately does not implement an in-process updater. It shows the current application version, opens the fixed public GitHub Releases page only after user interaction, and reuses the normal About dialog. The external launcher validates URI policy before handing the destination to the operating system; it does not fetch remote content itself.
 
 ## Runtime flow
 
@@ -97,7 +102,7 @@ App starts
        └─ shows onboarding when IsFirstRun
 ```
 
-The 250 ms dispatcher timer does **not** imply 4 Hz business state writes. It only refreshes the displayed time and gives the chime policy a reliable opportunity to observe a boundary second. Settings are written only after a user preference change/import/reset/onboarding completion.
+The 250 ms dispatcher timer does **not** imply 4 Hz business state writes. It only refreshes the displayed time and gives the chime policy a reliable opportunity to observe a boundary second. Settings are written only after a user preference change/import/reset/onboarding completion. Update/release navigation is not part of startup or the tick path.
 
 ## Clock calculation
 
@@ -181,6 +186,28 @@ The startup command contains a `--background` flag. After settings load, the mai
 
 No administrator/root privileges are requested.
 
+## External navigation
+
+`ExternalLinkLauncher` is the application-wide boundary for destinations that leave ChronoDesk.
+
+Policy:
+
+1. require an absolute URI;
+2. allow only HTTPS or mailto;
+3. reject HTTP, file, script-style, relative, and malformed destinations;
+4. ask the operating system to open the accepted URI with its default handler;
+5. treat a missing/unsupported handler as non-fatal.
+
+The current callers provide fixed project/support URLs. Imported settings do not contain an external-link field. Tests validate policy without launching a browser or mail client.
+
+The Settings Releases action therefore preserves the offline-first architecture: it performs no HTTP request inside ChronoDesk and is invoked only by explicit user interaction.
+
+## Application version identity
+
+Repository development metadata remains `0.1.0-preview`. `AppVersionProvider` reads informational version metadata for user-facing About/Settings text, strips `+build` metadata that is useful for machines but noisy for users, and falls back safely when informational metadata is unavailable.
+
+The tagged Release workflow derives version metadata from the semantic Git tag. This makes the tag the release identity used for package, file, informational, and About/Settings display values instead of shipping the repository's development preview version accidentally.
+
 ## Chime integration
 
 The chime policy is platform-independent; playback is platform-specific.
@@ -223,6 +250,19 @@ Avalonia Fluent theme provides native theme/control behavior. ChronoDesk adds a 
 
 `ThemeMode.System` follows the application/system theme variant. Light, Dark, and High Contrast apply explicit variants/palettes. Reduced motion is stored and the current app deliberately avoids non-essential animations, so there is no animation engine to disable.
 
+Interactive Settings controls that use separate visual `TextBlock` labels also receive explicit `AutomationProperties.Name` values on the actual control. This avoids assuming that visual adjacency alone provides an accessible name to a platform automation peer.
+
+## Release packaging architecture
+
+The tag workflow has two trust stages:
+
+1. `Release preflight` validates tag syntax, repository integrity, formatting, Release build/tests, and NuGet vulnerability output.
+2. platform jobs publish self-contained runtime-specific binaries, then the final publication job verifies downloaded SHA-256 sidecars before requesting a GitHub Release.
+
+Windows is packaged as ZIP. Linux and macOS are packaged as `tar.gz` so Unix executable mode bits survive extraction. Only the final publication job receives `contents: write`; earlier release jobs remain read-only.
+
+Checksums provide transport/integrity verification, not publisher authentication. Code signing/notarization remains a separate capability.
+
 ## Error handling
 
 Rules:
@@ -230,6 +270,7 @@ Rules:
 - domain services validate arguments and return deterministic results;
 - recoverable settings corruption returns safe defaults;
 - local file/startup failures are surfaced as user-safe settings status text;
+- external link handler failures are non-fatal and user-safe;
 - chime/tray failures do not stop the clock;
 - logs avoid raw exception details that could contain private paths/data;
 - cancellation is propagated when an operation was explicitly cancelled.
@@ -245,6 +286,7 @@ Intentional limits reduce accidental complexity:
 - no web backend;
 - no authentication;
 - no telemetry;
+- no background update service;
 - no privileged daemon.
 
 ## Architecture changes
