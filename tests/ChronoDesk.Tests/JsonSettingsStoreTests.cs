@@ -67,6 +67,100 @@ public sealed class JsonSettingsStoreTests
     }
 
     [Fact]
+    public async Task ImportAsync_MigratesMissingSchemaVersionFromLegacyDocument()
+    {
+        var root = CreateTemporaryDirectory();
+        try
+        {
+            var sourcePath = Path.Combine(root, "legacy-no-schema.json");
+            await File.WriteAllTextAsync(
+                sourcePath,
+                """
+                {
+                  "isFirstRun": false,
+                  "showSeconds": false,
+                  "theme": "dark"
+                }
+                """);
+            var store = new JsonSettingsStore(
+                new SafeFileLogger(Path.Combine(root, "logs")),
+                Path.Combine(root, "settings.json"));
+
+            var imported = await store.ImportAsync(sourcePath);
+
+            Assert.Equal(AppSettings.CurrentSchemaVersion, imported.SchemaVersion);
+            Assert.False(imported.IsFirstRun);
+            Assert.False(imported.ShowSeconds);
+            Assert.Equal(ThemeMode.Dark, imported.Theme);
+        }
+        finally
+        {
+            DeleteTemporaryDirectory(root);
+        }
+    }
+
+    [Fact]
+    public async Task ImportAsync_MigratesExplicitSchemaVersionZero()
+    {
+        var root = CreateTemporaryDirectory();
+        try
+        {
+            var sourcePath = Path.Combine(root, "legacy-schema-zero.json");
+            await File.WriteAllTextAsync(
+                sourcePath,
+                """
+                {
+                  "schemaVersion": 0,
+                  "isFirstRun": false,
+                  "contentSpacing": 21
+                }
+                """);
+            var store = new JsonSettingsStore(
+                new SafeFileLogger(Path.Combine(root, "logs")),
+                Path.Combine(root, "settings.json"));
+
+            var imported = await store.ImportAsync(sourcePath);
+
+            Assert.Equal(AppSettings.CurrentSchemaVersion, imported.SchemaVersion);
+            Assert.False(imported.IsFirstRun);
+            Assert.Equal(21, imported.ContentSpacing);
+        }
+        finally
+        {
+            DeleteTemporaryDirectory(root);
+        }
+    }
+
+    [Theory]
+    [InlineData(-1)]
+    [InlineData(2)]
+    public async Task ImportAsync_RejectsUnsupportedSchemaVersions(int schemaVersion)
+    {
+        var root = CreateTemporaryDirectory();
+        try
+        {
+            var sourcePath = Path.Combine(root, "unsupported-schema.json");
+            await File.WriteAllTextAsync(
+                sourcePath,
+                $$"""
+                {
+                  "schemaVersion": {{schemaVersion}},
+                  "isFirstRun": false
+                }
+                """);
+            var store = new JsonSettingsStore(
+                new SafeFileLogger(Path.Combine(root, "logs")),
+                Path.Combine(root, "settings.json"));
+
+            await Assert.ThrowsAsync<InvalidDataException>(() => store.ImportAsync(sourcePath));
+        }
+        finally
+        {
+            DeleteTemporaryDirectory(root);
+        }
+    }
+
+    [Fact]
     public async Task ImportAsync_RejectsNumericEnumValues()
     {
         var root = CreateTemporaryDirectory();
