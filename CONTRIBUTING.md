@@ -13,6 +13,7 @@ Thank you for helping improve ChronoDesk. Contributions should preserve the proj
 
 - Git
 - .NET 9 SDK
+- PowerShell 7 for repository verification scripts
 - A supported desktop OS for UI testing
 
 Clone and verify:
@@ -24,6 +25,13 @@ dotnet restore ChronoDesk.sln
 dotnet format ChronoDesk.sln --verify-no-changes --no-restore
 dotnet build ChronoDesk.sln -c Release --no-restore
 dotnet test ChronoDesk.sln -c Release --no-build
+```
+
+Repository-specific verification:
+
+```powershell
+./scripts/check-version.ps1
+./scripts/check-markdown-links.ps1
 ```
 
 For local development details, see `docs/development.md`.
@@ -87,6 +95,25 @@ If a change creates a durable architecture decision, add or update an ADR in `do
 - Keep user-facing defaults non-intrusive.
 - Do not add remote telemetry or sign-in requirements to core clock functionality.
 
+## Versioning
+
+ChronoDesk uses four numeric application/release version components:
+
+```text
+MAJOR.MINOR.PATCH.REVISION
+```
+
+The current source version is `2.6.0.2`. The application project keeps `Version`, `PackageVersion`, `AssemblyVersion`, and `FileVersion` synchronized, and CI checks that they remain equal.
+
+If your pull request intentionally changes the product version:
+
+1. update all four project properties together;
+2. update the version-bearing README/roadmap/changelog/release documentation in the same pull request;
+3. run `./scripts/check-version.ps1`;
+4. do not create/push a release tag merely to test workflow changes.
+
+The About screen must continue to display all four version components.
+
 ## Tests
 
 Every bug fix should include a regression test when the defect is testable below the UI layer. New domain behavior should have unit tests. Persistence/platform changes should include integration-oriented tests where they can be deterministic.
@@ -97,6 +124,13 @@ Before opening a pull request:
 dotnet format ChronoDesk.sln --verify-no-changes
 dotnet build ChronoDesk.sln -c Release
 dotnet test ChronoDesk.sln -c Release
+```
+
+Also run:
+
+```powershell
+./scripts/check-version.ps1
+./scripts/check-markdown-links.ps1
 ```
 
 Also manually exercise relevant UI behavior when the change affects Avalonia views, keyboard navigation, focus/mini mode, tray behavior, startup, chimes, file pickers, or accessibility.
@@ -114,6 +148,7 @@ See `docs/accessibility.md`.
 - Use fixed/validated URI schemes before opening external links.
 - Prefer user-level rather than machine-level OS integration.
 - Do not weaken security workflows to make CI green.
+- Preserve the distinction between malformed settings data and temporary I/O/read failures; do not quarantine potentially valid user settings because of a transient read problem.
 
 ## Documentation
 
@@ -128,6 +163,7 @@ A strong pull request explains:
 - how it was verified;
 - platform-specific behavior;
 - accessibility/security/privacy impact;
+- version/release impact when applicable;
 - rollback considerations.
 
 The repository pull request template contains the required checklist.
