@@ -22,6 +22,7 @@ public sealed partial class MainWindow : Window
     private PixelPoint restoredPosition;
     private bool hasRestoredPosition;
     private bool restoredTopmost;
+    private WindowState restoredFocusWindowState = WindowState.Normal;
 
     public MainWindow(MainWindowViewModel viewModel)
     {
@@ -56,9 +57,22 @@ public sealed partial class MainWindow : Window
             ExitMiniMode();
         }
 
-        isFocusMode = !isFocusMode;
-        SetChromeVisibility(!isFocusMode);
-        WindowState = isFocusMode ? WindowState.FullScreen : WindowState.Normal;
+        if (!isFocusMode)
+        {
+            restoredFocusWindowState = WindowState == WindowState.FullScreen
+                ? WindowState.Normal
+                : WindowState;
+            isFocusMode = true;
+            SetChromeVisibility(false);
+            WindowState = WindowState.FullScreen;
+        }
+        else
+        {
+            isFocusMode = false;
+            SetChromeVisibility(true);
+            WindowState = restoredFocusWindowState;
+        }
+
         var heroCard = this.FindControl<Border>("HeroCard");
         if (heroCard is not null)
         {
