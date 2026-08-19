@@ -38,12 +38,14 @@ All notable ChronoDesk changes are documented here. The project uses semantic-ve
 - External-link allowlist regression tests covering HTTPS/mailto acceptance and rejection of HTTP, file, script, relative, and empty targets.
 - Repository-local Markdown link validation in CI.
 - High-confidence committed-credential pattern scanning in CI.
+- Machine-enforced tracked-file documentation inventory using `git ls-files`, with standard-library regression tests for inventory parsing and missing/stale path detection.
 - Three-platform CI for formatting, build, tests, and NuGet vulnerability inspection.
 - CodeQL security analysis.
 - Pull-request dependency review.
 - Dependabot for NuGet and GitHub Actions.
 - Cross-platform tagged release packaging workflow with tag-derived version stamping, release preflight, platform-appropriate archives, SHA-256 sidecars, checksum verification, and prerelease publication support.
 - GitHub issue forms, pull-request template, funding configuration, and repository policy documents.
+- Canonical documentation hub plus deep runtime-behavior, settings-schema, build/configuration, platform-integration, localization, CI/CD, automated-test, and exhaustive tracked-file references.
 
 ### Changed
 
@@ -59,6 +61,8 @@ All notable ChronoDesk changes are documented here. The project uses semantic-ve
 - Consolidated reusable settings/startup/timezone/chime/logger test doubles under the test project.
 - Centralized application external-link launching behind a HTTPS/mailto allowlist shared by About and Settings.
 - Added explicit automation names to Settings controls whose visual labels were previously adjacent text only, improving screen-reader semantics.
+- CI Repository integrity and tag-time Release preflight now reject incomplete/stale `docs/repository-reference.md` coverage for any tracked file.
+- README, contributor workflow, development guide, testing guide, and release procedure now link and enforce the canonical deep-documentation set.
 
 ### Fixed
 
@@ -67,6 +71,7 @@ All notable ChronoDesk changes are documented here. The project uses semantic-ve
 - About-screen branding no longer relies on unsupported built-in SVG image decoding and remains visible across theme variants.
 - Tagged release binaries no longer depend on the repository's fixed preview version for their user-facing release identity.
 - Unix release archives no longer risk dropping the executable permission bit through ZIP packaging.
+- Documentation inventory parsing ignores fenced syntax examples so explanatory code blocks cannot be mistaken for tracked-file entries.
 
 ### Security
 
@@ -87,10 +92,19 @@ All notable ChronoDesk changes are documented here. The project uses semantic-ve
 
 - Complete README baseline.
 - Contribution, support, security, privacy, code-of-conduct, roadmap, architecture, setup, development, testing, release, troubleshooting, accessibility, performance, GitHub-maintenance, release-note-template, and ADR documentation.
+- Added `docs/README.md` as the canonical technical documentation navigation/source-of-truth guide.
+- Added `docs/runtime-behavior.md` covering process startup, composition, clock tick, world clocks, settings transactions/rollback, import/export, focus/mini/tray, themes, chimes, error containment, network behavior, and shutdown.
+- Added `docs/settings-reference.md` documenting every persistent setting, default, enum, bound, normalization rule, quiet-hours/world-clock behavior, schema/import/export, and atomic persistence rule.
+- Added `docs/configuration-reference.md` documenting SDK/MSBuild/package/project/environment/editor/Git configuration and build-mode/version behavior.
+- Added `docs/platform-integration.md` documenting Windows Registry, macOS LaunchAgent, Linux XDG autostart, tray, sound, timezone, local-path, file-picker, external-handler, and release-RID boundaries.
+- Added `docs/localization.md` documenting ResourceManager/.resx structure, culture rules, XAML usage, accessibility/security translation requirements, and future translation workflow.
+- Added `docs/ci-cd.md` documenting CI, CodeQL, Dependency Review, Dependabot, repository validators, release preflight/package/checksum/publication, and permissions.
+- Added `docs/test-catalog.md` mapping every xUnit/headless test, shared fake, and Python validator test to its production contract and manual-test boundary.
+- Added `docs/repository-reference.md` with a canonical responsibility entry for every tracked repository file; completeness is enforced automatically.
 - Privacy documentation explicitly covers safe import/startup behavior.
-- Testing and roadmap documents are aligned with property, fuzz, startup-adapter, and headless UI coverage.
+- Testing and roadmap documents are aligned with property, fuzz, startup-adapter, headless UI, repository-integrity, and documentation-inventory coverage.
 - Release/security guidance distinguishes automated repository-integrity checks from required human review and native-desktop release validation.
-- Release guidance documents semantic-tag stamping, prerelease behavior, Windows ZIP/Unix tarball formats, checksum sidecars, and post-download verification.
+- Release guidance documents semantic-tag stamping, prerelease behavior, Windows ZIP/Unix tarball formats, checksum sidecars, post-download verification, and tracked-file documentation completeness.
 
 ## Release policy
 
