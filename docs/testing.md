@@ -11,13 +11,20 @@ dotnet build ChronoDesk.sln -c Release --no-restore
 dotnet test ChronoDesk.sln -c Release --no-build --collect:"XPlat Code Coverage"
 ```
 
-Also verify repository-local Markdown links with PowerShell:
+Also verify version metadata and repository-local Markdown links with PowerShell:
 
 ```powershell
+./scripts/check-version.ps1
 ./scripts/check-markdown-links.ps1
 ```
 
-CI executes equivalent documentation/formatting/build/test work on Ubuntu, Windows, and macOS and also inspects NuGet dependencies for reported vulnerabilities.
+For a tagged release candidate, also bind the tag to the application version:
+
+```powershell
+./scripts/check-version.ps1 -Tag "v2.6.0.2"
+```
+
+CI executes equivalent version/documentation/formatting/build/test work on Ubuntu, Windows, and macOS and also inspects NuGet dependencies for reported vulnerabilities.
 
 ## Automated test areas
 
@@ -70,7 +77,9 @@ New cadence behavior must remain independent of actual sound playback.
 - settings save/load round-trip;
 - portable export/import;
 - malformed JSON fallback;
-- corrupt-file preservation.
+- corrupt-file preservation;
+- transient read failures fall back safely without renaming a potentially valid settings file;
+- normal loading resumes after the transient file lock is released.
 
 Tests must not read or write the developer's real ChronoDesk data folder.
 
@@ -114,9 +123,22 @@ Fuzz inputs are generated locally inside the test and never contain production/u
 - focus mode hides/restores application chrome;
 - focus mode restores the prior normal/maximized window state;
 - Settings loads primary preference controls;
-- onboarding and About windows load localized resources.
+- onboarding and About windows load localized resources;
+- About displays the complete four-part `2.6.0.2` assembly version rather than truncating the revision component.
 
 Headless UI tests strengthen cross-platform CI but do **not** replace real desktop testing for system tray, startup registration, sound playback, accessibility APIs, display scaling, or native file pickers.
+
+## Version verification
+
+`scripts/check-version.ps1` reads the application project and enforces:
+
+- a four-component numeric `Version` (`MAJOR.MINOR.PATCH.REVISION`);
+- matching `PackageVersion`, `AssemblyVersion`, and `FileVersion` values;
+- no conflicting `VersionPrefix`/`VersionSuffix` values;
+- assembly-version component bounds;
+- exact tag equality when `-Tag` is supplied.
+
+The current required source version is `2.6.0.2`.
 
 ## Documentation-link verification
 
@@ -134,6 +156,7 @@ Automated Core/headless tests are not a substitute for desktop validation. Befor
 - [ ] Onboarding explains offline/private behavior accurately.
 - [ ] Completing onboarding persists and it does not reappear next launch.
 - [ ] An unreadable settings location produces a warning while the clock remains usable.
+- [ ] A temporary settings-file lock does not rename/delete the valid settings file.
 
 ### Main clock
 
@@ -189,6 +212,11 @@ Automated Core/headless tests are not a substitute for desktop validation. Befor
 - [ ] Import/export round-trips a settings file.
 - [ ] Invalid import displays a safe error and does not replace good settings.
 - [ ] Reset returns to defaults.
+
+### About/version
+
+- [ ] About displays `2.6.0.2` exactly.
+- [ ] File/application metadata on packaged binaries reports `2.6.0.2` where the platform exposes it.
 
 ### Chime
 

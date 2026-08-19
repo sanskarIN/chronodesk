@@ -120,6 +120,41 @@ public sealed class JsonSettingsStoreTests
         }
     }
 
+    [Fact]
+    public async Task Load_TransientIoFailureFallsBackWithoutQuarantiningSettings()
+    {
+        var root = CreateTemporaryDirectory();
+        try
+        {
+            var settingsPath = Path.Combine(root, "settings.json");
+            var logger = new SafeFileLogger(Path.Combine(root, "logs"));
+            var store = new JsonSettingsStore(logger, settingsPath);
+            await store.SaveAsync(new AppSettings { IsFirstRun = false });
+
+            await using (var locked = new FileStream(
+                settingsPath,
+                FileMode.Open,
+                FileAccess.ReadWrite,
+                FileShare.None,
+                bufferSize: 4096,
+                useAsync: true))
+            {
+                var loaded = await store.LoadAsync();
+
+                Assert.True(loaded.IsFirstRun);
+                Assert.True(File.Exists(settingsPath));
+                Assert.Empty(Directory.GetFiles(root, "settings.json.corrupt-*.json"));
+            }
+
+            var recovered = await store.LoadAsync();
+            Assert.False(recovered.IsFirstRun);
+        }
+        finally
+        {
+            DeleteTemporaryDirectory(root);
+        }
+    }
+
     private static string CreateTemporaryDirectory()
     {
         var path = Path.Combine(Path.GetTempPath(), "ChronoDesk.Tests", Guid.NewGuid().ToString("N"));

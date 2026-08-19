@@ -4,22 +4,31 @@ ChronoDesk releases are created only after the source tree, automated checks, de
 
 ## Versioning
 
-Use semantic version tags:
+ChronoDesk uses four numeric version components:
 
 ```text
-vMAJOR.MINOR.PATCH
+MAJOR.MINOR.PATCH.REVISION
 ```
 
-Examples:
+The repository's current application version is:
 
 ```text
-v0.1.0
-v0.2.0
-v1.0.0
-v1.0.1
+2.6.0.2
 ```
 
-Before `v1.0.0`, minor versions may contain breaking preview changes, but those changes must still be documented clearly.
+Release tags add a leading `v`:
+
+```text
+vMAJOR.MINOR.PATCH.REVISION
+```
+
+Example:
+
+```text
+v2.6.0.2
+```
+
+`src/ChronoDesk.App/ChronoDesk.App.csproj` is the canonical source for `Version`, `PackageVersion`, `AssemblyVersion`, and `FileVersion`. Keep all four values identical. `scripts/check-version.ps1` enforces that rule and can also verify that a release tag matches the application version exactly.
 
 ## Release prerequisites
 
@@ -28,6 +37,7 @@ The release operator needs:
 - push permission to `sanskarIN/chronodesk`;
 - Git;
 - .NET 9 SDK for local verification;
+- PowerShell 7 for repository verification scripts;
 - access to supported Windows, macOS, and Linux desktop sessions for manual validation;
 - no uncommitted changes in the release checkout.
 
@@ -37,13 +47,20 @@ No application API credentials are required.
 
 Update:
 
-- `CHANGELOG.md` — move relevant Unreleased entries into the target version/date section;
+- `src/ChronoDesk.App/ChronoDesk.App.csproj` — set the intended four-part version consistently;
+- `CHANGELOG.md` — move relevant Unreleased entries into the target version/date section only when the release is actually ready;
 - `ROADMAP.md` — reflect completed/replanned items;
 - `what_changed.md` — record the release candidate state;
 - `README.md` — update screenshots or compatibility notes when needed;
 - `PRIVACY.md` / `SECURITY.md` if release behavior changed their scope.
 
-Verify version-dependent About text still derives from assembly/package metadata rather than a stale hard-coded version.
+Verify the version metadata before any build:
+
+```powershell
+./scripts/check-version.ps1
+```
+
+The About window must derive its displayed version from assembly metadata and must preserve all four version components.
 
 ## 2. Clean-checkout verification
 
@@ -61,7 +78,14 @@ dotnet test ChronoDesk.sln -c Release --no-build --collect:"XPlat Code Coverage"
 dotnet list ChronoDesk.sln package --vulnerable --include-transitive
 ```
 
-Do not proceed if restore, formatting, build, tests, or vulnerability review reports an unresolved blocker.
+Also run:
+
+```powershell
+./scripts/check-version.ps1
+./scripts/check-markdown-links.ps1
+```
+
+Do not proceed if version validation, documentation validation, restore, formatting, build, tests, or vulnerability review reports an unresolved blocker.
 
 ## 3. CI verification
 
@@ -72,6 +96,8 @@ For the exact release commit, confirm the repository checks that actually exist 
 - CI on macOS;
 - CodeQL;
 - dependency review where applicable to the release pull request.
+
+The CI matrix validates the four-part version metadata before restore/build/test work.
 
 Do not add a README badge for a workflow that does not exist.
 
@@ -149,31 +175,44 @@ Equivalent release-workflow RIDs:
 - `osx-x64`
 - `osx-arm64`
 
+The release workflow also copies `LICENSE`, `README.md`, `CHANGELOG.md`, `PRIVACY.md`, `SECURITY.md`, and `SUPPORT.md` into every ZIP so distributed artifacts remain self-describing.
+
 Launch the produced executable on the matching platform before tagging whenever possible.
 
 ## 7. Create the tag
 
-Only after the release commit is finalized:
+Only after the release commit is finalized, verify the exact intended tag against the project metadata:
 
-```bash
-git tag -a vX.Y.Z -m "ChronoDesk vX.Y.Z"
-git push origin vX.Y.Z
+```powershell
+./scripts/check-version.ps1 -Tag "v2.6.0.2"
 ```
 
-The `Release` GitHub Actions workflow is configured to build self-contained ZIP packages and create the GitHub Release for tags matching `v*.*.*`.
+Then create and push the annotated tag:
 
-## 8. Inspect generated artifacts
+```bash
+git tag -a v2.6.0.2 -m "ChronoDesk v2.6.0.2"
+git push origin v2.6.0.2
+```
+
+For future versions, substitute the new four-part value consistently. The `Release` GitHub Actions workflow is configured for four-component tags matching `v*.*.*.*` and independently rejects a tag that does not exactly match the application version.
+
+## 8. Inspect generated artifacts and checksums
+
+The release workflow generates one ZIP per runtime identifier plus `SHA256SUMS.txt`.
 
 For each release ZIP:
 
 - download it from the GitHub release/artifact output;
+- verify its SHA-256 value against `SHA256SUMS.txt`;
 - inspect the archive contents;
+- confirm the bundled license/privacy/security/support documents are present;
 - extract to a fresh folder;
 - verify the application launches;
+- confirm About displays the exact four-part version;
 - repeat a clock/settings smoke test;
-- check that no settings/log/test result files were packaged accidentally.
+- check that no settings/log/test-result files were packaged accidentally.
 
-Record SHA-256 checksums in release notes if checksums are introduced as a formal release artifact.
+Treat a checksum mismatch as a release blocker until the cause is understood.
 
 ## 9. Signing and notarization
 
@@ -190,13 +229,14 @@ Never place a `.pfx`, private key, Apple certificate private material, or passwo
 
 Every release note should cover:
 
+- exact four-part version;
 - headline user-visible changes;
 - fixes;
 - accessibility changes;
 - security/privacy changes when applicable;
 - platform-specific known limitations;
 - upgrade/settings migration notes;
-- artifact list;
+- artifact list and checksum file;
 - support/security reporting links;
 - license/funding credit without making funding intrusive.
 
@@ -207,10 +247,11 @@ Use `docs/release-notes-template.md` as the starting point.
 After publication:
 
 1. verify the release page is public and artifacts are downloadable;
-2. install/extract at least one artifact from the release page rather than the local build directory;
-3. confirm README download/release references remain valid;
-4. update `what_changed.md` with the tag, release URL, verified platforms, and any follow-up task;
-5. open focused issues for non-blocking follow-up defects discovered after release.
+2. verify `SHA256SUMS.txt` against downloaded ZIPs;
+3. install/extract at least one artifact from the release page rather than the local build directory;
+4. confirm README download/release references remain valid;
+5. update `what_changed.md` with the tag, release URL, verified platforms, and any follow-up task;
+6. open focused issues for non-blocking follow-up defects discovered after release.
 
 ## Rollback
 
@@ -218,7 +259,7 @@ If a severe regression is discovered:
 
 - do not rewrite the published Git tag silently;
 - document the affected version;
-- prepare a forward fix in a new patch version where possible;
+- prepare a forward fix in a new four-part version where possible;
 - remove/mark an artifact only when continued distribution creates meaningful risk;
 - for a security issue, coordinate through `SECURITY.md` rather than publishing exploit details prematurely.
 
@@ -226,6 +267,8 @@ If a severe regression is discovered:
 
 A release candidate is not ready to tag until:
 
+- four-part project/version metadata is internally consistent;
+- the intended tag matches that version exactly;
 - clean restore/build/test/format checks pass;
 - dependency/security checks are reviewed;
 - core user journeys are manually exercised on target desktops;

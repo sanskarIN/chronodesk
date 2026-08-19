@@ -1,6 +1,8 @@
-# ChronoDesk vX.Y.Z
+# ChronoDesk vMAJOR.MINOR.PATCH.REVISION
 
 Release date: YYYY-MM-DD
+
+Current target example: `v2.6.0.2`
 
 ## Highlights
 
@@ -51,17 +53,37 @@ Release date: YYYY-MM-DD
 
 Release workflow targets:
 
-- `chronodesk-vX.Y.Z-win-x64.zip`
-- `chronodesk-vX.Y.Z-linux-x64.zip`
-- `chronodesk-vX.Y.Z-osx-x64.zip`
-- `chronodesk-vX.Y.Z-osx-arm64.zip`
+- `chronodesk-vMAJOR.MINOR.PATCH.REVISION-win-x64.zip`
+- `chronodesk-vMAJOR.MINOR.PATCH.REVISION-linux-x64.zip`
+- `chronodesk-vMAJOR.MINOR.PATCH.REVISION-osx-x64.zip`
+- `chronodesk-vMAJOR.MINOR.PATCH.REVISION-osx-arm64.zip`
+- `SHA256SUMS.txt`
+
+Each ZIP is expected to include the application plus `LICENSE`, `README.md`, `CHANGELOG.md`, `PRIVACY.md`, `SECURITY.md`, and `SUPPORT.md`.
 
 Only list artifacts that were actually produced and verified for the release.
+
+## Version verification
+
+- Project `Version`: PASS / exact value
+- `PackageVersion`: PASS / exact value
+- `AssemblyVersion`: PASS / exact value
+- `FileVersion`: PASS / exact value
+- About window displays all four components: PASS
+- Release tag exactly matches `v` + project version: PASS
+
+## Artifact verification
+
+- `SHA256SUMS.txt` present: PASS
+- Downloaded ZIP checksums match: PASS / details
+- Bundled legal/privacy/security/support documents present: PASS
+- Extracted application launches: PASS / details
 
 ## Verification
 
 - CI: PASS / link in GitHub release context
 - CodeQL: PASS
+- Dependency review/security review: PASS / details
 - Clean checkout: PASS
 - Windows manual smoke test: PASS / details
 - macOS manual smoke test: PASS / details

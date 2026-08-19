@@ -39,10 +39,15 @@ public sealed class JsonSettingsStore : ISettingsStore
         {
             return await ReadAndValidateAsync(SettingsPath, cancellationToken);
         }
-        catch (Exception exception) when (exception is JsonException or IOException or InvalidDataException)
+        catch (Exception exception) when (exception is JsonException or InvalidDataException)
         {
-            logger.Error("settings.load_failed", exception, "Settings could not be loaded; defaults were used.");
+            logger.Error("settings.load_failed", exception, "Settings data was invalid; defaults were used.");
             PreserveCorruptSettings();
+            return new AppSettings();
+        }
+        catch (IOException exception)
+        {
+            logger.Error("settings.load_failed", exception, "Settings could not be read; defaults were used without modifying the settings file.");
             return new AppSettings();
         }
     }

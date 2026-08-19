@@ -35,6 +35,10 @@ jobs:
             **/*.csproj
             Directory.Packages.props
 
+      - name: Verify version metadata
+        shell: pwsh
+        run: ./scripts/check-version.ps1
+
       - name: Restore
         run: dotnet restore ChronoDesk.sln
 

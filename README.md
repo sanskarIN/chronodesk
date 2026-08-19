@@ -7,6 +7,7 @@
 
 [![CI](https://github.com/sanskarIN/chronodesk/actions/workflows/ci.yml/badge.svg)](https://github.com/sanskarIN/chronodesk/actions/workflows/ci.yml)
 [![CodeQL](https://github.com/sanskarIN/chronodesk/actions/workflows/codeql.yml/badge.svg)](https://github.com/sanskarIN/chronodesk/actions/workflows/codeql.yml)
+[![Version](https://img.shields.io/badge/version-2.6.0.2-512BD4)](src/ChronoDesk.App/ChronoDesk.App.csproj)
 [![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![.NET 9](https://img.shields.io/badge/.NET-9.0-512BD4)](https://dotnet.microsoft.com/)
 
@@ -22,6 +23,18 @@
 ChronoDesk is intentionally more than a classroom clock demo. It separates clock/timezone logic from UI and platform integration, persists preferences safely, supports multiple world clocks, offers focus and mini modes, respects accessibility preferences, provides optional quiet-hours-aware chimes, and includes the repository quality expected from a serious open-source desktop project.
 
 The application does not require sign-in, analytics, a cloud database, or a network connection for its clock features. Timezone data comes from the operating system, settings stay local, and the product remains fully usable without funding or donations.
+
+## Current source version
+
+The application, package, assembly, and file version is **`2.6.0.2`**.
+
+ChronoDesk uses four numeric components:
+
+```text
+MAJOR.MINOR.PATCH.REVISION
+```
+
+`scripts/check-version.ps1` verifies that all version-bearing project properties agree. A release tag must match the application version exactly, so this source version corresponds to `v2.6.0.2` only after the release checklist has passed.
 
 ## Screenshot
 
@@ -78,7 +91,8 @@ The application does not require sign-in, analytics, a cloud database, or a netw
 
 - Local JSON settings only.
 - Atomic temporary-file writes before settings replacement.
-- Corrupt settings are preserved for manual recovery instead of silently destroyed.
+- Malformed settings are preserved for manual recovery instead of silently destroyed.
+- Temporary I/O/read failures fall back safely without renaming a potentially valid settings file as corrupt.
 - Import/export is size-bounded and schema-validated.
 - Structured JSONL logging with common email/secret-pattern redaction.
 - No credentials or API keys are required.
@@ -94,7 +108,7 @@ ChronoDesk targets desktop systems supported by Avalonia and .NET 9:
 | macOS | x64 / arm64 | User LaunchAgent startup integration. |
 | Linux | x64 | XDG autostart integration; tray/chime behavior can vary by desktop environment. |
 
-Release automation produces self-contained ZIP artifacts for `win-x64`, `linux-x64`, `osx-x64`, and `osx-arm64` when a semantic version tag is pushed.
+Release automation produces self-contained ZIP artifacts for `win-x64`, `linux-x64`, `osx-x64`, and `osx-arm64` when a verified four-component tag such as `v2.6.0.2` is pushed.
 
 ## Technology stack
 
@@ -116,6 +130,7 @@ No database server, web service, authentication provider, telemetry SDK, or clou
 chronodesk/
 ├─ .github/                     # CI, CodeQL, release, Dependabot, templates
 ├─ docs/                        # Architecture, setup, testing, ADRs, operations
+├─ scripts/                     # Deterministic repository verification helpers
 ├─ src/
 │  ├─ ChronoDesk.Core/          # Domain models, formatting, chime policy, contracts
 │  ├─ ChronoDesk.Infrastructure/# JSON persistence, timezone/startup/chime/log adapters
@@ -161,6 +176,13 @@ dotnet build ChronoDesk.sln --configuration Release --no-restore
 dotnet test ChronoDesk.sln --configuration Release --no-build
 ```
 
+Repository checks:
+
+```powershell
+./scripts/check-version.ps1
+./scripts/check-markdown-links.ps1
+```
+
 Optional development data isolation:
 
 ```bash
@@ -184,8 +206,11 @@ The current automated suite covers:
 - overnight quiet-hour boundaries.
 - chime cadence and duplicate suppression.
 - settings normalization invariants.
-- JSON settings round-trip, backup/export/import, and corrupt-file recovery.
+- JSON settings round-trip, backup/export/import, malformed-data recovery, and transient read failure behavior.
 - timezone catalog discovery/search/fallback behavior.
+- startup preference rollback/import behavior.
+- malformed import fuzzing and settings property invariants.
+- Avalonia headless window smoke coverage including focus/mini transitions and exact `2.6.0.2` About version rendering.
 
 Run:
 
@@ -193,7 +218,7 @@ Run:
 dotnet test ChronoDesk.sln -c Release --collect:"XPlat Code Coverage"
 ```
 
-CI runs formatting, build, tests, and NuGet vulnerability checks across Ubuntu, Windows, and macOS. See [docs/testing.md](docs/testing.md).
+CI validates version metadata and local documentation links, then runs formatting, build, tests, and NuGet vulnerability checks across Ubuntu, Windows, and macOS. See [docs/testing.md](docs/testing.md).
 
 ## Build and publish
 
@@ -215,6 +240,8 @@ dotnet publish src/ChronoDesk.App/ChronoDesk.App.csproj \
 ```
 
 Equivalent RIDs used by release automation are `linux-x64`, `osx-x64`, and `osx-arm64`.
+
+Tagged release ZIPs include the application plus `LICENSE`, `README.md`, `CHANGELOG.md`, `PRIVACY.md`, `SECURITY.md`, and `SUPPORT.md`. The release workflow also publishes `SHA256SUMS.txt` so downloaded ZIPs can be integrity-checked.
 
 Read [docs/release.md](docs/release.md) before creating a release tag.
 
@@ -250,7 +277,7 @@ ChronoDesk/
    └─ chronodesk.log.jsonl
 ```
 
-If a settings document is malformed, ChronoDesk returns to safe defaults and renames the malformed document with a timestamped `.corrupt-...json` suffix when possible.
+If a settings document is malformed, ChronoDesk returns to safe defaults and renames the malformed document with a timestamped `.corrupt-...json` suffix when possible. Temporary read/I/O failures return safe defaults without quarantining the original file, so a later read can recover once the transient problem clears.
 
 For the complete data policy, see [PRIVACY.md](PRIVACY.md).
 
@@ -264,6 +291,8 @@ ChronoDesk is an offline-first clock, but local desktop software still has a sec
 - atomic settings writes;
 - restricted external-link schemes;
 - redacted structured logs;
+- exact release-tag/version matching;
+- SHA-256 release checksums;
 - CodeQL;
 - dependency review;
 - Dependabot;
@@ -317,17 +346,17 @@ git config user.email "sanskarin@outlook.in"
 
 ## GitHub repository maintenance
 
-The repository includes issue forms, a pull request checklist, dependency automation, CI, CodeQL, dependency review, and release packaging. Recommended branch-protection rules are documented in `docs/github-maintenance.md` so repository settings can match the checks actually present in source control.
+The repository includes issue forms, a pull request checklist, dependency automation, CI, CodeQL, dependency review, release packaging, version verification, and checksum generation. Recommended branch-protection rules are documented in `docs/github-maintenance.md` so repository settings can match the checks actually present in source control.
 
 ## Roadmap
 
-See [ROADMAP.md](ROADMAP.md). The immediate release path is:
+See [ROADMAP.md](ROADMAP.md). The immediate release path for `2.6.0.2` is:
 
-- stabilize first public preview;
+- require green CI/CodeQL/dependency-security checks for the exact release commit;
 - capture real per-platform screenshots;
-- validate tray and startup behavior on supported desktops;
-- expand UI automation/headless coverage;
-- tag the first verified release only after the clean-checkout release checklist passes.
+- validate tray, startup, chime, and accessibility behavior on supported desktops;
+- verify packaged ZIPs and SHA-256 checksums;
+- tag `v2.6.0.2` only after the clean-checkout release checklist passes.
 
 ## License
 

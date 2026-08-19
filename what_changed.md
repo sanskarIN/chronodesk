@@ -2,191 +2,230 @@
 
 ## Current milestone
 
-**Phase 6 — final source/repository audit and release hardening, 2026-08-19.**
+**Phase 7 — version `2.6.0.2` final source/repository/release hardening, 2026-08-19.**
 
-The application feature baseline is implemented. This pass closes source-level defects and repository/documentation gaps while keeping native desktop release gates explicitly open until they are exercised on real supported environments.
+The product/source baseline is now explicitly versioned as `2.6.0.2`. This pass fixes the remaining version-display and persistence edge cases, strengthens CI/release automation, expands release artifact integrity controls, and synchronizes the open-source documentation. Native desktop validation remains a release gate and is not fabricated by source inspection.
 
 ## Source of truth
 
 - Repository: `https://github.com/sanskarIN/chronodesk`
 - Default branch: `main`
-- Final-audit branch used for this pass: `final-audit-20260819`
-- Pull request: `#17` — `fix: complete ChronoDesk final source audit hardening`
-- Baseline `main` commit before this pass: `8695efc3ba81b3e408630691a3da7b8093954ad9`
-- Audit branch head merged: `3364337c42c91ba0924565f05a5e6319ec892672`
-- Merge commit: `d6b140c2594a910b1463ded8ba31a2fdfdbcfe7c`
+- Version-hardening branch: `release-version-2.6.0.2`
+- Pull request: `#18` — `release: finalize ChronoDesk version 2.6.0.2 hardening`
+- `main` baseline before this pass: `acadb0e3861721bf72d90bdbb2c0282ef96b847d`
+- PR head before this final review-state handoff update: `b6d35c103235b57f187d79523e0554128ab565e2`
+- Canonical product version source: `src/ChronoDesk.App/ChronoDesk.App.csproj`
+- Required version: `2.6.0.2`
 - Product requirements: `10_chronodesk_master_prompt.md` supplied for the project plus the checked-in repository documentation.
 
-## Implemented product baseline
+## Version state
 
-ChronoDesk currently includes:
+The application project now declares all of these as exactly `2.6.0.2`:
 
-- .NET 9 + Avalonia modular desktop architecture (`Core`, `Infrastructure`, `App`);
-- Windows, macOS, and Linux desktop targets;
-- 12/24-hour clock and seconds toggle;
-- date, weekday, ISO week, calendar/UTC-offset details;
-- world clocks and offline OS timezone catalog/search;
-- focus/full-screen and compact always-on-top mini modes;
-- normal always-on-top preference;
-- light/dark/system/high-contrast presentation and configurable typography/layout/spacing;
-- onboarding, Settings, About, support/funding/credit UI;
-- reduced-motion/high-contrast/accessibility-oriented behavior;
-- opt-in chimes with quiet hours;
-- user-scoped startup integration on Windows/macOS/Linux;
-- tray Show/Focus/Mini/Quit integration where supported;
-- local atomic JSON persistence, import/export, corruption recovery, and bounded schema validation;
-- structured redacted JSONL logging;
-- English-first `.resx` localization architecture;
-- unit, persistence, property-style, malformed-import fuzz, and Avalonia headless UI tests;
-- CI, CodeQL, dependency review, Dependabot, release packaging, issue/PR templates, funding configuration, and policy documentation.
+- `Version`
+- `PackageVersion`
+- `AssemblyVersion`
+- `FileVersion`
 
-## Final-audit work completed in this pass
+The old `0.1.0-preview` metadata and three-component release guidance have been removed from the active release path.
 
-### Reliability fixes
+The About window now renders all four assembly-version components. A headless Avalonia regression test requires `2.6.0.2` to be present so the revision component cannot silently disappear again.
 
-- `MainWindowViewModel.InitializeAsync` now falls back to safe default settings **and still builds the clock/world-clock/search UI** when settings cannot be read because of I/O or permission failures.
-- Focus mode now records and restores the window state that existed before full screen, so a maximized window returns to maximized instead of being forced to normal.
-- System chime helper processes no longer redirect stdout/stderr streams that ChronoDesk does not consume, removing an avoidable pipe-stall risk.
+## Final code/reliability fixes in this pass
 
-### Settings/import hardening
+### Full four-part About version
 
-- Normalization now deduplicates imported world-clock IDs case-insensitively.
-- Normalization also deduplicates imported timezone IDs case-insensitively, matching the interactive add-clock rule and preventing inconsistent portable settings state.
+`AboutWindow` previously used `Version.ToString(3)`, which would display `2.6.0` even when assembly metadata was `2.6.0.2`. It now uses all four components and the UI smoke test verifies the exact value. The final assertion uses the basic xUnit string-containment overload to minimize test-framework compatibility risk.
 
-### Tests added/updated
+### Non-destructive transient settings fallback
 
-- Added view-model regression coverage for unreadable-settings initialization fallback.
-- Added headless Avalonia regression coverage for restoring a maximized state after focus mode.
-- Added settings-model coverage for case-insensitive world-clock ID/timezone-ID deduplication.
-- Updated the 24-clock limit fixture so it continues to exercise the size bound with unique timezone IDs.
+`JsonSettingsStore.LoadAsync` previously grouped `IOException` with malformed/schema-invalid settings and then attempted corrupt-file quarantine. That could convert a temporary availability/read problem into an unnecessary rename attempt against potentially valid data.
 
-### Repository tooling
+The loader now separates the cases:
 
-- Added `scripts/check-markdown-links.ps1`.
-- The verifier checks repository-local Markdown file/directory destinations, rejects missing targets, rejects paths escaping the repository root, supports percent-encoded/angle-bracket destinations, and intentionally ignores external-network reachability.
-- Wired the verifier into the existing three-platform CI workflow.
+- malformed/schema-invalid settings: safe defaults plus timestamped corrupt-file preservation where possible;
+- transient `IOException`: safe defaults without renaming/deleting the original settings file;
+- permission failures remain application-level local-data availability errors and are not bypassed.
 
-### Documentation
+A regression test locks a valid settings file, verifies safe fallback without a `.corrupt-*` rename, releases the lock, and verifies normal settings loading resumes.
 
-- Added `docs/final-audit.md` with explicit automated versus native-desktop release evidence.
-- Updated `docs/testing.md` for the new regression suites and documentation-link gate.
-- Updated `CHANGELOG.md` with the final-audit fixes, security hardening, test/tooling additions, and documentation changes.
-- Updated `ROADMAP.md` to reflect completed source/repository hardening while preserving the real-desktop release blockers.
-- Replaced the obsolete Phase 0→1 handoff in this file with the actual Phase 6 repository state.
+## Release/version tooling added
+
+### `scripts/check-version.ps1`
+
+The new verifier enforces:
+
+- exactly four numeric version components (`MAJOR.MINOR.PATCH.REVISION`);
+- matching `Version`, `PackageVersion`, `AssemblyVersion`, and `FileVersion`;
+- valid assembly-version component bounds;
+- no conflicting `VersionPrefix` / `VersionSuffix` values;
+- exact `v<version>` tag matching when `-Tag` is supplied.
+
+### CI
+
+The three-platform CI matrix now runs `scripts/check-version.ps1` before restore/build/test work, in addition to formatting, Markdown-link verification, tests, coverage collection, and vulnerability inspection.
+
+### Tagged release workflow
+
+Release workflow hardening now includes:
+
+- four-component tag trigger: `v*.*.*.*`;
+- exact tag/project-version verification before packaging;
+- self-contained packages for `win-x64`, `linux-x64`, `osx-x64`, and `osx-arm64`;
+- release ZIP copies of `LICENSE`, `README.md`, `CHANGELOG.md`, `PRIVACY.md`, `SECURITY.md`, and `SUPPORT.md`;
+- generated `SHA256SUMS.txt` for all release ZIPs;
+- checksum publication with the GitHub Release.
+
+The release tag `v2.6.0.2` has **not** been created. It remains blocked on the documented clean-checkout, CI/security, native desktop, accessibility, screenshot, branch/ruleset, and packaged-artifact verification gates.
+
+## Documentation synchronized in this pass
+
+Updated documentation now consistently describes `2.6.0.2`, four-component release tags, the version verifier, persistence behavior, bundled release documents, and checksums:
+
+- `README.md`
+- `CHANGELOG.md`
+- `ROADMAP.md`
+- `CONTRIBUTING.md`
+- `PRIVACY.md`
+- `SECURITY.md`
+- `docs/testing.md`
+- `docs/release.md`
+- `docs/final-audit.md`
+- `docs/release-notes-template.md`
+- `docs/github-maintenance.md`
+- `.github/pull_request_template.md`
+- this handoff file
 
 ## Files changed in this pass
 
+PR #18 reports exactly 21 changed files:
+
+- `.github/pull_request_template.md`
 - `.github/workflows/ci.yml`
+- `.github/workflows/release.yml`
 - `CHANGELOG.md`
+- `CONTRIBUTING.md`
+- `PRIVACY.md`
+- `README.md`
 - `ROADMAP.md`
+- `SECURITY.md`
 - `docs/final-audit.md`
+- `docs/github-maintenance.md`
+- `docs/release-notes-template.md`
+- `docs/release.md`
 - `docs/testing.md`
-- `scripts/check-markdown-links.ps1`
-- `src/ChronoDesk.App/ViewModels/MainWindowViewModel.cs`
-- `src/ChronoDesk.App/Views/MainWindow.axaml.cs`
-- `src/ChronoDesk.Core/Models/AppSettings.cs`
-- `src/ChronoDesk.Infrastructure/Platform/SystemChimePlayer.cs`
-- `tests/ChronoDesk.Tests/AppSettingsTests.cs`
+- `scripts/check-version.ps1`
+- `src/ChronoDesk.App/ChronoDesk.App.csproj`
+- `src/ChronoDesk.App/Views/AboutWindow.axaml.cs`
+- `src/ChronoDesk.Infrastructure/Persistence/JsonSettingsStore.cs`
 - `tests/ChronoDesk.Tests/HeadlessUiSmokeTests.cs`
-- `tests/ChronoDesk.Tests/MainWindowViewModelTests.cs`
+- `tests/ChronoDesk.Tests/JsonSettingsStoreTests.cs`
 - `what_changed.md`
 
 ## Verification status
 
-### Completed in this environment
+### Completed by repository/source inspection
 
-- Repository/default-branch/current-source inspection: **PASS**.
-- Open issue search: **PASS** — no open issues were returned during this audit.
-- TODO/FIXME/HACK/`NotImplementedException` repository search: **no matches returned** during the audit.
-- Required documentation/GitHub workflow structure inspection: **PASS**.
-- Source-level review of the changed clock/settings/window/chime paths: **completed**.
-- Complete PR #17 diff review: **completed**.
-- GitHub mergeability check before merge: **PASS**.
-- PR #17 merge into `main`: **PASS**, merge commit `d6b140c2594a910b1463ded8ba31a2fdfdbcfe7c`.
-- Git metadata check: recent connector-created commits are authored/committed as **Sanskar `<sanskarin@outlook.in>`**.
+- Required version metadata changed to `2.6.0.2`: **completed**.
+- About four-component rendering defect identified and fixed: **completed**.
+- Regression coverage for About version rendering added: **completed**.
+- Transient settings-read quarantine risk identified and fixed: **completed**.
+- Regression coverage for locked valid settings added: **completed**.
+- Version consistency/tag verifier added: **completed**.
+- CI integration for version verification added: **completed**.
+- Four-component release tag policy implemented: **completed**.
+- Release ZIP policy/support docs bundling added: **completed**.
+- SHA-256 checksum generation/publishing added: **completed**.
+- Release/testing/security/privacy/contributor/maintenance documentation synchronized: **completed**.
+- Complete PR #18 changed-file list reviewed: **completed**.
+- Complete PR #18 unified diff reviewed for version drift, workflow/script issues, test compile risk, persistence behavior, and documentation contradictions: **completed**.
+- GitHub currently reports PR #18 as **mergeable**.
+- Commit author/committer metadata observed on this branch: **Sanskar `<sanskarin@outlook.in>`**.
 
-### Automated workflow state observed during this pass
+### Automated workflow state observed for the reviewed PR head
 
-For audit branch head `3364337c42c91ba0924565f05a5e6319ec892672`, GitHub created these pull-request workflow runs:
+For PR head `b6d35c103235b57f187d79523e0554128ab565e2`, GitHub created these pull-request workflow runs:
 
-- CI run `328` / run id `32245568678` — **queued** when last observed;
-- CodeQL run `327` / run id `32245568645` — **queued** when last observed;
-- Dependency Review run `267` / run id `32245568650` — **queued** when last observed.
+- CI run `332` / run id `32252847982` — **queued** when observed;
+- CodeQL run `331` / run id `32252847871` — **queued** when observed;
+- Dependency Review run `269` / run id `32252848578` — **queued** when observed.
 
-Queued is not passing evidence. Do not rewrite these as successful unless GitHub later reports successful conclusions.
+Queued is not passing evidence. These conclusions must not be rewritten as successful unless GitHub later reports success.
 
-### Not executable in this environment
+### Repository settings observed
 
-The execution environment available to this chat does not contain `dotnet` or `pwsh`, and an attempted network clone through the local container could not resolve `github.com`. Therefore this chat did **not** claim a local build/test/link-check result.
+The actual GitHub `main` branch was observed as **not protected** at commit `acadb0e3861721bf72d90bdbb2c0282ef96b847d` (`protected: false`). Branch protection/rulesets are GitHub repository settings rather than files in the source tree.
 
-The authoritative automated verification remains the configured GitHub Actions checks for the exact release commit:
+The available GitHub connector in this pass exposes branch/ref operations but does not expose a branch-protection/ruleset mutation action. Therefore the source documentation is prepared, but an administrator must enable/verify the desired `main` ruleset in GitHub settings before release.
+
+### Local execution limitation
+
+This chat execution environment did not provide `dotnet` or `pwsh` for an authoritative local build/test/script run. Therefore no local PASS claim is invented.
+
+The expected automated verification for the exact PR/release commit is:
 
 ```text
+./scripts/check-version.ps1
+./scripts/check-markdown-links.ps1
 dotnet restore ChronoDesk.sln
 dotnet format ChronoDesk.sln --verify-no-changes --no-restore
-./scripts/check-markdown-links.ps1
 dotnet build ChronoDesk.sln --configuration Release --no-restore
 dotnet test ChronoDesk.sln --configuration Release --no-build --collect:"XPlat Code Coverage"
 dotnet list ChronoDesk.sln package --vulnerable --include-transitive
 ```
 
-Do not mark a release as verified unless the relevant GitHub workflow runs are green.
+For the actual tag, additionally:
 
-## Native/manual release gates still open
+```text
+./scripts/check-version.ps1 -Tag "v2.6.0.2"
+```
 
-These are not source-code TODOs; they require real supported desktop sessions or release infrastructure:
+## Remaining release evidence (not source-code omissions)
 
-- Windows 11 tray/minimize-to-tray/startup/chime/accessibility validation.
-- Current macOS Intel and Apple Silicon tray/startup/chime/VoiceOver validation.
-- Representative Linux GNOME/KDE tray/XDG-autostart/chime/accessibility validation.
-- Real screenshots captured from verified release builds (README placeholder must remain until then).
-- Clean-checkout publish verification for all advertised runtime identifiers.
-- CI, CodeQL, dependency-review/security confirmation for the exact release commit.
-- Branch-protection/status-check settings confirmation in GitHub repository settings.
-- Tagged-tree documentation-link/secret/private-data review.
-- First real prior-version migration fixture after a tagged preview exists.
-- Stable `v1.0.0` tag only after the release checklist is complete.
+- Green CI/CodeQL/dependency-security results for the exact release commit.
+- Windows 11 tray/minimize/startup/chime/keyboard/accessibility validation.
+- macOS Intel/Apple Silicon tray/startup/chime/VoiceOver/lifecycle validation.
+- Linux GNOME/KDE tray/XDG-autostart/chime/accessibility validation.
+- Real screenshots from verified release builds.
+- Clean-checkout publish/launch validation for every advertised RID.
+- Actual GitHub `main` branch ruleset/protection and required-status-check configuration.
+- Exact tagged-tree secret/private-data/documentation review.
+- Downloaded ZIP SHA-256 verification against `SHA256SUMS.txt`.
+- Packaged About/file metadata confirmation of `2.6.0.2`.
+- A real prior-version migration fixture when a prior tagged build exists.
 
-See `docs/final-audit.md`, `docs/release.md`, `docs/accessibility.md`, `docs/github-maintenance.md`, and `ROADMAP.md`.
+These are deliberately left open until evidence exists.
 
-## Migration notes
+## Commits created in the `2.6.0.2` pass before this final review-state handoff
 
-- Settings schema remains version `1`; this pass does not require a schema migration.
-- Existing valid settings remain compatible.
-- If an imported settings file contains world-clock IDs or timezone IDs that differ only by case, normalization now keeps the first occurrence and drops later duplicates.
-- Portable imports continue to preserve the current machine's startup preference rather than applying startup registration from the imported file.
-
-## Release notes draft
-
-ChronoDesk's final source-audit hardening improves startup resilience when local settings are unreadable, preserves maximized window state across focus mode, tightens portable world-clock normalization, removes a potential helper-process output-pipe stall, expands regression coverage, and adds deterministic repository-local documentation-link validation to CI. No settings schema migration is required.
-
-## Commits created in this final-audit pass
-
-- `2f5067b` — `fix: initialize clock UI when settings are unreadable`
-- `6d9a9b5` — `test: cover unreadable settings startup fallback`
-- `81dad34` — `fix: restore previous window state after focus mode`
-- `740130f` — `test: preserve maximized state across focus mode`
-- `232a318` — `security: deduplicate imported world clocks case-insensitively`
-- `578d9d9` — `test: cover imported world clock deduplication`
-- `3dc1b73` — `chore: add local markdown link verifier`
-- `3090b44` — `ci: verify repository-local documentation links`
-- `474f65c` — `fix: avoid redirected chime process pipe stalls`
-- `e47f132` — `docs: add final audit verification record`
-- `cf64ef6` — `docs: record final audit hardening changes`
-- `3acc860` — `fix: harden markdown link verifier path parsing`
-- `6f7c050` — `docs: document final audit regression coverage`
-- `f473961` — `docs: align roadmap with final audit hardening`
-- `3364337` — `docs: refresh ChronoDesk final handoff`
-- `d6b140c` — merge commit preserving the final-audit history.
-- final post-merge handoff commit: this commit on `main`.
+- `b117e95` — `build: set ChronoDesk version to 2.6.0.2`
+- `7e068de` — `fix: display full four-part application version`
+- `2ffa7bd` — `test: verify full four-part About version`
+- `a574306` — `chore: add release version consistency verifier`
+- `e8c3319` — `ci: verify four-part version metadata`
+- `0c24b92` — `ci: harden four-part release packaging`
+- `5cad868` — `fix: preserve settings on transient read failures`
+- `2c59f27` — `test: preserve valid settings across transient read failures`
+- `41c71cf` — `test: make About version assertion nullable-safe`
+- `4b5d305` — `docs: adopt ChronoDesk 2.6.0.2 release versioning`
+- `ccd3d53` — `docs: document version and persistence regression gates`
+- `2a158f2` — `docs: align roadmap with version 2.6.0.2`
+- `5e4c1a4` — `docs: record 2.6.0.2 final hardening changes`
+- `8ab45bb` — `docs: publish 2.6.0.2 source version guidance`
+- `f132c80` — `docs: clarify transient settings read privacy behavior`
+- `ef2638e` — `docs: finalize 2.6.0.2 audit criteria`
+- `ec53bdc` — `docs: update release notes for four-part versions`
+- `54dde6d` — `docs: align GitHub maintenance with 2.6.0.2 releases`
+- `aed97cc` — `docs: add version verification to contributor workflow`
+- `8e121ec` — `docs: add version checks to pull request template`
+- `7dafcf5` — `docs: align security policy with 2.6.0.2 hardening`
+- `2b2b2cc` — `docs: record 2.6.0.2 final release hardening handoff`
+- `b6d35c1` — `test: simplify About version assertion`
+- final PR review-state handoff: this commit.
 
 ## Next exact tasks
 
-No additional source feature is required by this final source-audit pass. The remaining work is release evidence:
-
-1. require green CI/CodeQL/dependency-security results for the exact release candidate;
-2. perform the real Windows/macOS/Linux checks listed above and in `docs/release.md`;
-3. capture real release screenshots after those checks;
-4. verify branch protection/status checks and the exact tagged tree;
-5. publish a preview/release candidate before stable `v1.0.0` and create a real prior-version migration fixture;
-6. publish stable `v1.0.0` only when every declared release gate is satisfied.
+1. Merge PR #18 with normal merge history if its head remains unchanged and mergeable.
+2. Re-check `main` after merge and record the merge commit in this handoff.
+3. Observe any available workflow state without inventing a successful conclusion.
+4. Do **not** create `v2.6.0.2` until the remaining release-evidence gates above are actually satisfied.

@@ -4,11 +4,20 @@ Describe the user-visible or engineering change and why it belongs in ChronoDesk
 
 ## Verification
 
+- [ ] `./scripts/check-version.ps1`
+- [ ] `./scripts/check-markdown-links.ps1`
 - [ ] `dotnet format ChronoDesk.sln --verify-no-changes`
 - [ ] `dotnet build ChronoDesk.sln -c Release`
 - [ ] `dotnet test ChronoDesk.sln -c Release`
 - [ ] Relevant manual UI/accessibility behavior reviewed
 - [ ] No secrets, tokens, private endpoints, or personal data added
+
+## Version / release impact
+
+- [ ] No product-version change
+- [ ] Version change intentionally updates `Version`, `PackageVersion`, `AssemblyVersion`, and `FileVersion` together
+- [ ] About still displays all four version components
+- [ ] Release/tag documentation updated when applicable
 
 ## Change type
 

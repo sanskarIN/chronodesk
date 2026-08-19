@@ -4,7 +4,9 @@ ChronoDesk is an offline-first desktop clock, but it still reads local configura
 
 ## Supported versions
 
-Before the first stable release, security fixes are made on the `main` branch and included in the next tagged release candidate/release. After stable releases begin, the newest stable release is the primary supported line unless a release note says otherwise.
+The current source/release-candidate version is **`2.6.0.2`**. Until that exact version is tagged and published after the documented release gates pass, security fixes continue to land on `main` and are included in the next verified four-part release.
+
+After tagged releases exist, the newest supported release is the primary supported line unless a release note explicitly states otherwise. Do not infer support solely from a version number; consult the latest release notes/security advisory when one exists.
 
 ## Reporting a vulnerability
 
@@ -49,10 +51,14 @@ ChronoDesk intentionally:
 - preserves the current device startup preference when settings are imported;
 - best-effort rolls startup integration back if the matching settings write fails;
 - writes settings through a temporary file before replacement;
-- preserves corrupt settings rather than executing/interpreting arbitrary content;
+- preserves invalid/corrupt settings data rather than executing/interpreting arbitrary content;
+- does not quarantine a potentially valid settings file solely because of a transient read/I/O failure;
 - allows only fixed `https` and `mailto` support destinations from the About window;
 - uses argument lists rather than a shell command string for optional Unix chime helpers;
 - redacts common email/secret patterns from structured logs;
+- verifies four-part project version consistency in CI;
+- rejects release tags that do not exactly match the canonical application version;
+- generates SHA-256 checksums for release ZIP artifacts;
 - uses GitHub CodeQL, dependency review, Dependabot, and NuGet vulnerability inspection in repository automation.
 
 ## Import threat model
@@ -67,10 +73,21 @@ Current controls include:
 - string-enum parsing with numeric values disabled;
 - settings normalization and bounded world-clock count;
 - bounded/single-line user-display text;
+- case-insensitive duplicate world-clock/timezone removal;
 - no imported OS startup side effect;
 - no imported executable path, URI, shell command, token, or credential field.
 
 Import hardening has deterministic malformed-input/fuzz regression coverage in the test project.
+
+## Local settings failure model
+
+ChronoDesk distinguishes invalid data from temporary availability failures:
+
+- malformed/schema-invalid settings can be moved to a timestamped `.corrupt-...json` file and replaced with safe defaults;
+- transient `IOException` read failures fall back to safe defaults without renaming/deleting the original settings file;
+- permission failures are not bypassed and are surfaced to the application as local-data availability problems.
+
+This avoids turning an availability problem into unnecessary data loss.
 
 ## Platform integration notes
 
@@ -89,6 +106,18 @@ The app writes a per-user XDG autostart desktop file only when startup is enable
 ### Chimes
 
 Windows uses a system beep path. macOS/Linux playback uses fixed OS executable paths and fixed system-sound arguments when those tools/files exist. User-provided text is not interpolated into a shell command.
+
+## Release integrity
+
+For a four-part release such as `v2.6.0.2`:
+
+- `scripts/check-version.ps1 -Tag <tag>` must confirm the tag exactly matches project metadata;
+- release ZIPs are produced from the tagged source by GitHub Actions;
+- each ZIP includes the project license/readme/changelog/privacy/security/support documents;
+- `SHA256SUMS.txt` is generated from the release ZIPs and published with the release;
+- downloaded artifacts should be verified against the checksum file before being treated as release evidence.
+
+Checksums detect accidental or malicious artifact changes after generation but do not provide publisher identity in the way platform code signing/notarization would. Signing/notarization remains a separate future capability and private signing material must never be committed to the repository.
 
 ## Dependency policy
 
