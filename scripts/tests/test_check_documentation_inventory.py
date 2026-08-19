@@ -19,6 +19,14 @@ class DocumentationInventoryTests(unittest.TestCase):
 
 Inline `src/App.cs` is not an inventory entry.
 - `missing-description.md`
+
+```text
+- `example/not-a-real-file.md` — Syntax example only.
+```
+
+~~~text
+- `another/example.md` — Another fenced example.
+~~~
 """
 
         self.assertEqual(
