@@ -176,7 +176,7 @@ public sealed partial class SettingsWindow : Window
     {
         if (!ExternalUriLauncher.TryOpen(destination))
         {
-            SetStatus(UpdateStrings.ReleaseOpenError);
+            SetStatus(UpdateStrings.ExternalOpenError);
         }
     }
 
