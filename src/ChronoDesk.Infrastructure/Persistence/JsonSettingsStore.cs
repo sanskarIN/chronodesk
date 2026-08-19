@@ -22,6 +22,7 @@ public sealed class JsonSettingsStore : ISettingsStore
             WriteIndented = true,
             AllowTrailingCommas = true,
             ReadCommentHandling = JsonCommentHandling.Skip,
+            UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow,
         };
         serializerOptions.Converters.Add(
             new JsonStringEnumConverter(JsonNamingPolicy.CamelCase, allowIntegerValues: false));
