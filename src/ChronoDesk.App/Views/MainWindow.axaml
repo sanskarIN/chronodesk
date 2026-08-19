@@ -64,7 +64,7 @@
               <TextBlock Text="{x:Static loc:Strings.WorldClocksTitle}" Classes="sectionTitle" />
               <TextBlock Text="{x:Static loc:Strings.WorldClocksDescription}" Classes="muted" />
             </StackPanel>
-            <TextBlock Grid.Column="1" Text="{Binding WorldClocks.Count, StringFormat='{}{0} clocks'}" Classes="muted" VerticalAlignment="Center" />
+            <TextBlock Grid.Column="1" Text="{Binding WorldClockCountText}" Classes="muted" VerticalAlignment="Center" />
           </Grid>
 
           <ItemsControl ItemsSource="{Binding WorldClocks}">
