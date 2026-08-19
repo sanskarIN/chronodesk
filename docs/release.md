@@ -31,7 +31,7 @@ The release operator needs:
 
 - push permission to `sanskarIN/chronodesk`;
 - Git;
-- Python 3 for repository-integrity scripts;
+- Python 3 for repository/release-integrity scripts;
 - .NET 9 SDK for local verification;
 - access to supported Windows, macOS, and Linux desktop sessions for manual validation;
 - no uncommitted changes in the release checkout.
@@ -42,13 +42,32 @@ No application API credentials are required.
 
 Update:
 
-- `CHANGELOG.md` — move relevant Unreleased entries into the target version/date section;
+- `CHANGELOG.md` — move relevant Unreleased entries into the exact target version/date section;
 - `ROADMAP.md` — reflect completed/replanned items;
 - `what_changed.md` — record the release candidate state;
-- `README.md` — update screenshots or compatibility notes when needed;
+- `README.md` — replace the explicit screenshot placeholder with a verified release-build capture and update compatibility notes when needed;
 - `PRIVACY.md` / `SECURITY.md` if release behavior changed their scope.
 
-Verify version-dependent About text still derives from assembly/package metadata rather than a stale hard-coded version. Normal development builds should show the preview semantic version; tagged publish builds receive their version from the release tag.
+For a planned tag, run:
+
+```bash
+python3 scripts/check_release_metadata.py --tag vX.Y.Z
+```
+
+For a release candidate:
+
+```bash
+python3 scripts/check_release_metadata.py --tag vX.Y.Z-rc.1
+```
+
+This release-only validator intentionally fails while either of these is true:
+
+- `CHANGELOG.md` has no `## [X.Y.Z]` / `## [X.Y.Z-PRERELEASE]` heading matching the tag;
+- README still contains the explicit `docs/assets/screenshot-placeholder.svg` release screenshot placeholder.
+
+The validator is unit-tested during normal CI. It is also executed by tag-time `Release preflight`, so pushing a tag before release metadata is ready cannot proceed to platform packaging.
+
+Verify version-dependent About/Settings text still derives from assembly/package metadata rather than a stale hard-coded version. Normal development builds should show the preview semantic version; tagged publish builds receive their version from the release tag.
 
 ## 2. Clean-checkout verification
 
@@ -60,6 +79,7 @@ cd chronodesk-release
 git checkout <release-commit>
 python3 scripts/check_markdown_links.py
 python3 scripts/check_repository_secrets.py
+python3 -m unittest discover -s scripts/tests -p 'test_*.py'
 dotnet --info
 dotnet restore ChronoDesk.sln
 dotnet format ChronoDesk.sln --verify-no-changes --no-restore
@@ -68,7 +88,9 @@ dotnet test ChronoDesk.sln -c Release --no-build --collect:"XPlat Code Coverage"
 dotnet list ChronoDesk.sln package --vulnerable --include-transitive
 ```
 
-Do not proceed if documentation integrity, credential scanning, restore, formatting, build, tests, or vulnerability review reports an unresolved blocker.
+Then run `check_release_metadata.py` with the exact intended tag as shown above.
+
+Do not proceed if documentation integrity, credential scanning, repository-script tests, release metadata, restore, formatting, build, tests, or vulnerability review reports an unresolved blocker.
 
 The credential script intentionally uses high-confidence patterns and is not a substitute for reviewing staged/release files for private names, screenshots, certificates, database exports, or other sensitive material that may not resemble a token.
 
@@ -85,7 +107,7 @@ For the exact release commit, confirm the repository checks that actually exist 
 
 Do not add a README badge for a workflow that does not exist. If branch protection requires named checks, use the exact check names shown on the release-candidate pull request rather than guessing them from workflow filenames.
 
-The tag-triggered Release workflow repeats critical repository integrity, formatting, Release build, tests, and NuGet vulnerability checks in a `Release preflight` job before any platform package is created. This is a second gate, not a replacement for pull-request/main validation.
+The tag-triggered Release workflow repeats critical release-metadata, repository-integrity, formatting, Release build, tests, and NuGet vulnerability checks in a `Release preflight` job before any platform package is created. This is a second gate, not a replacement for pull-request/main validation.
 
 ## 4. Manual desktop verification
 
@@ -101,8 +123,12 @@ Minimum release-candidate coverage:
 - tray hide/show/quit;
 - startup enable/disable;
 - settings import/export;
+- Settings Updates & About version display;
+- Open GitHub Releases default-browser behavior and safe failure if no handler is available;
+- About support/mail links;
 - optional chime;
 - keyboard-only navigation;
+- screen-reader naming for Settings controls;
 - high contrast and text scaling.
 
 ### macOS
@@ -113,6 +139,7 @@ Repeat the same product flows and specifically verify:
 - tray/menu-bar behavior as Avalonia exposes it;
 - LaunchAgent creation/removal;
 - `afplay` chime fallback;
+- browser/mail-handler external-link behavior;
 - Gatekeeper behavior for the unsigned development artifact is documented accurately.
 
 ### Linux
@@ -123,9 +150,10 @@ Test at least one GNOME-family and, when practical, one KDE-family session. Reco
 - desktop environment;
 - tray/status notifier result;
 - XDG autostart result;
+- browser/mail-handler external-link result;
 - which optional sound helper, if any, supplied chime playback.
 
-The clock must remain usable when optional tray/sound integrations are absent.
+The clock must remain usable when optional tray/sound integrations or external default handlers are absent.
 
 ## 5. Capture real screenshots
 
@@ -138,7 +166,7 @@ Screenshots must:
 - show a coherent theme and representative clock/world-clock state;
 - include meaningful alt text in README/docs.
 
-Do not present a design mock as a verified running-app screenshot.
+Do not present a design mock as a verified running-app screenshot. `check_release_metadata.py` deliberately makes the explicit placeholder a tag-time blocker.
 
 ## 6. Validate release packaging locally when practical
 
@@ -163,11 +191,11 @@ Equivalent release-workflow RIDs:
 
 The workflow publishes Windows as ZIP and Unix targets as `tar.gz`. Unix tarballs are used so executable permission bits are retained for the self-contained executable.
 
-Launch the produced executable on the matching platform before tagging whenever possible.
+Launch the produced executable on the matching platform before tagging whenever possible. Confirm the version shown by Settings/About matches the version you intend to tag.
 
 ## 7. Create the tag
 
-Only after the release commit is finalized:
+Only after the release commit is finalized **and** `check_release_metadata.py` passes for the exact intended tag:
 
 ```bash
 git tag -a vX.Y.Z -m "ChronoDesk vX.Y.Z"
@@ -181,7 +209,7 @@ git tag -a vX.Y.Z-rc.1 -m "ChronoDesk vX.Y.Z-rc.1"
 git push origin vX.Y.Z-rc.1
 ```
 
-The `Release` GitHub Actions workflow accepts the supported semantic tag form, runs release preflight, stamps package metadata from the tag, builds self-contained platform artifacts, generates checksums, verifies the downloaded artifacts, and creates the GitHub Release only after those steps succeed.
+The `Release` GitHub Actions workflow accepts the supported semantic tag form, validates release metadata, runs release preflight, stamps package metadata from the tag, builds self-contained platform artifacts, generates checksums, verifies the downloaded artifacts, and creates the GitHub Release only after those steps succeed.
 
 ## 8. Inspect and verify generated artifacts
 
@@ -192,6 +220,8 @@ Expected archive formats are:
 - `chronodesk-vX.Y.Z-osx-x64.tar.gz`
 - `chronodesk-vX.Y.Z-osx-arm64.tar.gz`
 
+Prerelease filenames use the exact prerelease tag, for example `chronodesk-v0.1.0-rc.1-linux-x64.tar.gz`.
+
 Each archive is accompanied by `<archive>.sha256`. The workflow verifies all four checksum/archive pairs after downloading the package artifacts and before creating the GitHub release.
 
 For each published archive:
@@ -201,6 +231,7 @@ For each published archive:
 - inspect the archive contents;
 - extract to a fresh folder;
 - verify the application launches;
+- confirm Settings/About show the tag-derived version;
 - repeat a clock/settings smoke test;
 - check that no settings/log/test result files were packaged accidentally.
 
@@ -229,6 +260,8 @@ The repository does not commit private signing keys. If code signing/notarizatio
 
 Never place a `.pfx`, private key, Apple certificate private material, or password in Git history.
 
+Checksums are integrity data, not a substitute for code signing/notarization or publisher-identity verification.
+
 ## 10. Release notes
 
 Every release note should cover:
@@ -250,10 +283,12 @@ Use `docs/release-notes-template.md` as the starting point.
 After publication:
 
 1. verify the release page is public and all four archives plus four checksum files are downloadable;
-2. install/extract at least one artifact from the release page rather than the local build directory;
-3. confirm README download/release references remain valid;
-4. update `what_changed.md` with the tag, release URL, verified platforms, and any follow-up task;
-5. open focused issues for non-blocking follow-up defects discovered after release.
+2. download at least one archive and checksum again from the public release page and verify them independently;
+3. install/extract at least one artifact from the release page rather than the local build directory;
+4. confirm the running artifact displays the expected tag-derived version;
+5. confirm README download/release references remain valid;
+6. update `what_changed.md` with the tag, release URL, verified platforms, and any follow-up task;
+7. open focused issues for non-blocking follow-up defects discovered after release.
 
 ## Rollback
 
@@ -270,12 +305,14 @@ If a severe regression is discovered:
 A release candidate is not ready to tag until:
 
 - repository-integrity checks pass;
+- repository validation-script tests pass;
+- release metadata validation passes for the exact intended tag;
 - clean restore/build/test/format checks pass;
 - dependency/security checks are reviewed;
 - core user journeys are manually exercised on target desktops;
 - accessibility basics are manually reviewed;
-- startup/tray/chime platform differences are documented accurately;
-- real release screenshots contain no private data;
+- startup/tray/chime/external-handler platform differences are documented accurately;
+- real release screenshots contain no private data and replace the explicit placeholder;
 - documentation matches the exact source tree;
 - `CHANGELOG.md`, `ROADMAP.md`, and `what_changed.md` are current;
 - no critical/blocker defect remains known.
