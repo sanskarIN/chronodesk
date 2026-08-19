@@ -52,16 +52,22 @@ Release date: YYYY-MM-DD
 Release workflow targets:
 
 - `chronodesk-vX.Y.Z-win-x64.zip`
-- `chronodesk-vX.Y.Z-linux-x64.zip`
-- `chronodesk-vX.Y.Z-osx-x64.zip`
-- `chronodesk-vX.Y.Z-osx-arm64.zip`
+- `chronodesk-vX.Y.Z-linux-x64.tar.gz`
+- `chronodesk-vX.Y.Z-osx-x64.tar.gz`
+- `chronodesk-vX.Y.Z-osx-arm64.tar.gz`
 
-Only list artifacts that were actually produced and verified for the release.
+Each archive is published with a sibling `.sha256` file containing its SHA-256 digest and archive filename. Verify the checksum after download and before distributing/mirroring an artifact.
+
+Only list artifacts that were actually produced and verified for the release. Prerelease tags such as `vX.Y.Z-rc.1` should be shown as prereleases and use the exact tag in artifact filenames.
 
 ## Verification
 
+- Repository integrity: PASS
 - CI: PASS / link in GitHub release context
 - CodeQL: PASS
+- Dependency/vulnerability review: PASS
+- Release preflight: PASS
+- Archive checksum verification: PASS
 - Clean checkout: PASS
 - Windows manual smoke test: PASS / details
 - macOS manual smoke test: PASS / details
