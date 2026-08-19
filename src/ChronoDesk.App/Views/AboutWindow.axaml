@@ -1,0 +1,56 @@
+<Window
+    x:Class="ChronoDesk.App.Views.AboutWindow"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    Title="About ChronoDesk"
+    Width="700"
+    Height="640"
+    MinWidth="620"
+    MinHeight="540"
+    WindowStartupLocation="CenterOwner"
+    ShowInTaskbar="False"
+    Icon="/Assets/chronodesk.ico">
+  <Grid RowDefinitions="*,Auto" Margin="28">
+    <ScrollViewer>
+      <StackPanel Spacing="18">
+        <Grid ColumnDefinitions="96,*" ColumnSpacing="18">
+          <Image Source="/Assets/chronodesk-logo.svg" Width="88" Height="88" />
+          <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="4">
+            <TextBlock Text="ChronoDesk" FontSize="32" FontWeight="Bold" />
+            <TextBlock x:Name="VersionText" Classes="muted" />
+            <TextBlock Text="Made by the Sanskar" FontWeight="SemiBold" />
+          </StackPanel>
+        </Grid>
+
+        <TextBlock Text="A production-oriented, open-source digital clock for Windows, macOS, and Linux, built with C# .NET 9 and Avalonia UI." TextWrapping="Wrap" FontSize="16" />
+
+        <Border Classes="card">
+          <StackPanel Spacing="10">
+            <TextBlock Text="Project" Classes="sectionTitle" />
+            <Button Content="GitHub — github.com/sanskarIN/chronodesk" HorizontalAlignment="Left" Click="GitHubButton_OnClick" />
+            <Button Content="Buy Me a Coffee — buymeacoffee.com/sanskarIN" Classes="primary" HorizontalAlignment="Left" Click="BmcButton_OnClick" />
+            <TextBlock Text="Donations are optional. Every clock feature remains fully usable without donating." Classes="muted" TextWrapping="Wrap" />
+          </StackPanel>
+        </Border>
+
+        <Border Classes="card">
+          <StackPanel Spacing="10">
+            <TextBlock Text="Contact &amp; support" Classes="sectionTitle" />
+            <Button Content="Business — sanskarin@outlook.in" HorizontalAlignment="Left" Click="BusinessPrimaryButton_OnClick" />
+            <Button Content="Business — sanskarin.business@gmail.com" HorizontalAlignment="Left" Click="BusinessSecondaryButton_OnClick" />
+            <Button Content="Support — supportramsandesh@gmail.com" HorizontalAlignment="Left" Click="SupportButton_OnClick" />
+          </StackPanel>
+        </Border>
+
+        <Border Classes="card">
+          <StackPanel Spacing="8">
+            <TextBlock Text="License &amp; privacy" Classes="sectionTitle" />
+            <TextBlock Text="ChronoDesk is open source under the MIT License. Core clock features work offline and settings are stored locally. See LICENSE, PRIVACY.md, SECURITY.md, and the project documentation in the repository for details." TextWrapping="Wrap" />
+          </StackPanel>
+        </Border>
+      </StackPanel>
+    </ScrollViewer>
+
+    <Button Grid.Row="1" Content="Close" HorizontalAlignment="Right" Margin="0,18,0,0" Click="CloseButton_OnClick" />
+  </Grid>
+</Window>
