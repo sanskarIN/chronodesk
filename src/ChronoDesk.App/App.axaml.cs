@@ -18,6 +18,8 @@ public sealed partial class App : Application
 
     public AppServices Services { get; } = new();
 
+    public bool IsTrayIntegrationAvailable { get; private set; }
+
     public override void Initialize() => AvaloniaXamlLoader.Load(this);
 
     public override void OnFrameworkInitializationCompleted()
@@ -84,6 +86,8 @@ public sealed partial class App : Application
         MainWindow window,
         IClassicDesktopStyleApplicationLifetime desktop)
     {
+        IsTrayIntegrationAvailable = false;
+
         try
         {
             using var stream = AssetLoader.Open(new Uri("avares://ChronoDesk/Assets/chronodesk.ico"));
@@ -96,10 +100,20 @@ public sealed partial class App : Application
                 IsVisible = true,
             };
             TrayIcon.SetIcons(this, new TrayIcons { trayIcon });
+
+            IsTrayIntegrationAvailable = trayIcon.NativeMenuExporter is not null;
+            if (!IsTrayIntegrationAvailable)
+            {
+                Services.Logger.Warning(
+                    "tray.restore_unavailable",
+                    "Tray menu integration is unavailable; minimize-to-tray behavior is disabled for this session.");
+            }
+
             desktop.Exit += (_, _) => trayIcon?.Dispose();
         }
         catch (Exception exception)
         {
+            IsTrayIntegrationAvailable = false;
             Services.Logger.Error("tray.initialize_failed", exception, "System tray integration could not be initialized.");
         }
     }
