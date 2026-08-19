@@ -1,0 +1,65 @@
+<Styles xmlns="https://github.com/avaloniaui">
+  <Style Selector="Window">
+    <Setter Property="Background" Value="{DynamicResource ChronoSurfaceBrush}" />
+  </Style>
+
+  <Style Selector="Border.card">
+    <Setter Property="Background" Value="{DynamicResource ChronoCardBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource ChronoBorderBrush}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="18" />
+    <Setter Property="Padding" Value="20" />
+  </Style>
+
+  <Style Selector="Border.softCard">
+    <Setter Property="Background" Value="{DynamicResource ChronoCardBrush}" />
+    <Setter Property="CornerRadius" Value="14" />
+    <Setter Property="Padding" Value="14" />
+  </Style>
+
+  <Style Selector="TextBlock.heroClock">
+    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="LetterSpacing" Value="1.5" />
+    <Setter Property="TextAlignment" Value="Center" />
+  </Style>
+
+  <Style Selector="TextBlock.sectionTitle">
+    <Setter Property="FontSize" Value="20" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+  </Style>
+
+  <Style Selector="TextBlock.muted">
+    <Setter Property="Foreground" Value="{DynamicResource ChronoMutedBrush}" />
+  </Style>
+
+  <Style Selector="Button">
+    <Setter Property="CornerRadius" Value="10" />
+    <Setter Property="Padding" Value="14,8" />
+    <Setter Property="MinHeight" Value="38" />
+  </Style>
+
+  <Style Selector="Button.primary">
+    <Setter Property="Background" Value="{DynamicResource ChronoAccentBrush}" />
+    <Setter Property="Foreground" Value="White" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+  </Style>
+
+  <Style Selector="Button.compact">
+    <Setter Property="Padding" Value="10,6" />
+    <Setter Property="MinHeight" Value="32" />
+  </Style>
+
+  <Style Selector="TextBox.searchBox">
+    <Setter Property="CornerRadius" Value="12" />
+    <Setter Property="MinHeight" Value="42" />
+    <Setter Property="Padding" Value="12,8" />
+  </Style>
+
+  <Style Selector="ComboBox">
+    <Setter Property="MinHeight" Value="38" />
+  </Style>
+
+  <Style Selector="CheckBox">
+    <Setter Property="MinHeight" Value="34" />
+  </Style>
+</Styles>
