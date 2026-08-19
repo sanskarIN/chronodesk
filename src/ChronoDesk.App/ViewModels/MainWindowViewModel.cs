@@ -221,7 +221,15 @@ public sealed class MainWindowViewModel : ObservableObject
         clocks.Add(WorldClock.Create(label, descriptor.Id));
 
         await UpdateSettingsAsync(Settings with { WorldClocks = clocks }, cancellationToken);
-        StatusMessage = $"{Strings.AddedPrefix} {label}";
+        var persistedLabel = Settings.WorldClocks
+            .Last(clock => string.Equals(
+                clock.TimeZoneId,
+                descriptor.Id,
+                StringComparison.OrdinalIgnoreCase))
+            .DisplayName;
+        StatusMessage = StateStrings.Format(
+            nameof(StateStrings.WorldClockAddedFormat),
+            persistedLabel);
     }
 
     public async Task RemoveWorldClockAsync(
