@@ -90,7 +90,8 @@ public sealed record AppSettings
             .Where(clock => clock.Id.Length > 0
                 && clock.DisplayName.Length > 0
                 && clock.TimeZoneId.Length > 0)
-            .DistinctBy(clock => clock.Id, StringComparer.Ordinal)
+            .DistinctBy(clock => clock.Id, StringComparer.OrdinalIgnoreCase)
+            .DistinctBy(clock => clock.TimeZoneId, StringComparer.OrdinalIgnoreCase)
             .Take(24)
             .ToList();
 

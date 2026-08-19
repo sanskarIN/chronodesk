@@ -26,13 +26,13 @@ Status: **Implemented; release verification pending**
 - [x] Local settings persistence.
 - [x] World-clock cards.
 - [x] Timezone search.
-- [x] Error-safe settings fallback.
+- [x] Error-safe settings fallback, including unreadable local data.
 
 ## Phase 2 — Complete core product
 
 Status: **Implemented in source; platform validation pending**
 
-- [x] Focus mode.
+- [x] Focus mode with previous window-state restoration.
 - [x] Mini always-on-top mode.
 - [x] Configurable normal always-on-top.
 - [x] Themes and layout controls.
@@ -55,6 +55,7 @@ Status: **Source implementation present; manual validation required**
 - [x] User-level Linux XDG autostart adapter.
 - [x] OS timezone database strategy.
 - [x] Best-effort local system chime adapters.
+- [x] Chime helper process execution avoids unconsumed redirected output streams.
 - [x] Redacted structured logging.
 - [ ] Validate tray behavior on Windows 11.
 - [ ] Validate tray behavior on current macOS Intel and Apple Silicon hardware/runners with a GUI session.
@@ -72,9 +73,12 @@ Status: **Implemented for domain/persistence/headless UI; native-desktop validat
 - [x] Settings normalization tests.
 - [x] JSON persistence/import/export/corruption tests.
 - [x] Timezone catalog tests.
+- [x] Startup-persistence rollback and unreadable-settings initialization regression tests.
 - [x] Deterministic property-style tests for quiet hours/settings invariants.
 - [x] Deterministic malformed-import fuzz coverage and oversized-input rejection.
 - [x] Avalonia headless XUnit smoke tests for primary windows and focus/mini transitions.
+- [x] Headless regression coverage for restoring the pre-focus window state.
+- [x] Imported world-clock uniqueness tests.
 - [x] Multi-OS CI.
 - [ ] Add startup-adapter tests through isolated fake filesystem/registry abstractions if platform regressions justify the extra abstraction.
 - [ ] Add deeper headless interaction tests for file-picker-independent settings flows after the first full CI pass establishes stable baseline behavior.
@@ -88,6 +92,8 @@ Status: **Infrastructure implemented; release candidate not declared**
 - [x] Release documentation baseline.
 - [x] README screenshot placeholder clearly identified as a placeholder.
 - [x] Preview assembly/package metadata established (`0.1.0-preview`).
+- [x] Repository-local Markdown link verifier integrated into CI.
+- [x] Final-audit verification record added.
 - [ ] Replace placeholder with real verified screenshots from release builds.
 - [ ] Complete clean-checkout manual verification on Windows, macOS, and Linux.
 - [ ] Confirm CI and CodeQL are green for the release commit.
@@ -96,14 +102,18 @@ Status: **Infrastructure implemented; release candidate not declared**
 
 ## Phase 6 — Final audit and stable release
 
-Status: **Automated audit in progress; native GUI release gates remain**
+Status: **Source/repository hardening complete for this pass; native GUI release gates remain**
 
+- [x] Perform source-level final audit for core clock/settings/window/chime failure paths.
+- [x] Add regression coverage for defects found during the final source audit.
+- [x] Add deterministic local-documentation link verification to CI.
+- [x] Record automated versus manual release evidence in `docs/final-audit.md`.
 - [ ] Run the complete release checklist in `docs/release.md` on real supported desktops.
 - [ ] Validate accessibility checklist on each primary platform.
 - [ ] Validate settings migration path after the first tagged preview creates a real prior-version fixture.
-- [ ] Audit documentation links against the tagged tree.
-- [ ] Confirm vulnerability scan has no unresolved moderate-or-higher dependency finding.
-- [ ] Confirm no real credentials/private data are present.
+- [ ] Audit documentation links against the exact tagged tree.
+- [ ] Confirm vulnerability scan has no unresolved moderate-or-higher dependency finding for the release commit.
+- [ ] Confirm no real credentials/private data are present in the release tag.
 - [ ] Publish stable `v1.0.0` only when the above gates pass.
 
 ## Post-1.0 candidates

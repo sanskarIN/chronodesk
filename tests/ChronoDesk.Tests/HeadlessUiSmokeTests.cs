@@ -61,6 +61,22 @@ public sealed class HeadlessUiSmokeTests
     }
 
     [AvaloniaFact]
+    public void MainWindow_FocusModeRestoresPreviousWindowState()
+    {
+        var viewModel = new MainWindowViewModel(new AppServices());
+        var window = new MainWindow(viewModel)
+        {
+            WindowState = WindowState.Maximized,
+        };
+
+        window.ToggleFocusMode();
+        Assert.Equal(WindowState.FullScreen, window.WindowState);
+
+        window.ToggleFocusMode();
+        Assert.Equal(WindowState.Maximized, window.WindowState);
+    }
+
+    [AvaloniaFact]
     public void SettingsWindow_LoadsAllPrimaryPreferenceControls()
     {
         var viewModel = new MainWindowViewModel(new AppServices());

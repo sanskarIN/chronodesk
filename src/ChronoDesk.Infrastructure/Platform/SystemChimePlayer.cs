@@ -76,8 +76,6 @@ public sealed class SystemChimePlayer : IChimePlayer
             FileName = executable,
             UseShellExecute = false,
             CreateNoWindow = true,
-            RedirectStandardError = true,
-            RedirectStandardOutput = true,
         };
 
         foreach (var argument in arguments)
