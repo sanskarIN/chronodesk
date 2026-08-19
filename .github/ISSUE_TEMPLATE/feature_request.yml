@@ -1,0 +1,53 @@
+name: Feature request
+description: Propose a focused improvement that fits ChronoDesk.
+title: "[Feature]: "
+labels: [enhancement, needs-triage]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ChronoDesk favors coherent clock, timezone, accessibility, reliability, and desktop-productivity features over feature count.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem or user need
+      description: What problem should this solve?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behavior
+      description: Describe the smallest useful version of the feature.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+  - type: dropdown
+    id: scope
+    attributes:
+      label: Primary area
+      options:
+        - Clock display
+        - World clocks / timezones
+        - Focus / mini / tray behavior
+        - Appearance
+        - Accessibility
+        - Chimes / quiet hours
+        - Import / export
+        - Startup / platform integration
+        - Documentation / developer experience
+        - Other
+    validations:
+      required: true
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checks
+      options:
+        - label: I searched existing issues and roadmap items first.
+          required: true
+        - label: This request does not require sending private clock data to a remote service.
+          required: true
