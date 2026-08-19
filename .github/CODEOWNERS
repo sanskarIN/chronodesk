@@ -1,0 +1,11 @@
+# Default maintainer review owner for ChronoDesk.
+* @sanskarIN
+
+# Keep release/security automation and repository policy under maintainer review.
+/.github/ @sanskarIN
+/docs/ @sanskarIN
+/SECURITY.md @sanskarIN
+/PRIVACY.md @sanskarIN
+/CHANGELOG.md @sanskarIN
+/ROADMAP.md @sanskarIN
+/what_changed.md @sanskarIN
