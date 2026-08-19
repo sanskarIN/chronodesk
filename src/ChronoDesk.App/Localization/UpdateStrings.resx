@@ -11,4 +11,5 @@
   <data name="OpenReleases" xml:space="preserve"><value>Open official releases</value></data>
   <data name="UpdatePrivacyNote" xml:space="preserve"><value>The clock remains fully offline. A network connection is used only if you choose to open the releases page in your browser.</value></data>
   <data name="ReleaseOpenError" xml:space="preserve"><value>The releases page could not be opened with the current system handler.</value></data>
+  <data name="ExternalOpenError" xml:space="preserve"><value>The selected external destination could not be opened with the current system handler.</value></data>
 </root>
