@@ -12,10 +12,31 @@ jobs:
   preflight:
     name: Release preflight
     runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      assembly_version: ${{ steps.version.outputs.assembly_version }}
+      prerelease: ${{ steps.version.outputs.prerelease }}
 
     steps:
       - name: Checkout
         uses: actions/checkout@v7
+
+      - name: Resolve release version
+        id: version
+        shell: pwsh
+        run: |
+          $tag = "${{ github.ref_name }}"
+          $pattern = '^v(?<major>0|[1-9][0-9]*)\.(?<minor>0|[1-9][0-9]*)\.(?<patch>0|[1-9][0-9]*)(?<suffix>-(?:[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?$'
+          if ($tag -notmatch $pattern) {
+            throw "Release tag '$tag' is not a supported semantic version tag."
+          }
+
+          $version = "$($Matches.major).$($Matches.minor).$($Matches.patch)$($Matches.suffix)"
+          $assemblyVersion = "$($Matches.major).$($Matches.minor).$($Matches.patch).0"
+          $isPrerelease = -not [string]::IsNullOrEmpty($Matches.suffix)
+          "version=$version" >> $env:GITHUB_OUTPUT
+          "assembly_version=$assemblyVersion" >> $env:GITHUB_OUTPUT
+          "prerelease=$($isPrerelease.ToString().ToLowerInvariant())" >> $env:GITHUB_OUTPUT
 
       - name: Validate local Markdown links
         run: python3 scripts/check_markdown_links.py
@@ -76,20 +97,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
 
-      - name: Resolve release version
-        id: version
-        shell: pwsh
-        run: |
-          $tag = "${{ github.ref_name }}"
-          if ($tag -notmatch '^v(?<major>[0-9]+)\.(?<minor>[0-9]+)\.(?<patch>[0-9]+)(?<suffix>-[0-9A-Za-z.-]+)?$') {
-            throw "Release tag '$tag' is not a supported semantic version tag."
-          }
-
-          $version = "$($Matches.major).$($Matches.minor).$($Matches.patch)$($Matches.suffix)"
-          $assemblyVersion = "$($Matches.major).$($Matches.minor).$($Matches.patch).0"
-          "version=$version" >> $env:GITHUB_OUTPUT
-          "assembly_version=$assemblyVersion" >> $env:GITHUB_OUTPUT
-
       - name: Setup .NET 9
         uses: actions/setup-dotnet@v6
         with:
@@ -110,10 +117,10 @@ jobs:
           -p:PublishSingleFile=true
           -p:IncludeNativeLibrariesForSelfExtract=true
           -p:DebugType=None
-          -p:Version=${{ steps.version.outputs.version }}
-          -p:AssemblyVersion=${{ steps.version.outputs.assembly_version }}
-          -p:FileVersion=${{ steps.version.outputs.assembly_version }}
-          -p:InformationalVersion=${{ steps.version.outputs.version }}
+          -p:Version=${{ needs.preflight.outputs.version }}
+          -p:AssemblyVersion=${{ needs.preflight.outputs.assembly_version }}
+          -p:FileVersion=${{ needs.preflight.outputs.assembly_version }}
+          -p:InformationalVersion=${{ needs.preflight.outputs.version }}
           --output publish/${{ matrix.rid }}
 
       - name: Package ZIP
@@ -143,7 +150,7 @@ jobs:
 
   release:
     name: Publish GitHub release
-    needs: package
+    needs: [preflight, package]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -157,13 +164,29 @@ jobs:
           merge-multiple: true
 
       - name: Create release
+        shell: pwsh
         env:
           GH_TOKEN: ${{ github.token }}
-        run: >-
-          gh release create "${GITHUB_REF_NAME}"
-          artifacts/*.zip
-          artifacts/*.sha256
-          --repo "${GITHUB_REPOSITORY}"
-          --verify-tag
-          --generate-notes
-          --title "ChronoDesk ${GITHUB_REF_NAME}"
+        run: |
+          $assets = Get-ChildItem -Path artifacts -File | ForEach-Object { $_.FullName }
+          if ($assets.Count -eq 0) {
+            throw "No release assets were downloaded."
+          }
+
+          $arguments = @(
+            "release", "create", $env:GITHUB_REF_NAME
+          ) + $assets + @(
+            "--repo", $env:GITHUB_REPOSITORY,
+            "--verify-tag",
+            "--generate-notes",
+            "--title", "ChronoDesk $env:GITHUB_REF_NAME"
+          )
+
+          if ("${{ needs.preflight.outputs.prerelease }}" -eq "true") {
+            $arguments += "--prerelease"
+          }
+
+          & gh @arguments
+          if ($LASTEXITCODE -ne 0) {
+            exit $LASTEXITCODE
+          }
