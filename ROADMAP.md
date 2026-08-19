@@ -1,6 +1,6 @@
 # ChronoDesk Roadmap
 
-This roadmap keeps ChronoDesk focused on becoming a dependable desktop clock rather than accumulating unrelated features. Items may move when testing, accessibility, platform reliability, or security work reveals a higher-priority need.
+This roadmap keeps ChronoDesk focused on becoming a dependable desktop clock rather than accumulating unrelated features. Items may move when testing, accessibility, platform reliability, security, or documentation audits reveal a higher-priority need.
 
 ## Phase 0 — Repository and architecture baseline
 
@@ -13,6 +13,7 @@ Status: **Implemented; verification continues in CI**
 - [x] CI, CodeQL, dependency review, Dependabot.
 - [x] Architecture decision records and handoff file structure.
 - [x] English-first `.resx` localization architecture.
+- [x] Canonical documentation hub and source-of-truth precedence.
 
 ## Phase 1 — End-to-end clock MVP
 
@@ -58,6 +59,7 @@ Status: **Source implementation present; manual validation required**
 - [x] OS timezone database strategy.
 - [x] Best-effort local system chime adapters.
 - [x] Redacted structured logging.
+- [x] Deep platform-integration documentation for startup, tray, sound, timezone, local files, pickers, external handlers, and release RIDs.
 - [ ] Validate tray behavior on Windows 11.
 - [ ] Validate tray behavior on current macOS Intel and Apple Silicon hardware/runners with a GUI session.
 - [ ] Validate tray behavior on representative Linux GNOME/KDE sessions.
@@ -67,7 +69,7 @@ Status: **Source implementation present; manual validation required**
 
 ## Phase 4 — Automated quality depth
 
-Status: **Implemented for domain/persistence/startup/headless UI; native-desktop validation remains**
+Status: **Implemented for domain/persistence/startup/headless UI/repository integrity; native-desktop validation remains**
 
 - [x] Clock formatting tests.
 - [x] Quiet-hour boundary tests.
@@ -84,7 +86,12 @@ Status: **Implemented for domain/persistence/startup/headless UI; native-desktop
 - [x] External-link allowlist regression tests.
 - [x] Semantic version display regression tests.
 - [x] Repository validation-script unit tests.
+- [x] Repository-local Markdown link validation.
+- [x] High-confidence committed-credential scanning.
+- [x] Tracked-file documentation inventory validation against `git ls-files`.
+- [x] Regression tests for documentation inventory parsing/missing/stale behavior.
 - [x] Multi-OS CI.
+- [x] Exhaustive automated-test/test-double catalog.
 
 ## Phase 5 — Release readiness
 
@@ -95,10 +102,12 @@ Status: **Infrastructure implemented; release candidate not declared**
 - [x] Windows ZIP and Unix `tar.gz` packaging appropriate to platform permission semantics.
 - [x] Tag-derived package/assembly/file/informational version stamping.
 - [x] Release preflight for repository integrity, formatting, Release build/tests, and NuGet vulnerability inspection.
+- [x] Release preflight enforces complete tracked-file documentation inventory.
 - [x] SHA-256 sidecars plus pre-publication checksum verification for all release archives.
 - [x] Prerelease tag recognition/publication.
 - [x] Release workflow write permission scoped to the publication job.
 - [x] Release documentation baseline.
+- [x] Deep CI/CD, runtime, settings, configuration, platform, localization, testing, and file-reference documentation.
 - [x] README screenshot placeholder clearly identified as a placeholder.
 - [x] Preview assembly/package metadata established (`0.1.0-preview`).
 - [x] Repository-local Markdown link validation in CI.
@@ -118,8 +127,9 @@ Status: **Automated audit substantially implemented; native GUI release gates re
 - [ ] Run the complete release checklist in `docs/release.md` on real supported desktops.
 - [ ] Validate accessibility checklist on each primary platform.
 - [ ] Validate settings migration path after the first tagged preview creates a real prior-version fixture.
-- [ ] Audit documentation links against the tagged tree (local link validation is automated; tagged/external review remains).
-- [ ] Confirm vulnerability scan has no unresolved release-blocking dependency finding.
+- [x] Audit repository-local documentation links continuously in CI; tagged/external URL review remains manual.
+- [x] Require every tracked file to remain documented in the canonical repository reference through CI/release preflight.
+- [ ] Confirm vulnerability scan has no unresolved release-blocking dependency finding on the final release commit.
 - [ ] Confirm no real credentials/private data are present after both automated scanning and human artifact review.
 - [ ] Verify each published checksum from a separately downloaded release archive.
 - [ ] Publish stable `v1.0.0` only when the above gates pass.
