@@ -27,6 +27,7 @@ The release operator needs:
 
 - push permission to `sanskarIN/chronodesk`;
 - Git;
+- Python 3 for repository-integrity scripts;
 - .NET 9 SDK for local verification;
 - access to supported Windows, macOS, and Linux desktop sessions for manual validation;
 - no uncommitted changes in the release checkout.
@@ -53,6 +54,8 @@ Use a disposable fresh clone.
 git clone https://github.com/sanskarIN/chronodesk.git chronodesk-release
 cd chronodesk-release
 git checkout <release-commit>
+python3 scripts/check_markdown_links.py
+python3 scripts/check_repository_secrets.py
 dotnet --info
 dotnet restore ChronoDesk.sln
 dotnet format ChronoDesk.sln --verify-no-changes --no-restore
@@ -61,19 +64,22 @@ dotnet test ChronoDesk.sln -c Release --no-build --collect:"XPlat Code Coverage"
 dotnet list ChronoDesk.sln package --vulnerable --include-transitive
 ```
 
-Do not proceed if restore, formatting, build, tests, or vulnerability review reports an unresolved blocker.
+Do not proceed if documentation integrity, credential scanning, restore, formatting, build, tests, or vulnerability review reports an unresolved blocker.
+
+The credential script intentionally uses high-confidence patterns and is not a substitute for reviewing staged/release files for private names, screenshots, certificates, database exports, or other sensitive material that may not resemble a token.
 
 ## 3. CI verification
 
 For the exact release commit, confirm the repository checks that actually exist in `.github/workflows/` are green:
 
+- CI / Repository integrity;
 - CI on Ubuntu;
 - CI on Windows;
 - CI on macOS;
 - CodeQL;
 - dependency review where applicable to the release pull request.
 
-Do not add a README badge for a workflow that does not exist.
+Do not add a README badge for a workflow that does not exist. If branch protection requires named checks, use the exact check names shown on the release-candidate pull request rather than guessing them from workflow filenames.
 
 ## 4. Manual desktop verification
 
@@ -226,6 +232,7 @@ If a severe regression is discovered:
 
 A release candidate is not ready to tag until:
 
+- repository-integrity checks pass;
 - clean restore/build/test/format checks pass;
 - dependency/security checks are reviewed;
 - core user journeys are manually exercised on target desktops;
