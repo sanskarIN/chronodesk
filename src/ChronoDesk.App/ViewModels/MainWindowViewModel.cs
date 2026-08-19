@@ -239,14 +239,30 @@ public sealed class MainWindowViewModel : ObservableObject
     {
         ArgumentNullException.ThrowIfNull(newSettings);
         var normalized = newSettings.Normalize();
-        var startupChanged = normalized.StartWithSystem != Settings.StartWithSystem;
+        var previousStartupValue = Settings.StartWithSystem;
+        var startupChanged = normalized.StartWithSystem != previousStartupValue;
+        var startupApplied = false;
 
         if (startupChanged && services.StartupManager.IsSupported)
         {
             await services.StartupManager.SetEnabledAsync(normalized.StartWithSystem, cancellationToken);
+            startupApplied = true;
         }
 
-        await services.SettingsStore.SaveAsync(normalized, cancellationToken);
+        try
+        {
+            await services.SettingsStore.SaveAsync(normalized, cancellationToken);
+        }
+        catch
+        {
+            if (startupApplied)
+            {
+                await TryRollbackStartupAsync(previousStartupValue, cancellationToken);
+            }
+
+            throw;
+        }
+
         Settings = normalized;
         RebuildWorldClocks();
         await TickAsync(cancellationToken);
@@ -266,7 +282,12 @@ public sealed class MainWindowViewModel : ObservableObject
         CancellationToken cancellationToken = default)
     {
         var imported = await services.SettingsStore.ImportAsync(sourcePath, cancellationToken);
-        await UpdateSettingsAsync(imported with { IsFirstRun = false }, cancellationToken);
+        var safeImportedSettings = imported with
+        {
+            IsFirstRun = false,
+            StartWithSystem = Settings.StartWithSystem,
+        };
+        await UpdateSettingsAsync(safeImportedSettings, cancellationToken);
         StatusMessage = Strings.SettingsImported;
     }
 
@@ -275,6 +296,29 @@ public sealed class MainWindowViewModel : ObservableObject
         var defaults = new AppSettings { IsFirstRun = false };
         await UpdateSettingsAsync(defaults, cancellationToken);
         StatusMessage = Strings.SettingsReset;
+    }
+
+    private async Task TryRollbackStartupAsync(
+        bool previousValue,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            await services.StartupManager.SetEnabledAsync(previousValue, cancellationToken);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            services.Logger.Warning(
+                "startup.rollback_cancelled",
+                "Startup integration rollback was cancelled after settings persistence failed.");
+        }
+        catch (Exception exception)
+        {
+            services.Logger.Error(
+                "startup.rollback_failed",
+                exception,
+                "Startup integration could not be restored after settings persistence failed.");
+        }
     }
 
     private void RebuildWorldClocks()

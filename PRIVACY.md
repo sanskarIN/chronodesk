@@ -68,7 +68,9 @@ An export can include:
 
 It does not intentionally include log history, credentials, or unrelated files. Users control where exported files are stored and should review them before sharing.
 
-Imported settings files are size-bounded, parsed as JSON, schema-checked, and normalized before becoming active.
+Imported settings files are size-bounded, parsed as JSON, schema-checked, and normalized before becoming active. Imported text fields are converted to bounded single-line values and unsupported enum representations are rejected.
+
+An imported file is **not allowed to enable or disable operating-system startup registration**. ChronoDesk preserves the current local startup preference during import; changing startup still requires an explicit user preference change in Settings.
 
 ## Corrupt settings recovery
 
@@ -82,7 +84,7 @@ Startup is opt-in.
 - macOS: current-user LaunchAgent.
 - Linux: current-user XDG autostart file.
 
-ChronoDesk does not request machine-wide startup installation through these settings.
+ChronoDesk does not request machine-wide startup installation through these settings. If startup integration is changed successfully but persisting the matching preference then fails, ChronoDesk makes a best-effort attempt to restore the previous startup state before surfacing the save failure.
 
 ## Optional chimes
 

@@ -22,7 +22,8 @@ public sealed class JsonSettingsStore : ISettingsStore
             AllowTrailingCommas = true,
             ReadCommentHandling = JsonCommentHandling.Skip,
         };
-        serializerOptions.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.CamelCase));
+        serializerOptions.Converters.Add(
+            new JsonStringEnumConverter(JsonNamingPolicy.CamelCase, allowIntegerValues: false));
     }
 
     public string SettingsPath { get; }

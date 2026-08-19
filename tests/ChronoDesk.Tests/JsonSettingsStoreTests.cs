@@ -1,3 +1,4 @@
+using System.Text.Json;
 using ChronoDesk.Core.Models;
 using ChronoDesk.Infrastructure.Logging;
 using ChronoDesk.Infrastructure.Persistence;
@@ -58,6 +59,35 @@ public sealed class JsonSettingsStoreTests
 
             Assert.Equal(ThemeMode.Dark, imported.Theme);
             Assert.Equal(22, imported.ContentSpacing);
+        }
+        finally
+        {
+            DeleteTemporaryDirectory(root);
+        }
+    }
+
+    [Fact]
+    public async Task ImportAsync_RejectsNumericEnumValues()
+    {
+        var root = CreateTemporaryDirectory();
+        try
+        {
+            var sourcePath = Path.Combine(root, "numeric-enum.json");
+            await File.WriteAllTextAsync(
+                sourcePath,
+                """
+                {
+                  "schemaVersion": 1,
+                  "clockFormat": 24,
+                  "theme": "system",
+                  "layout": "centered"
+                }
+                """);
+            var store = new JsonSettingsStore(
+                new SafeFileLogger(Path.Combine(root, "logs")),
+                Path.Combine(root, "settings.json"));
+
+            await Assert.ThrowsAsync<JsonException>(() => store.ImportAsync(sourcePath));
         }
         finally
         {

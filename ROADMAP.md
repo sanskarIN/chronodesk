@@ -12,6 +12,7 @@ Status: **Implemented; verification continues in CI**
 - [x] GitHub issue/PR templates.
 - [x] CI, CodeQL, dependency review, Dependabot.
 - [x] Architecture decision records and handoff file structure.
+- [x] English-first `.resx` localization architecture.
 
 ## Phase 1 — End-to-end clock MVP
 
@@ -43,6 +44,7 @@ Status: **Implemented in source; platform validation pending**
 - [x] Startup preference.
 - [x] Tray actions.
 - [x] About/support/funding experience.
+- [x] User-facing English strings externalized for future localization.
 
 ## Phase 3 — Platform hardening
 
@@ -62,7 +64,7 @@ Status: **Source implementation present; manual validation required**
 
 ## Phase 4 — Automated quality depth
 
-Status: **Core tests implemented; UI depth remains**
+Status: **Implemented for domain/persistence/headless UI; native-desktop validation remains**
 
 - [x] Clock formatting tests.
 - [x] Quiet-hour boundary tests.
@@ -70,10 +72,12 @@ Status: **Core tests implemented; UI depth remains**
 - [x] Settings normalization tests.
 - [x] JSON persistence/import/export/corruption tests.
 - [x] Timezone catalog tests.
+- [x] Deterministic property-style tests for quiet hours/settings invariants.
+- [x] Deterministic malformed-import fuzz coverage and oversized-input rejection.
+- [x] Avalonia headless XUnit smoke tests for primary windows and focus/mini transitions.
 - [x] Multi-OS CI.
-- [ ] Add deterministic headless Avalonia smoke tests after the first clean CI compile establishes the UI-test package baseline.
-- [ ] Add property-based testing for broader quiet-hour/timezone boundary generation if it provides value beyond table-driven coverage.
 - [ ] Add startup-adapter tests through isolated fake filesystem/registry abstractions if platform regressions justify the extra abstraction.
+- [ ] Add deeper headless interaction tests for file-picker-independent settings flows after the first full CI pass establishes stable baseline behavior.
 
 ## Phase 5 — Release readiness
 
@@ -83,6 +87,7 @@ Status: **Infrastructure implemented; release candidate not declared**
 - [x] Self-contained artifact matrix.
 - [x] Release documentation baseline.
 - [x] README screenshot placeholder clearly identified as a placeholder.
+- [x] Preview assembly/package metadata established (`0.1.0-preview`).
 - [ ] Replace placeholder with real verified screenshots from release builds.
 - [ ] Complete clean-checkout manual verification on Windows, macOS, and Linux.
 - [ ] Confirm CI and CodeQL are green for the release commit.
@@ -91,11 +96,11 @@ Status: **Infrastructure implemented; release candidate not declared**
 
 ## Phase 6 — Final audit and stable release
 
-Status: **Pending release candidate**
+Status: **Automated audit in progress; native GUI release gates remain**
 
-- [ ] Run the complete release checklist in `docs/release.md`.
+- [ ] Run the complete release checklist in `docs/release.md` on real supported desktops.
 - [ ] Validate accessibility checklist on each primary platform.
-- [ ] Validate settings migration path from the first tagged preview.
+- [ ] Validate settings migration path after the first tagged preview creates a real prior-version fixture.
 - [ ] Audit documentation links against the tagged tree.
 - [ ] Confirm vulnerability scan has no unresolved moderate-or-higher dependency finding.
 - [ ] Confirm no real credentials/private data are present.
@@ -107,7 +112,7 @@ These are candidates, not promises:
 
 - user-editable world-clock card labels after adding a timezone;
 - optional additional bundled chime tones that can be licensed and played reliably cross-platform;
-- runtime language switching after all user-facing strings are migrated to a finalized localization catalog;
+- runtime language switching using the established resource catalog and a reliable live-refresh strategy;
 - richer calendar detail options that remain offline;
 - signed/notarized installers when signing infrastructure is available;
 - stronger automated desktop accessibility checks where tooling is reliable.

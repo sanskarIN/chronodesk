@@ -44,12 +44,33 @@ ChronoDesk intentionally:
 - uses user-scoped startup registration;
 - limits imported settings files to a small maximum size;
 - validates settings schema and normalizes values;
+- rejects numeric enum representations in imported JSON;
+- bounds imported font/world-clock/timezone text and converts it to single-line values;
+- preserves the current device startup preference when settings are imported;
+- best-effort rolls startup integration back if the matching settings write fails;
 - writes settings through a temporary file before replacement;
 - preserves corrupt settings rather than executing/interpreting arbitrary content;
 - allows only fixed `https` and `mailto` support destinations from the About window;
 - uses argument lists rather than a shell command string for optional Unix chime helpers;
 - redacts common email/secret patterns from structured logs;
 - uses GitHub CodeQL, dependency review, Dependabot, and NuGet vulnerability inspection in repository automation.
+
+## Import threat model
+
+A settings export is user-controlled input when it is imported, even if its extension is `.json`. ChronoDesk therefore treats an imported document as untrusted configuration rather than as a command or trusted backup.
+
+Current controls include:
+
+- maximum 2 MiB file size;
+- JSON parsing only; no script/template execution;
+- supported schema-version check;
+- string-enum parsing with numeric values disabled;
+- settings normalization and bounded world-clock count;
+- bounded/single-line user-display text;
+- no imported OS startup side effect;
+- no imported executable path, URI, shell command, token, or credential field.
+
+Import hardening has deterministic malformed-input/fuzz regression coverage in the test project.
 
 ## Platform integration notes
 
