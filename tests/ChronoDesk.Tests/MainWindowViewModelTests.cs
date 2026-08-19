@@ -98,7 +98,11 @@ public sealed class MainWindowViewModelTests
             new TimeZoneDescriptor("Test/New", "New timezone", TimeSpan.Zero));
 
         Assert.Equal(AppSettings.MaximumWorldClockCount, viewModel.Settings.WorldClocks.Count);
-        Assert.Equal(Strings.WorldClockLimitReached, viewModel.StatusMessage);
+        Assert.Equal(
+            Strings.Format(
+                nameof(Strings.WorldClockLimitReachedFormat),
+                AppSettings.MaximumWorldClockCount),
+            viewModel.StatusMessage);
         Assert.Null(store.LastSaved);
     }
 
