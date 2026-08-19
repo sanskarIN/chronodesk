@@ -8,7 +8,7 @@ public sealed class PlatformStartupManager : IStartupManager
 {
     private const string WindowsRunKey = @"Software\Microsoft\Windows\CurrentVersion\Run";
     private const string AppName = "ChronoDesk";
-    private const string MacLaunchAgentName = "com.sanskar.chronodesk.plist";
+    private const int MaximumRegistrationBytes = 16 * 1024;
     private readonly string executablePath;
 
     public PlatformStartupManager(string? executablePath = null)
@@ -34,7 +34,7 @@ public sealed class PlatformStartupManager : IStartupManager
         if (OperatingSystem.IsMacOS())
         {
             return await HasExpectedFileContentAsync(
-                GetMacLaunchAgentPath(),
+                StartupPathResolver.GetMacLaunchAgentPath(GetUserProfile()),
                 StartupRegistrationDocuments.BuildMacLaunchAgent(executablePath),
                 cancellationToken);
         }
@@ -42,7 +42,9 @@ public sealed class PlatformStartupManager : IStartupManager
         if (OperatingSystem.IsLinux())
         {
             return await HasExpectedFileContentAsync(
-                GetLinuxAutostartPath(),
+                StartupPathResolver.GetLinuxAutostartPath(
+                    GetUserProfile(),
+                    Environment.GetEnvironmentVariable("XDG_CONFIG_HOME")),
                 StartupRegistrationDocuments.BuildLinuxDesktopEntry(executablePath),
                 cancellationToken);
         }
@@ -107,7 +109,7 @@ public sealed class PlatformStartupManager : IStartupManager
 
     private async Task SetMacStartupAsync(bool enabled, CancellationToken cancellationToken)
     {
-        var path = GetMacLaunchAgentPath();
+        var path = StartupPathResolver.GetMacLaunchAgentPath(GetUserProfile());
         if (!enabled)
         {
             DeleteIfExists(path);
@@ -122,7 +124,9 @@ public sealed class PlatformStartupManager : IStartupManager
 
     private async Task SetLinuxStartupAsync(bool enabled, CancellationToken cancellationToken)
     {
-        var path = GetLinuxAutostartPath();
+        var path = StartupPathResolver.GetLinuxAutostartPath(
+            GetUserProfile(),
+            Environment.GetEnvironmentVariable("XDG_CONFIG_HOME"));
         if (!enabled)
         {
             DeleteIfExists(path);
@@ -135,23 +139,15 @@ public sealed class PlatformStartupManager : IStartupManager
             cancellationToken);
     }
 
-    private static string GetMacLaunchAgentPath()
+    private static string GetUserProfile()
     {
-        var home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
-        return Path.Combine(home, "Library", "LaunchAgents", MacLaunchAgentName);
-    }
-
-    private static string GetLinuxAutostartPath()
-    {
-        var configHome = Environment.GetEnvironmentVariable("XDG_CONFIG_HOME");
-        if (string.IsNullOrWhiteSpace(configHome))
+        var userProfile = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+        if (string.IsNullOrWhiteSpace(userProfile))
         {
-            configHome = Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
-                ".config");
+            throw new InvalidOperationException("The current user profile directory could not be resolved.");
         }
 
-        return Path.Combine(configHome, "autostart", "chronodesk.desktop");
+        return userProfile;
     }
 
     private static async Task<bool> HasExpectedFileContentAsync(
@@ -164,7 +160,20 @@ public sealed class PlatformStartupManager : IStartupManager
             return false;
         }
 
-        var actualContent = await File.ReadAllTextAsync(path, cancellationToken);
+        await using var stream = new FileStream(
+            path,
+            FileMode.Open,
+            FileAccess.Read,
+            FileShare.Read,
+            bufferSize: 4 * 1024,
+            options: FileOptions.Asynchronous | FileOptions.SequentialScan);
+        if (stream.Length > MaximumRegistrationBytes)
+        {
+            return false;
+        }
+
+        using var reader = new StreamReader(stream);
+        var actualContent = await reader.ReadToEndAsync(cancellationToken);
         return string.Equals(
             NormalizeDocument(actualContent),
             NormalizeDocument(expectedContent),
