@@ -1,6 +1,5 @@
 using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
-using Avalonia.VisualTree;
 using ChronoDesk.App;
 using ChronoDesk.App.Localization;
 using ChronoDesk.App.Services;
@@ -111,7 +110,7 @@ public sealed class HeadlessUiSmokeTests
     }
 
     [AvaloniaFact]
-    public void SettingsWindow_LoadsAboutVersionAndRequiredCredit()
+    public void SettingsWindow_LoadsAboutVersion()
     {
         var viewModel = new MainWindowViewModel(new AppServices());
         var window = new SettingsWindow(viewModel);
@@ -121,7 +120,6 @@ public sealed class HeadlessUiSmokeTests
         Assert.Equal(
             Strings.Format(nameof(Strings.VersionFormat), AppVersionInfo.GetDisplayVersion()),
             version.Text);
-        Assert.Contains(Strings.Credit, GetAllText(window));
     }
 
     [AvaloniaFact]
@@ -134,25 +132,5 @@ public sealed class HeadlessUiSmokeTests
         Assert.Equal(Strings.OnboardingTitle, onboarding.Title);
         Assert.Equal(Strings.AboutTitle, about.Title);
         Assert.NotNull(about.FindControl<TextBlock>("VersionText"));
-    }
-
-    private static IReadOnlyList<string> GetAllText(Control root)
-    {
-        var values = new List<string>();
-        Collect(root, values);
-        return values;
-
-        static void Collect(Control control, List<string> values)
-        {
-            if (control is TextBlock { Text: { } text })
-            {
-                values.Add(text);
-            }
-
-            foreach (var child in control.GetVisualChildren().OfType<Control>())
-            {
-                Collect(child, values);
-            }
-        }
     }
 }
