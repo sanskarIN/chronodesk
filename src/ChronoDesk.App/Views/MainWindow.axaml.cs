@@ -242,21 +242,27 @@ public sealed partial class MainWindow : Window
         }
     }
 
-    private void FocusButton_OnClick(object? sender, RoutedEventArgs e) => ToggleFocusMode();
-
-    private void MiniButton_OnClick(object? sender, RoutedEventArgs e) => ToggleMiniMode();
-
-    private async void SettingsButton_OnClick(object? sender, RoutedEventArgs e)
+    private async Task OpenSettingsAsync()
     {
         var settingsWindow = new SettingsWindow(viewModel);
         await settingsWindow.ShowDialog(this);
     }
 
-    private async void AboutButton_OnClick(object? sender, RoutedEventArgs e)
+    private async Task OpenAboutAsync()
     {
         var aboutWindow = new AboutWindow();
         await aboutWindow.ShowDialog(this);
     }
+
+    private void FocusButton_OnClick(object? sender, RoutedEventArgs e) => ToggleFocusMode();
+
+    private void MiniButton_OnClick(object? sender, RoutedEventArgs e) => ToggleMiniMode();
+
+    private async void SettingsButton_OnClick(object? sender, RoutedEventArgs e) =>
+        await OpenSettingsAsync();
+
+    private async void AboutButton_OnClick(object? sender, RoutedEventArgs e) =>
+        await OpenAboutAsync();
 
     private async void FormatButton_OnClick(object? sender, RoutedEventArgs e) =>
         await viewModel.ToggleClockFormatAsync();
@@ -328,7 +334,7 @@ public sealed partial class MainWindow : Window
         }
         else if (control && e.Key == Key.OemComma)
         {
-            SettingsButton_OnClick(this, new RoutedEventArgs());
+            await OpenSettingsAsync();
             e.Handled = true;
         }
         else if (control && shift && e.Key == Key.T)
