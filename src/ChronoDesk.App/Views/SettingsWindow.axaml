@@ -167,6 +167,31 @@
           </StackPanel>
         </ScrollViewer>
       </TabItem>
+
+      <TabItem Header="{x:Static loc:UpdateStrings.TabUpdates}">
+        <ScrollViewer>
+          <StackPanel Margin="8,18" Spacing="18">
+            <Border Classes="card">
+              <StackPanel Spacing="12">
+                <TextBlock Text="{x:Static loc:UpdateStrings.UpdatesTitle}" Classes="sectionTitle" />
+                <TextBlock Text="{x:Static loc:UpdateStrings.UpdatesDescription}" TextWrapping="Wrap" />
+                <Grid ColumnDefinitions="220,*" RowDefinitions="Auto,Auto" RowSpacing="12">
+                  <TextBlock Text="{x:Static loc:UpdateStrings.CurrentVersionLabel}" VerticalAlignment="Center" />
+                  <TextBlock x:Name="UpdateVersionText" Grid.Column="1" FontWeight="SemiBold" VerticalAlignment="Center" />
+                  <Button
+                      x:Name="OpenReleasesButton"
+                      Grid.Row="1"
+                      Grid.Column="1"
+                      HorizontalAlignment="Left"
+                      Content="{x:Static loc:UpdateStrings.OpenReleases}"
+                      Click="OpenReleasesButton_OnClick" />
+                </Grid>
+                <TextBlock Text="{x:Static loc:UpdateStrings.UpdatePrivacyNote}" Classes="muted" TextWrapping="Wrap" />
+              </StackPanel>
+            </Border>
+          </StackPanel>
+        </ScrollViewer>
+      </TabItem>
     </TabControl>
 
     <Border Grid.Row="2" BorderBrush="{DynamicResource ChronoBorderBrush}" BorderThickness="0,1,0,0" Padding="24,14">
