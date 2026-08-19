@@ -21,6 +21,8 @@ public static class SettingsExtras
 
     public static string UpdatePrivacyNote => Get(nameof(UpdatePrivacyNote));
 
+    public static string LinkOpenError => Get(nameof(LinkOpenError));
+
     public static string AboutSectionTitle => Get(nameof(AboutSectionTitle));
 
     public static string AboutSectionBody => Get(nameof(AboutSectionBody));
