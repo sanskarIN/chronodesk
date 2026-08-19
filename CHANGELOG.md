@@ -1,8 +1,8 @@
 # Changelog
 
-All notable ChronoDesk changes are documented here. The project uses semantic-version-style release tags and aims to follow the spirit of Keep a Changelog without claiming a release before its verification gates are complete.
+All notable ChronoDesk changes are documented here. ChronoDesk uses four-component release versions (`MAJOR.MINOR.PATCH.REVISION`) and does not claim a published release before its verification gates are complete.
 
-## [Unreleased]
+## [Unreleased — target 2.6.0.2]
 
 ### Added
 
@@ -31,20 +31,25 @@ All notable ChronoDesk changes are documented here. The project uses semantic-ve
 - Deterministic property-style tests for quiet-hour and settings invariants.
 - Deterministic malformed-import fuzz coverage and oversized-import rejection.
 - Avalonia headless XUnit smoke tests for primary windows and focus/mini transitions.
-- Three-platform CI for formatting, local Markdown-link verification, build, tests, and NuGet vulnerability inspection.
+- Headless regression coverage for the full four-part About version.
+- Three-platform CI for version validation, formatting, local Markdown-link verification, build, tests, and NuGet vulnerability inspection.
 - Repository-local PowerShell verifier for Markdown file/directory links.
+- Repository-local PowerShell verifier for four-part application/package/assembly/file version consistency and tag matching.
 - Final-audit verification record separating automated checks from native desktop release gates.
 - CodeQL security analysis.
 - Pull-request dependency review.
 - Dependabot for NuGet and GitHub Actions.
 - Cross-platform tagged release packaging workflow.
+- Release ZIPs bundle license, README, changelog, privacy, security, and support documents.
+- Release workflow generates `SHA256SUMS.txt` for published ZIP artifacts.
 - GitHub issue forms, pull-request template, funding configuration, and repository policy documents.
 
 ### Changed
 
 - Updated the Avalonia 11 baseline to the current 11.3.18 maintenance patch used throughout application and headless tests.
 - Updated GitHub Actions workflow action majors to maintained versions and explicitly configured .NET 9 before CodeQL autobuild.
-- Defined preview assembly/package metadata as `0.1.0-preview` while release verification remains incomplete.
+- Set `Version`, `PackageVersion`, `AssemblyVersion`, and `FileVersion` to `2.6.0.2`.
+- Release tags now use four components and must exactly match the application version.
 - Imported world clocks now use case-insensitive ID and timezone-ID uniqueness, matching interactive world-clock behavior.
 
 ### Fixed
@@ -52,7 +57,9 @@ All notable ChronoDesk changes are documented here. The project uses semantic-ve
 - Settings-save failure now makes a best-effort rollback when an explicit startup integration change had already been applied.
 - Imported settings preserve the device's current startup preference instead of allowing a portable JSON file to enable or disable operating-system startup registration.
 - About-screen branding no longer relies on unsupported built-in SVG image decoding and remains visible across theme variants.
+- About now displays the complete four-part application version instead of truncating the revision component.
 - An unreadable settings file no longer leaves the clock, timezone search, or world-clock collection uninitialized; safe defaults are rendered with a warning instead.
+- Temporary settings read failures no longer attempt to quarantine/rename a potentially valid settings file as corrupt.
 - Exiting focus mode now restores the pre-focus window state instead of always forcing a normal window.
 - Unix chime helper processes no longer redirect unconsumed output streams, removing an avoidable pipe-stall risk.
 
@@ -68,15 +75,18 @@ All notable ChronoDesk changes are documented here. The project uses semantic-ve
 - Fixed executable/argument use for Unix system chime helpers.
 - User-scoped startup integration.
 - Imported backup files cannot silently change startup registration.
+- Release publication rejects tags that do not match the canonical project version.
+- Published ZIPs receive deterministic SHA-256 checksum entries for integrity verification.
 - No required application secrets or remote credentials.
 
 ### Documentation
 
 - Complete README baseline.
 - Contribution, support, security, privacy, code-of-conduct, roadmap, architecture, setup, development, testing, release, troubleshooting, accessibility, performance, GitHub-maintenance, release-note-template, final-audit, and ADR documentation.
+- Release documentation now uses `2.6.0.2` and the four-component version/tag convention consistently.
 - Privacy documentation explicitly covers safe import/startup behavior.
-- Testing and roadmap documents are aligned with property, fuzz, headless UI, and repository-local documentation-link coverage.
+- Testing and roadmap documents are aligned with property, fuzz, headless UI, persistence I/O, version, and repository-local documentation-link coverage.
 
 ## Release policy
 
-A versioned section will be added only when the clean-checkout verification in `docs/release.md` has been completed and a corresponding Git tag is ready to publish.
+A final `## [2.6.0.2] - YYYY-MM-DD` section will replace the target header only when the clean-checkout verification in `docs/release.md` has been completed and the corresponding `v2.6.0.2` Git tag is ready to publish.
