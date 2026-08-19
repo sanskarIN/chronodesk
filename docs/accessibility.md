@@ -10,6 +10,7 @@ ChronoDesk currently includes or intentionally supports:
 - visible native focus indicators;
 - dedicated keyboard shortcuts for common clock/window actions;
 - semantic automation names on the primary clock and timezone search;
+- explicit automation names on Settings inputs whose visual labels are rendered in adjacent text;
 - text labels alongside controls rather than icon-only critical actions;
 - high-contrast application palette;
 - reduced-motion preference;
@@ -18,7 +19,8 @@ ChronoDesk currently includes or intentionally supports:
 - reasonably large interactive targets;
 - status messages expressed as text rather than color alone;
 - simple, predictable first-run and settings windows;
-- full-screen and compact modes that can be exited from the keyboard.
+- full-screen and compact modes that can be exited from the keyboard;
+- an Updates & About Settings surface whose external navigation remains explicit user action rather than background behavior.
 
 ## Keyboard shortcuts
 
@@ -44,9 +46,11 @@ Using no pointing device:
 - [ ] Enter search text, move through results, and activate the add action.
 - [ ] Reach world-clock remove actions.
 - [ ] Open Settings.
-- [ ] Navigate every settings tab.
+- [ ] Navigate every settings tab, including Updates & About.
 - [ ] Change checkboxes, combos, sliders, and text fields.
 - [ ] Reach import/export/reset actions.
+- [ ] Reach Open GitHub Releases and Open About.
+- [ ] Open and close About from Settings without trapping focus.
 - [ ] Close Settings without trapping focus.
 - [ ] Enter/exit focus mode.
 - [ ] Enter/exit mini mode.
@@ -65,11 +69,16 @@ Check that:
 - [ ] timezone search identifies itself as a search field;
 - [ ] buttons expose their visible names;
 - [ ] checkboxes expose state and label;
-- [ ] combo boxes expose selected value;
+- [ ] combo boxes expose selected value and purpose;
+- [ ] sliders expose their visible purpose/value;
+- [ ] quiet-hours start/end text fields expose distinct labels;
 - [ ] settings tabs expose their labels and selected state;
+- [ ] Updates & About exposes current version text in a sensible reading order;
 - [ ] world-clock cards are understandable in reading order;
 - [ ] status/error text is discoverable and not conveyed only visually;
 - [ ] focus/mini transitions do not leave assistive focus on an inaccessible hidden control.
+
+Settings controls such as clock format, display toggles, chime interval/quiet hours, theme/layout, font family, font size, and content spacing have explicit `AutomationProperties.Name` values when their visible label is a separate `TextBlock`. This is source-level hardening only; real platform screen-reader announcement still requires manual release validation.
 
 Where an Avalonia control does not expose sufficient semantics by default, add an `AutomationProperties.Name`, help text, or an appropriate structural change instead of relying on tooltip text alone.
 
@@ -100,7 +109,9 @@ The clock size control supports a broad range. Manual review should include:
 - increased OS text scaling where available;
 - narrowest supported main window;
 - mini mode;
-- Settings at minimum supported dimensions.
+- Settings at minimum supported dimensions;
+- Updates & About cards with enlarged text;
+- About dialog with enlarged text.
 
 Text should wrap or scroll rather than become clipped in a way that makes an action impossible to understand.
 
@@ -128,6 +139,18 @@ Focus mode intentionally hides non-clock chrome. Verify:
 - screen-reader focus can return to meaningful content after exiting.
 
 Mini mode similarly hides most controls, but must remain escapable with `Esc`/`Ctrl+M` and must not permanently change the user's normal always-on-top preference.
+
+## External navigation
+
+External browser/mail actions must remain keyboard reachable and understandable without relying on icon shape or color.
+
+Verify:
+
+- Open GitHub Releases is announced as a button with its visible name;
+- Open About is announced as a button with its visible name;
+- activating an external link does not permanently trap focus if the OS handler cannot open;
+- returning from the external browser/mail client leaves ChronoDesk usable;
+- no background update prompt steals focus because ChronoDesk does not run a background update checker.
 
 ## Chimes
 
@@ -168,4 +191,4 @@ For an accessibility defect:
 
 ## Known limits before GUI validation
 
-Source-level semantics and keyboard design can be reviewed without a GUI session, but actual screen-reader announcements, focus visuals, OS theme interactions, and tray accessibility require a real supported desktop environment. Those checks remain explicit release gates rather than being assumed from source code.
+Source-level semantics and keyboard design can be reviewed without a GUI session, but actual screen-reader announcements, focus visuals, OS theme interactions, browser/mail-handler focus handoff, and tray accessibility require a real supported desktop environment. Those checks remain explicit release gates rather than being assumed from source code.

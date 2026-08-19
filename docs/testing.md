@@ -1,17 +1,25 @@
 # ChronoDesk Testing Guide
 
+This guide explains the testing strategy, commands, and manual release boundary. For a file-by-file mapping of every xUnit/headless test, fake, and Python validator test, see `test-catalog.md`.
+
 ## Quality gates
 
-The intended release gate is:
+The intended release-quality local gate is:
 
 ```bash
+python3 scripts/check_markdown_links.py
+python3 scripts/check_documentation_inventory.py
+python3 scripts/check_repository_secrets.py
+python3 -m unittest discover -s scripts/tests -p 'test_*.py'
 dotnet restore ChronoDesk.sln
 dotnet format ChronoDesk.sln --verify-no-changes --no-restore
 dotnet build ChronoDesk.sln -c Release --no-restore
 dotnet test ChronoDesk.sln -c Release --no-build --collect:"XPlat Code Coverage"
 ```
 
-CI executes equivalent formatting/build/test work on Ubuntu, Windows, and macOS and also inspects NuGet dependencies for reported vulnerabilities.
+CI validates repository-local Markdown links, complete tracked-file documentation, committed text for high-confidence credential patterns, and the repository validator unit tests. It then executes equivalent formatting/build/test work on Ubuntu, Windows, and macOS. The .NET matrix also inspects NuGet dependencies for reported vulnerabilities.
+
+A green automated suite is necessary but not sufficient for a release because tray, native startup execution, file pickers, real audio, window-manager behavior, external default handlers, and platform accessibility APIs require real desktop environments.
 
 ## Automated test areas
 
@@ -52,9 +60,11 @@ New cadence behavior must remain independent of actual sound playback.
 
 - visual range normalization;
 - default font fallback;
+- invalid/null nested value repair;
 - invalid/duplicate clock removal;
 - at least one clock invariant;
-- 24-card limit.
+- 24-card limit;
+- bounded and flattened imported text.
 
 ### Persistence
 
@@ -62,6 +72,7 @@ New cadence behavior must remain independent of actual sound playback.
 
 - settings save/load round-trip;
 - portable export/import;
+- numeric enum rejection;
 - malformed JSON fallback;
 - corrupt-file preservation.
 
@@ -76,6 +87,51 @@ Tests must not read or write the developer's real ChronoDesk data folder.
 - invalid-ID fallback;
 - bounded case-insensitive search.
 
+The three-OS CI matrix helps catch differences in runtime-provided timezone databases without hard-coding a platform-specific catalog.
+
+### Startup adapters
+
+`PlatformStartupManagerTests` drives the production startup manager through fake filesystem and registry boundaries. The tests verify without changing the CI runner's real startup configuration:
+
+- the Windows current-user Run entry uses a quoted executable plus `--background`;
+- disabling Windows startup removes the application value;
+- startup detection only accepts entries containing the ChronoDesk executable path;
+- macOS LaunchAgent paths are derived from the supplied user profile and XML-sensitive executable characters are escaped;
+- disabling macOS startup removes an existing LaunchAgent;
+- Linux honors `XDG_CONFIG_HOME` and otherwise falls back to `~/.config/autostart`;
+- Linux desktop entries quote executable paths containing spaces;
+- disabling Linux startup removes an existing desktop entry;
+- unsupported platforms reject startup writes;
+- pre-cancelled operations honor cancellation.
+
+These tests validate generated user-level startup artifacts, but real registry/LaunchAgent/XDG session behavior still requires native desktop verification before release.
+
+### External-link policy
+
+`ExternalLinkLauncherTests` verifies the application-wide external-navigation allowlist independently of an installed browser/mail client:
+
+- absolute HTTPS project links are accepted;
+- mailto support destinations are accepted;
+- plain HTTP is rejected;
+- local `file:` destinations are rejected;
+- script-style destinations are rejected;
+- relative and empty destinations are rejected.
+
+The tests exercise URI policy only and intentionally do not launch an external process.
+
+### Version display
+
+`AppVersionProviderTests` verifies:
+
+- normal preview semantic versions;
+- stable semantic versions;
+- prerelease versions;
+- user-facing removal of `+build` metadata;
+- three-part assembly-version fallback;
+- the development fallback when no version metadata exists.
+
+`HeadlessUiSmokeTests` additionally verifies the configured preview semantic version is rendered in About and Settings for an ordinary development build.
+
 ### Property-style robustness tests
 
 `DomainPropertyTests` runs deterministic seeded randomized cases against reference invariants. It verifies thousands of quiet-hour combinations and checks that settings normalization is idempotent, bounded, and produces unique clock IDs.
@@ -88,18 +144,69 @@ This test style gives broad edge coverage while staying deterministic in CI. A f
 
 Fuzz inputs are generated locally inside the test and never contain production/user data.
 
-### Headless Avalonia UI smoke tests
+### View-model transaction tests
 
-`AvaloniaTestSetup` and `HeadlessUiSmokeTests` use `Avalonia.Headless.XUnit` with the same Avalonia 11.3 maintenance baseline as the application. Current smoke coverage verifies:
+`MainWindowViewModelTests` verifies the critical settings/startup consistency boundary:
+
+- startup is rolled back when settings persistence fails after an external startup change;
+- the live settings snapshot does not claim a failed persistence update;
+- imported settings cannot silently enable startup;
+- an explicit user startup change is applied once and persisted.
+
+### Headless Avalonia UI tests
+
+`AvaloniaTestSetup`, `HeadlessUiSmokeTests`, and `SettingsWindowHeadlessTests` use `Avalonia.Headless.XUnit` with the same Avalonia maintenance baseline as the application. Current coverage verifies:
 
 - main-window XAML/resource loading;
 - key named controls exist;
 - mini mode can enter and restore normal dimensions;
 - focus mode hides/restores application chrome;
 - Settings loads primary preference controls;
-- onboarding and About windows load localized resources.
+- Settings exposes the Updates & About surface, Releases action, About action, and current preview version;
+- onboarding and About windows load localized resources;
+- Settings save maps edited controls into normalized persisted preferences;
+- explicit startup preference changes flow through the startup service;
+- invalid quiet-hour text displays validation without persistence;
+- reset-to-defaults persists defaults and reloads the visible controls.
 
-Headless UI tests strengthen cross-platform CI but do **not** replace real desktop testing for system tray, startup registration, sound playback, accessibility APIs, display scaling, or native file pickers.
+File-picker-backed import/export remains outside the headless interaction suite because native picker behavior belongs to platform validation. Browser/mail-client launching and modal user interaction with the About dialog also remain native/UI boundaries; their underlying URI policy and resource/window loading are automated independently.
+
+Headless UI tests strengthen cross-platform CI but do **not** replace real desktop testing for system tray, native startup registration, sound playback, accessibility APIs, display scaling, external OS handlers, or native file pickers.
+
+## Documentation and repository integrity
+
+### Local Markdown links
+
+`scripts/check_markdown_links.py` scans repository Markdown without network access and validates repository-local link/image targets. Links that escape the repository or point at missing files fail the dedicated CI Repository integrity job.
+
+External URLs are deliberately excluded from deterministic availability checking; release review should still verify important project/support destinations when preparing a tag.
+
+### Tracked-file documentation coverage
+
+`scripts/check_documentation_inventory.py` obtains the authoritative tracked paths from `git ls-files` and compares them with the canonical inventory entries in `docs/repository-reference.md`.
+
+It fails when:
+
+- a tracked file has no reference entry;
+- an inventory entry points at a file that is no longer tracked.
+
+Fenced syntax examples inside the reference are ignored so documentation can explain the inventory format without creating a fake path.
+
+This gate means source, tests, assets, XAML, resources, workflows, templates, scripts, and documentation files cannot be added silently without at least an explicit responsibility entry.
+
+### Credential-pattern scan
+
+`scripts/check_repository_secrets.py` scans committed text for high-confidence private-key and common credential/token patterns without printing matched secret values. It is an automated tripwire rather than proof that every possible private datum is absent.
+
+### Repository validator tests
+
+Run all standard-library validator tests with:
+
+```bash
+python3 -m unittest discover -s scripts/tests -p 'test_*.py'
+```
+
+Current tests protect release metadata rules and documentation-inventory parser/comparison behavior. Add validator tests when a repository script gains nontrivial parsing or policy logic.
 
 ## Manual UI checklist
 
@@ -163,6 +270,10 @@ Automated Core/headless tests are not a substitute for desktop validation. Befor
 - [ ] Import/export round-trips a settings file.
 - [ ] Invalid import displays a safe error and does not replace good settings.
 - [ ] Reset returns to defaults.
+- [ ] Updates & About shows the same release version as the About dialog.
+- [ ] Open GitHub Releases launches the expected public HTTPS page only after the button is activated.
+- [ ] A missing/default browser handler fails safely and leaves the app usable.
+- [ ] Open About displays the full About dialog from Settings.
 
 ### Chime
 
@@ -173,7 +284,7 @@ Automated Core/headless tests are not a substitute for desktop validation. Befor
 
 ### Accessibility
 
-Use the detailed checklist in `docs/accessibility.md`.
+Use the detailed checklist in `docs/accessibility.md`. Pay particular attention to the Settings clock/appearance controls whose visual labels are represented explicitly through automation names for screen-reader users.
 
 ## Regression test rule
 
@@ -187,8 +298,8 @@ When fixing a bug:
 
 ## Coverage philosophy
 
-Coverage percentage is not a release target by itself. Prefer tests that protect invariants and failure paths. A high line percentage that does not exercise timezone boundaries, persistence corruption, chime suppression, malformed import handling, or window-mode transitions is less useful than focused behavioral coverage.
+Coverage percentage is not a release target by itself. Prefer tests that protect invariants and failure paths. A high line percentage that does not exercise timezone boundaries, persistence corruption, chime suppression, malformed import handling, startup artifact generation, external-link policy, release version identity, documentation completeness, or window-mode transitions is less useful than focused behavioral coverage.
 
 ## Performance testing
 
-Clock ticks should not perform settings I/O or network I/O. If a future change adds heavy work to the tick path, capture CPU/allocation measurements and update `docs/performance.md`.
+Clock ticks should not perform settings I/O or network I/O. The Updates & About feature must remain user-initiated; it must not turn the clock tick or application startup into a release/network polling path. If a future change adds heavy work to the tick path, capture CPU/allocation measurements and update `docs/performance.md`.

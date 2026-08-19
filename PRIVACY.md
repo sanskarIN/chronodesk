@@ -48,9 +48,11 @@ Redaction reduces risk but is not a guarantee that every possible sensitive patt
 
 ChronoDesk's clock functionality does not require a network request. It uses the timezone data exposed by the local operating system/.NET runtime.
 
-The About screen contains visible links for GitHub, Buy Me a Coffee, and email. ChronoDesk opens one of those destinations only after the user activates the corresponding control. Those destinations are handled by the user's browser/mail client and are then subject to the destination provider's privacy practices.
+ChronoDesk does **not** silently poll an update service or contact GitHub in the background. The Settings **Updates & About** section provides an explicit **Open GitHub Releases** action; only activating that button asks the operating system to open the public project Releases page in the user's default browser.
 
-The application does not contain a telemetry SDK, advertising SDK, analytics endpoint, cloud database, or built-in sign-in flow.
+The About screen similarly contains visible links for GitHub, Buy Me a Coffee, and email. ChronoDesk opens one of those destinations only after the user activates the corresponding control. Application external-link launching is restricted to HTTPS and mailto URI schemes. Once an external destination is opened, it is handled by the user's browser/mail client and is subject to that destination provider's privacy practices.
+
+The application does not contain a telemetry SDK, advertising SDK, analytics endpoint, cloud database, built-in sign-in flow, background update checker, or application-controlled update download service.
 
 ## Timezone data
 

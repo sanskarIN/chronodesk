@@ -25,7 +25,7 @@ The application does not require sign-in, analytics, a cloud database, or a netw
 
 ## Screenshot
 
-> This image is an explicit placeholder until a release build is captured on a supported desktop. The repository does not pretend that an unverified mockup is a real running-app screenshot.
+> This image is an explicit placeholder until a release build is captured on a supported desktop. The repository does not pretend that an unverified mockup is a real running-app screenshot. The tagged release workflow refuses to package a release while this placeholder remains in README.
 
 ![ChronoDesk screenshot placeholder](docs/assets/screenshot-placeholder.svg)
 
@@ -64,13 +64,22 @@ The application does not require sign-in, analytics, a cloud database, or a netw
 - Duplicate chimes within the same minute are suppressed.
 - Playback uses OS-appropriate best-effort system facilities without a remote dependency.
 
+### Settings, updates, and About
+
+- Clock, appearance, accessibility, behavior, privacy/data, and Updates & About settings areas.
+- Import/export and reset-to-defaults controls.
+- Current semantic version shown in both Settings and About.
+- **Open GitHub Releases** is explicitly user-initiated; ChronoDesk does not poll an update server in the background.
+- Full About dialog includes project, MIT license, privacy, support contacts, GitHub, funding information, and **Made by the Sanskar** credit.
+- External navigation is restricted to absolute HTTPS and mailto destinations before it is passed to the operating system.
+
 ### Accessibility
 
 - Keyboard-first operation and shortcuts.
 - High-contrast palette.
 - Reduced-motion preference; the application intentionally avoids decorative motion by default.
 - Visible native focus behavior from Avalonia/Fluent controls.
-- Semantic automation names on key clock/search controls.
+- Semantic automation names on key clock/search controls and visually adjacent Settings labels.
 - Scalable clock typography and touch-friendly control sizing.
 - Non-color-only status text.
 
@@ -83,18 +92,19 @@ The application does not require sign-in, analytics, a cloud database, or a netw
 - Structured JSONL logging with common email/secret-pattern redaction.
 - No credentials or API keys are required.
 - Startup behavior is opt-in and user-scoped.
+- No telemetry, advertising, background update checker, or app-controlled update download service.
 
 ## Supported platforms
 
 ChronoDesk targets desktop systems supported by Avalonia and .NET 9:
 
-| Platform | Target | Notes |
-|---|---|---|
-| Windows | x64 | User-level startup registration through the current-user Run key. |
-| macOS | x64 / arm64 | User LaunchAgent startup integration. |
-| Linux | x64 | XDG autostart integration; tray/chime behavior can vary by desktop environment. |
+| Platform | Target | Release archive | Notes |
+|---|---|---|---|
+| Windows | x64 | `.zip` | User-level startup registration through the current-user Run key. |
+| macOS | x64 / arm64 | `.tar.gz` | User LaunchAgent startup integration; tarball preserves executable mode bits. |
+| Linux | x64 | `.tar.gz` | XDG autostart integration; tray/chime behavior can vary by desktop environment; tarball preserves executable mode bits. |
 
-Release automation produces self-contained ZIP artifacts for `win-x64`, `linux-x64`, `osx-x64`, and `osx-arm64` when a semantic version tag is pushed.
+Release automation produces self-contained artifacts for `win-x64`, `linux-x64`, `osx-x64`, and `osx-arm64` when a supported semantic version tag is pushed. Every archive has a sibling `.sha256` checksum file, and the publication job verifies all four archive/checksum pairs before creating the GitHub Release.
 
 ## Technology stack
 
@@ -104,6 +114,7 @@ Release automation produces self-contained ZIP artifacts for `win-x64`, `linux-x
 - Fluent theme
 - `System.Text.Json`
 - xUnit
+- Python 3 repository/release validation scripts
 - GitHub Actions
 - GitHub CodeQL
 - Dependabot
@@ -116,19 +127,43 @@ No database server, web service, authentication provider, telemetry SDK, or clou
 chronodesk/
 ├─ .github/                     # CI, CodeQL, release, Dependabot, templates
 ├─ docs/                        # Architecture, setup, testing, ADRs, operations
+├─ scripts/                     # Repository/release integrity validators + tests
 ├─ src/
 │  ├─ ChronoDesk.Core/          # Domain models, formatting, chime policy, contracts
 │  ├─ ChronoDesk.Infrastructure/# JSON persistence, timezone/startup/chime/log adapters
 │  └─ ChronoDesk.App/           # Avalonia shell, views, view models, assets
 ├─ tests/
-│  └─ ChronoDesk.Tests/         # Unit/integration-oriented automated tests
+│  └─ ChronoDesk.Tests/         # Unit/integration/headless automated tests
 ├─ ChronoDesk.sln
 ├─ Directory.Build.props
 ├─ Directory.Packages.props
 └─ what_changed.md              # Primary cross-chat / cross-session handoff
 ```
 
-See [docs/architecture.md](docs/architecture.md) for the dependency rules and runtime flow.
+For a deep, navigable technical map start at **[docs/README.md](docs/README.md)**. For the purpose of **every tracked file**, use **[docs/repository-reference.md](docs/repository-reference.md)**. See [docs/architecture.md](docs/architecture.md) for dependency rules and the system architecture.
+
+## Documentation
+
+ChronoDesk maintains product, technical, operational, architecture-decision, and file-inventory documentation as part of the implementation.
+
+Important entry points:
+
+- [Documentation hub](docs/README.md)
+- [Architecture](docs/architecture.md)
+- [Runtime behavior](docs/runtime-behavior.md)
+- [Complete settings reference](docs/settings-reference.md)
+- [Build/configuration reference](docs/configuration-reference.md)
+- [Platform integration](docs/platform-integration.md)
+- [Localization guide](docs/localization.md)
+- [Testing guide](docs/testing.md)
+- [Exhaustive test catalog](docs/test-catalog.md)
+- [CI/CD reference](docs/ci-cd.md)
+- [Release procedure](docs/release.md)
+- [Accessibility checklist](docs/accessibility.md)
+- [Troubleshooting](docs/troubleshooting.md)
+- [Repository file reference](docs/repository-reference.md)
+
+Documentation completeness is enforced in CI: every tracked file must have a canonical entry in `docs/repository-reference.md`.
 
 ## Quick start
 
@@ -155,6 +190,10 @@ For platform-specific prerequisites and packaging notes, read [docs/setup.md](do
 
 ```bash
 dotnet --info
+python3 scripts/check_markdown_links.py
+python3 scripts/check_documentation_inventory.py
+python3 scripts/check_repository_secrets.py
+python3 -m unittest discover -s scripts/tests -p 'test_*.py'
 dotnet restore ChronoDesk.sln
 dotnet format ChronoDesk.sln --verify-no-changes --no-restore
 dotnet build ChronoDesk.sln --configuration Release --no-restore
@@ -179,21 +218,31 @@ More detail: [docs/development.md](docs/development.md).
 
 The current automated suite covers:
 
-- 12/24-hour and seconds formatting.
-- ISO week/calendar details.
-- overnight quiet-hour boundaries.
-- chime cadence and duplicate suppression.
-- settings normalization invariants.
-- JSON settings round-trip, backup/export/import, and corrupt-file recovery.
-- timezone catalog discovery/search/fallback behavior.
+- 12/24-hour and seconds formatting;
+- ISO week/calendar details;
+- overnight quiet-hour boundaries;
+- chime cadence and duplicate suppression;
+- settings normalization invariants;
+- JSON settings round-trip, backup/export/import, and corrupt-file recovery;
+- timezone catalog discovery/search/fallback behavior;
+- startup artifact generation/cleanup across Windows, macOS, and Linux through isolated adapters;
+- deterministic malformed-import fuzz/property-style robustness cases;
+- external-link scheme allowlisting;
+- semantic version display normalization;
+- Avalonia headless main/settings/onboarding/About smoke and interaction flows;
+- repository validation-script unit tests;
+- repository-local Markdown link integrity;
+- exhaustive tracked-file documentation inventory coverage;
+- high-confidence committed credential pattern scanning.
 
 Run:
 
 ```bash
 dotnet test ChronoDesk.sln -c Release --collect:"XPlat Code Coverage"
+python3 -m unittest discover -s scripts/tests -p 'test_*.py'
 ```
 
-CI runs formatting, build, tests, and NuGet vulnerability checks across Ubuntu, Windows, and macOS. See [docs/testing.md](docs/testing.md).
+CI runs repository integrity plus formatting, build, tests, and NuGet vulnerability checks across Ubuntu, Windows, and macOS. See [docs/testing.md](docs/testing.md) and [docs/test-catalog.md](docs/test-catalog.md).
 
 ## Build and publish
 
@@ -216,7 +265,7 @@ dotnet publish src/ChronoDesk.App/ChronoDesk.App.csproj \
 
 Equivalent RIDs used by release automation are `linux-x64`, `osx-x64`, and `osx-arm64`.
 
-Read [docs/release.md](docs/release.md) before creating a release tag.
+Read [docs/release.md](docs/release.md) before creating a release tag. The release workflow rejects a tag if its matching changelog heading is missing, this README still references the explicit screenshot placeholder, local Markdown is broken, the tracked-file documentation inventory is incomplete, a high-confidence committed credential pattern is detected, formatting/build/tests fail, or NuGet vulnerability inspection reports a vulnerable package.
 
 ## Keyboard shortcuts
 
@@ -237,6 +286,12 @@ After the OS timezone database is updated, restart ChronoDesk to rebuild its in-
 
 See [docs/architecture.md](docs/architecture.md) and ADR 0003 for the design decision.
 
+## Application update strategy
+
+ChronoDesk does not run a background update checker. Settings shows the current application version and provides **Open GitHub Releases** so the user can deliberately open the repository's public release page in the default browser. ChronoDesk itself does not download or execute update packages.
+
+This keeps update awareness compatible with the project's offline-first/privacy model while still making verified release artifacts easy to find.
+
 ## Local data
 
 By default, settings and logs are placed under the user's application-data folder in a `ChronoDesk` directory. The exact base path is resolved through .NET's `Environment.SpecialFolder.ApplicationData` for the current user.
@@ -252,7 +307,7 @@ ChronoDesk/
 
 If a settings document is malformed, ChronoDesk returns to safe defaults and renames the malformed document with a timestamped `.corrupt-...json` suffix when possible.
 
-For the complete data policy, see [PRIVACY.md](PRIVACY.md).
+For the complete data policy, see [PRIVACY.md](PRIVACY.md) and [docs/settings-reference.md](docs/settings-reference.md).
 
 ## Security
 
@@ -262,12 +317,15 @@ ChronoDesk is an offline-first clock, but local desktop software still has a sec
 - bounded settings imports;
 - safe JSON parsing;
 - atomic settings writes;
-- restricted external-link schemes;
+- centralized HTTPS/mailto external-link allowlisting;
 - redacted structured logs;
+- repository-local Markdown, tracked-file documentation, and high-confidence credential scans;
 - CodeQL;
 - dependency review;
 - Dependabot;
-- CI vulnerability inspection;
+- CI and release-preflight vulnerability inspection;
+- tag-time changelog/screenshot readiness checks;
+- release SHA-256 sidecars verified before publication;
 - no committed production credentials.
 
 Do not report vulnerabilities in a public issue. Follow [SECURITY.md](SECURITY.md).
@@ -275,6 +333,8 @@ Do not report vulnerabilities in a public issue. Follow [SECURITY.md](SECURITY.m
 ## Accessibility
 
 Accessibility is a release criterion rather than a post-release extra. Before a tagged release, manually review keyboard-only use, visible focus, screen-reader naming, contrast, text scaling, reduced-motion behavior, and focus/mini window transitions on each primary platform.
+
+Settings controls with separate visual labels use explicit automation names on the interactive element rather than relying on visual adjacency alone.
 
 See [docs/accessibility.md](docs/accessibility.md).
 
@@ -292,7 +352,7 @@ ChronoDesk.Core ──X──> Avalonia / OS APIs / filesystem
 
 `ChronoDesk.Core` owns models and business rules. `ChronoDesk.Infrastructure` implements persistence and platform boundaries. `ChronoDesk.App` owns Avalonia composition and UI behavior. This keeps time/chime/settings logic testable without a desktop session.
 
-Architecture decisions live under [docs/adr](docs/adr/).
+Architecture decisions live under [docs/adr](docs/adr/). The detailed runtime sequence is in [docs/runtime-behavior.md](docs/runtime-behavior.md).
 
 ## Contributing
 
@@ -301,12 +361,14 @@ Contributions are welcome when they keep ChronoDesk focused, testable, accessibl
 Start with:
 
 1. [CONTRIBUTING.md](CONTRIBUTING.md)
-2. [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)
-3. [ROADMAP.md](ROADMAP.md)
-4. [docs/development.md](docs/development.md)
-5. [docs/testing.md](docs/testing.md)
+2. [docs/README.md](docs/README.md)
+3. [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)
+4. [ROADMAP.md](ROADMAP.md)
+5. [docs/development.md](docs/development.md)
+6. [docs/testing.md](docs/testing.md)
+7. [docs/repository-reference.md](docs/repository-reference.md)
 
-Please keep commits atomic and use Conventional Commits where practical.
+Please keep commits atomic and use Conventional Commits where practical. Any new tracked file must be documented in the repository reference in the same change.
 
 Local Git identity requested for this project:
 
@@ -317,16 +379,19 @@ git config user.email "sanskarin@outlook.in"
 
 ## GitHub repository maintenance
 
-The repository includes issue forms, a pull request checklist, dependency automation, CI, CodeQL, dependency review, and release packaging. Recommended branch-protection rules are documented in `docs/github-maintenance.md` so repository settings can match the checks actually present in source control.
+The repository includes issue forms, a pull request checklist, dependency automation, CI, CodeQL, dependency review, repository-integrity automation, and hardened release packaging. Recommended branch-protection rules are documented in `docs/github-maintenance.md` so repository settings can match the checks actually present in source control.
+
+For the complete workflow/release automation map, see [docs/ci-cd.md](docs/ci-cd.md).
 
 ## Roadmap
 
 See [ROADMAP.md](ROADMAP.md). The immediate release path is:
 
 - stabilize first public preview;
-- capture real per-platform screenshots;
+- capture real per-platform screenshots and replace the explicit placeholder;
 - validate tray and startup behavior on supported desktops;
-- expand UI automation/headless coverage;
+- complete native accessibility validation;
+- move `CHANGELOG.md` from Unreleased into the intended release version;
 - tag the first verified release only after the clean-checkout release checklist passes.
 
 ## License

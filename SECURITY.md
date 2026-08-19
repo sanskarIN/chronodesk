@@ -1,6 +1,6 @@
 # Security Policy
 
-ChronoDesk is an offline-first desktop clock, but it still reads local configuration, opens user-selected import files, integrates with user-session startup mechanisms, can launch fixed support links, and executes limited OS facilities for optional chimes. Security reports are taken seriously.
+ChronoDesk is an offline-first desktop clock, but it still reads local configuration, opens user-selected import files, integrates with user-session startup mechanisms, can launch user-initiated project/support links, and executes limited OS facilities for optional chimes. Security reports are taken seriously.
 
 ## Supported versions
 
@@ -50,10 +50,29 @@ ChronoDesk intentionally:
 - best-effort rolls startup integration back if the matching settings write fails;
 - writes settings through a temporary file before replacement;
 - preserves corrupt settings rather than executing/interpreting arbitrary content;
-- allows only fixed `https` and `mailto` support destinations from the About window;
+- routes application external-link requests through one allowlist that accepts only absolute HTTPS and mailto URIs;
+- exposes update navigation only as an explicit user action that opens the public GitHub Releases page rather than running a background updater/downloader;
 - uses argument lists rather than a shell command string for optional Unix chime helpers;
 - redacts common email/secret patterns from structured logs;
-- uses GitHub CodeQL, dependency review, Dependabot, and NuGet vulnerability inspection in repository automation.
+- uses GitHub CodeQL, dependency review, Dependabot, NuGet vulnerability inspection, and a high-confidence committed-credential scan in repository automation;
+- gates tagged packaging behind repository-integrity, formatting, Release build, tests, and dependency-vulnerability preflight;
+- scopes GitHub release write permission to the final publication job;
+- creates SHA-256 sidecars for every release archive and verifies all downloaded archive/checksum pairs before publication.
+
+## External-link threat model
+
+About and Settings contain project/support destinations that leave the application. They are treated as controlled external-navigation requests rather than arbitrary commands.
+
+Current controls include:
+
+- only absolute URIs are accepted;
+- HTTPS and mailto are the only allowed schemes;
+- HTTP, file, script-style, relative, and empty targets are rejected by the shared launcher policy;
+- the current application uses fixed project/support destinations rather than imported/user-controlled URLs;
+- failure to launch the operating-system handler is non-fatal;
+- update navigation is user-initiated and does not fetch, parse, or execute release metadata inside ChronoDesk.
+
+The URI allowlist has deterministic regression tests.
 
 ## Import threat model
 
@@ -90,12 +109,28 @@ The app writes a per-user XDG autostart desktop file only when startup is enable
 
 Windows uses a system beep path. macOS/Linux playback uses fixed OS executable paths and fixed system-sound arguments when those tools/files exist. User-provided text is not interpolated into a shell command.
 
+## Release integrity
+
+The tagged Release workflow is designed to reduce accidental publication of an invalid or mismatched build:
+
+1. validate the semantic release tag;
+2. run repository-local documentation and committed-credential checks;
+3. restore, verify formatting, build Release, run tests, and inspect NuGet vulnerability output;
+4. stamp package/file/informational version metadata from the release tag;
+5. create a Windows ZIP or Unix `tar.gz` archive appropriate to the target;
+6. generate a SHA-256 sidecar per archive;
+7. download all package artifacts into the publication job;
+8. verify exactly four archives and four checksum files and compare each calculated digest;
+9. create the GitHub Release only after those checks pass.
+
+Checksums protect integrity verification of the published bytes; they are not code signatures and do not provide publisher identity/authenticity equivalent to platform code signing. Signing/notarization remains a separate future release capability.
+
 ## Dependency policy
 
 - NuGet and GitHub Actions dependency updates are monitored by Dependabot.
 - Pull requests run dependency review.
 - CodeQL analyzes C# changes.
-- CI runs `dotnet list ... --vulnerable --include-transitive` and fails when NuGet reports vulnerable packages through the expected result marker.
+- CI and release preflight run `dotnet list ... --vulnerable --include-transitive` and fail when NuGet reports vulnerable packages through the expected result marker.
 - Dependencies should be removed when the standard library is sufficient.
 
 ## Secret handling
@@ -111,6 +146,10 @@ ChronoDesk requires no production secrets. Never commit:
 - credentials in screenshots or logs.
 
 `.env.example` contains placeholders/configuration names only.
+
+`scripts/check_repository_secrets.py` scans committed text files for high-confidence private-key and credential/token patterns as part of CI and release preflight. A passing scan is only one defense: it does not prove that every private file, screenshot, endpoint, identifier, or novel credential format is absent. Release preparation must still include a human review of staged files and generated artifacts.
+
+If a real secret is ever committed, removing it in a later commit is not sufficient. Revoke or rotate it immediately and follow the appropriate Git history remediation process before treating the incident as resolved.
 
 ## Hardening contributions
 

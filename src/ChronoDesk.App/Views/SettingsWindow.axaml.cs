@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Reflection;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Markup.Xaml;
@@ -18,9 +19,17 @@ public sealed partial class SettingsWindow : Window
         this.viewModel = viewModel ?? throw new ArgumentNullException(nameof(viewModel));
         InitializeComponent();
         LoadControls(viewModel.Settings);
+        LoadVersionText();
     }
 
     private void InitializeComponent() => AvaloniaXamlLoader.Load(this);
+
+    private void LoadVersionText()
+    {
+        var version = AppVersionProvider.GetDisplayVersion(Assembly.GetExecutingAssembly());
+        Control<TextBlock>("SettingsVersionText").Text =
+            Strings.Format(nameof(Strings.VersionFormat), version);
+    }
 
     private void LoadControls(AppSettings settings)
     {
@@ -68,13 +77,16 @@ public sealed partial class SettingsWindow : Window
         SetStatus(string.Empty);
     }
 
-    private async void SaveButton_OnClick(object? sender, RoutedEventArgs e)
+    private async void SaveButton_OnClick(object? sender, RoutedEventArgs e) =>
+        await SaveChangesAsync();
+
+    internal async Task<bool> SaveChangesAsync()
     {
         if (!TryReadQuietTime("QuietStartText", out var quietStart)
             || !TryReadQuietTime("QuietEndText", out var quietEnd))
         {
             SetStatus(Strings.InvalidQuietHours);
-            return;
+            return false;
         }
 
         var current = viewModel.Settings;
@@ -135,14 +147,30 @@ public sealed partial class SettingsWindow : Window
         {
             await viewModel.UpdateSettingsAsync(updated);
             Close();
+            return true;
         }
         catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or InvalidOperationException)
         {
             SetStatus(Strings.SettingsSaveError);
+            return false;
         }
     }
 
     private void CancelButton_OnClick(object? sender, RoutedEventArgs e) => Close();
+
+    private void OpenReleasesButton_OnClick(object? sender, RoutedEventArgs e)
+    {
+        if (!ExternalLinkLauncher.TryOpen("https://github.com/sanskarIN/chronodesk/releases"))
+        {
+            SetStatus(SettingsExtras.LinkOpenError);
+        }
+    }
+
+    private async void OpenAboutButton_OnClick(object? sender, RoutedEventArgs e)
+    {
+        var about = new AboutWindow();
+        await about.ShowDialog(this);
+    }
 
     private async void ExportButton_OnClick(object? sender, RoutedEventArgs e)
     {
@@ -207,17 +235,22 @@ public sealed partial class SettingsWindow : Window
         }
     }
 
-    private async void ResetButton_OnClick(object? sender, RoutedEventArgs e)
+    private async void ResetButton_OnClick(object? sender, RoutedEventArgs e) =>
+        await ResetDefaultsAsync();
+
+    internal async Task<bool> ResetDefaultsAsync()
     {
         try
         {
             await viewModel.ResetSettingsAsync();
             LoadControls(viewModel.Settings);
             SetStatus(Strings.DefaultsRestored);
+            return true;
         }
         catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or InvalidOperationException)
         {
             SetStatus(Strings.DefaultsSaveError);
+            return false;
         }
     }
 
