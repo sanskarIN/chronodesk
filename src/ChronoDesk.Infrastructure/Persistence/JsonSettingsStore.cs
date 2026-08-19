@@ -10,6 +10,7 @@ public sealed class JsonSettingsStore : ISettingsStore
     private const long MaximumSettingsBytes = 2 * 1024 * 1024;
     private readonly IAppLogger logger;
     private readonly JsonSerializerOptions serializerOptions;
+    private readonly SettingsMigrationPipeline migrationPipeline = new();
 
     public JsonSettingsStore(IAppLogger logger, string? settingsPath = null)
     {
@@ -21,6 +22,7 @@ public sealed class JsonSettingsStore : ISettingsStore
             WriteIndented = true,
             AllowTrailingCommas = true,
             ReadCommentHandling = JsonCommentHandling.Skip,
+            UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow,
         };
         serializerOptions.Converters.Add(
             new JsonStringEnumConverter(JsonNamingPolicy.CamelCase, allowIntegerValues: false));
@@ -75,40 +77,88 @@ public sealed class JsonSettingsStore : ISettingsStore
         string path,
         CancellationToken cancellationToken)
     {
-        var file = new FileInfo(path);
-        if (!file.Exists)
-        {
-            throw new FileNotFoundException("Settings file was not found.", path);
-        }
-
-        if (file.Length > MaximumSettingsBytes)
-        {
-            throw new InvalidDataException("Settings file exceeds the allowed size.");
-        }
-
         await using var stream = new FileStream(
             path,
             FileMode.Open,
             FileAccess.Read,
             FileShare.Read,
             bufferSize: 16 * 1024,
-            useAsync: true);
-        var settings = await JsonSerializer.DeserializeAsync<AppSettings>(
+            options: FileOptions.Asynchronous | FileOptions.SequentialScan);
+        if (stream.Length > MaximumSettingsBytes)
+        {
+            throw new InvalidDataException("Settings file exceeds the allowed size.");
+        }
+
+        using var document = await JsonDocument.ParseAsync(
             stream,
-            serializerOptions,
+            new JsonDocumentOptions
+            {
+                AllowTrailingCommas = true,
+                CommentHandling = JsonCommentHandling.Skip,
+            },
             cancellationToken);
 
+        EnsureNoDuplicatePropertyNames(document.RootElement);
+        var sourceSchemaVersion = ReadSourceSchemaVersion(document.RootElement);
+        var migratedDocument = migrationPipeline.Migrate(
+            document.RootElement,
+            sourceSchemaVersion);
+        var settings = migratedDocument.Deserialize<AppSettings>(serializerOptions);
         if (settings is null)
         {
             throw new InvalidDataException("Settings document is empty.");
         }
 
-        if (settings.SchemaVersion > AppSettings.CurrentSchemaVersion)
+        return settings.Normalize();
+    }
+
+    private static void EnsureNoDuplicatePropertyNames(JsonElement element)
+    {
+        if (element.ValueKind == JsonValueKind.Object)
         {
-            throw new InvalidDataException("Settings were created by a newer unsupported ChronoDesk version.");
+            var names = new HashSet<string>(StringComparer.Ordinal);
+            foreach (var property in element.EnumerateObject())
+            {
+                if (!names.Add(property.Name))
+                {
+                    throw new InvalidDataException(
+                        $"Settings document contains duplicate property '{property.Name}'.");
+                }
+
+                EnsureNoDuplicatePropertyNames(property.Value);
+            }
+
+            return;
         }
 
-        return settings.Normalize();
+        if (element.ValueKind == JsonValueKind.Array)
+        {
+            foreach (var item in element.EnumerateArray())
+            {
+                EnsureNoDuplicatePropertyNames(item);
+            }
+        }
+    }
+
+    private static int ReadSourceSchemaVersion(JsonElement root)
+    {
+        if (root.ValueKind != JsonValueKind.Object)
+        {
+            throw new InvalidDataException("Settings document root must be a JSON object.");
+        }
+
+        if (!root.TryGetProperty("schemaVersion", out var versionElement))
+        {
+            return 0;
+        }
+
+        if (versionElement.ValueKind != JsonValueKind.Number
+            || !versionElement.TryGetInt32(out var version))
+        {
+            throw new InvalidDataException("Settings schemaVersion must be an integer.");
+        }
+
+        return version;
     }
 
     private async Task WriteAtomicallyAsync(
@@ -130,7 +180,7 @@ public sealed class JsonSettingsStore : ISettingsStore
                 FileAccess.Write,
                 FileShare.None,
                 bufferSize: 16 * 1024,
-                useAsync: true))
+                options: FileOptions.Asynchronous | FileOptions.SequentialScan))
             {
                 await JsonSerializer.SerializeAsync(
                     stream,
@@ -160,7 +210,8 @@ public sealed class JsonSettingsStore : ISettingsStore
                 return;
             }
 
-            var backup = SettingsPath + $".corrupt-{DateTimeOffset.UtcNow:yyyyMMdd-HHmmss}.json";
+            var backup = SettingsPath
+                + $".corrupt-{DateTimeOffset.UtcNow:yyyyMMdd-HHmmssfff}-{Guid.NewGuid():N}.json";
             File.Move(SettingsPath, backup, overwrite: false);
             logger.Warning("settings.corrupt_preserved", "A corrupt settings file was preserved for manual recovery.");
         }

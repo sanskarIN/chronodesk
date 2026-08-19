@@ -2,7 +2,7 @@
 
 _Last updated: 2026-08-19_
 
-ChronoDesk is designed as a local, offline-first desktop clock. Core clock, world-clock, settings, accessibility, focus/mini, startup-preference, and chime-policy features do not require a ChronoDesk account or remote application service.
+ChronoDesk is designed as a local, offline-first desktop clock. Core clock, world-clock, settings, accessibility, focus/mini, startup-preference, chime-policy, and version-display features do not require a ChronoDesk account or remote application service.
 
 ## Data ChronoDesk stores locally
 
@@ -48,9 +48,11 @@ Redaction reduces risk but is not a guarantee that every possible sensitive patt
 
 ChronoDesk's clock functionality does not require a network request. It uses the timezone data exposed by the local operating system/.NET runtime.
 
-The About screen contains visible links for GitHub, Buy Me a Coffee, and email. ChronoDesk opens one of those destinations only after the user activates the corresponding control. Those destinations are handled by the user's browser/mail client and are then subject to the destination provider's privacy practices.
+The About screen contains visible links for GitHub, Buy Me a Coffee, and email. The Settings **Updates** section contains a visible **Open official releases** action. ChronoDesk opens one of those destinations only after the user activates the corresponding control. Those destinations are handled by the user's browser/mail client and are then subject to the destination provider's privacy practices.
 
-The application does not contain a telemetry SDK, advertising SDK, analytics endpoint, cloud database, or built-in sign-in flow.
+ChronoDesk does **not** poll GitHub, a release API, or any application server in the background to check for updates. The current application version is read from local assembly metadata. Opening the official Releases page is the only update-related network action implemented by the application and is entirely user initiated.
+
+The application does not contain a telemetry SDK, advertising SDK, analytics endpoint, cloud database, background update tracker, or built-in sign-in flow.
 
 ## Timezone data
 
@@ -68,13 +70,15 @@ An export can include:
 
 It does not intentionally include log history, credentials, or unrelated files. Users control where exported files are stored and should review them before sharing.
 
-Imported settings files are size-bounded, parsed as JSON, schema-checked, and normalized before becoming active. Imported text fields are converted to bounded single-line values and unsupported enum representations are rejected.
+Imported settings files are size-bounded using the opened file stream, parsed as JSON, required to have an object root, schema-checked/migrated, and normalized before becoming active. Imported text fields are converted to bounded single-line values, duplicate timezone cards are removed, and unsupported enum representations are rejected.
 
 An imported file is **not allowed to enable or disable operating-system startup registration**. ChronoDesk preserves the current local startup preference during import; changing startup still requires an explicit user preference change in Settings.
 
 ## Corrupt settings recovery
 
-If the normal settings document cannot be parsed, ChronoDesk attempts to preserve it with a timestamped `.corrupt-...json` suffix and returns to safe defaults. That preserved file remains local and may contain the same preference data that existed in the original settings file.
+If the normal settings document cannot be parsed or validated, ChronoDesk attempts to preserve it with a collision-resistant timestamp-and-randomized `.corrupt-...json` suffix and returns to safe defaults. That preserved file remains local and may contain the same preference data that existed in the original settings file.
+
+ChronoDesk does not upload a corrupt settings file for diagnostics or recovery.
 
 ## Startup integration
 
@@ -84,17 +88,21 @@ Startup is opt-in.
 - macOS: current-user LaunchAgent.
 - Linux: current-user XDG autostart file.
 
-ChronoDesk does not request machine-wide startup installation through these settings. If startup integration is changed successfully but persisting the matching preference then fails, ChronoDesk makes a best-effort attempt to restore the previous startup state before surfacing the save failure.
+ChronoDesk does not request machine-wide startup installation through these settings. If startup integration is changed successfully but persisting the matching preference then fails, ChronoDesk makes a best-effort attempt to restore the previous startup state before surfacing the save failure. That rollback uses its own non-cancelled operation so cancellation of the failed settings save does not itself prevent restoration of the previous startup registration.
+
+## Tray behavior
+
+Minimize-to-tray is a local desktop preference. ChronoDesk hides its main window on close or background startup only when the current Avalonia desktop integration exposes a usable native tray-menu exporter. When reliable tray restoration is unavailable, ChronoDesk leaves the main window accessible instead of intentionally creating an unreachable hidden process.
 
 ## Optional chimes
 
-Chimes are disabled by default. When enabled, ChronoDesk uses local system facilities. On macOS/Linux, the implementation may invoke fixed system sound utilities/paths if they exist. No user-provided text is inserted into those process arguments.
+Chimes are disabled by default. When enabled, ChronoDesk uses local system facilities. On macOS/Linux, the implementation may invoke fixed system sound utilities/paths if they exist. No user-provided text is inserted into those process arguments. Process output is not captured or sent elsewhere.
 
 ## Deleting your ChronoDesk data
 
 To remove application preference/log data:
 
-1. Quit ChronoDesk completely from the tray/menu.
+1. Quit ChronoDesk completely from the tray/menu, or close it normally if tray integration is unavailable.
 2. Disable **Start ChronoDesk when I sign in** first if it is enabled, or remove the documented user-level startup entry manually.
 3. Delete the `ChronoDesk` application-data directory for your current user.
 4. Delete any settings exports you created elsewhere if you no longer want them.

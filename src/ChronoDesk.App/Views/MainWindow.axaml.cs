@@ -4,6 +4,7 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Markup.Xaml;
 using Avalonia.Threading;
+using ChronoDesk.App.Services;
 using ChronoDesk.App.ViewModels;
 using ChronoDesk.Core.Models;
 
@@ -21,7 +22,8 @@ public sealed partial class MainWindow : Window
     private double restoredHeight = 760;
     private PixelPoint restoredPosition;
     private bool hasRestoredPosition;
-    private bool restoredTopmost;
+    private WindowState restoredFocusWindowState = WindowState.Normal;
+    private WindowState restoredMiniWindowState = WindowState.Normal;
 
     public MainWindow(MainWindowViewModel viewModel)
     {
@@ -56,14 +58,26 @@ public sealed partial class MainWindow : Window
             ExitMiniMode();
         }
 
-        isFocusMode = !isFocusMode;
-        SetChromeVisibility(!isFocusMode);
-        WindowState = isFocusMode ? WindowState.FullScreen : WindowState.Normal;
-        var heroCard = this.FindControl<Border>("HeroCard");
-        if (heroCard is not null)
+        if (!isFocusMode)
         {
-            heroCard.MinHeight = isFocusMode ? 520 : 300;
+            restoredFocusWindowState = GetRestorableWindowState(WindowState);
+            isFocusMode = true;
+            SetChromeVisibility(false);
+            WindowState = WindowState.FullScreen;
+
+            var heroCard = this.FindControl<Border>("HeroCard");
+            if (heroCard is not null)
+            {
+                heroCard.MinHeight = 520;
+            }
+
+            return;
         }
+
+        isFocusMode = false;
+        SetChromeVisibility(true);
+        WindowState = restoredFocusWindowState;
+        ApplyLayout(viewModel.Settings.Layout);
     }
 
     public void ToggleMiniMode()
@@ -84,8 +98,9 @@ public sealed partial class MainWindow : Window
         restoredHeight = Height;
         restoredPosition = Position;
         hasRestoredPosition = true;
-        restoredTopmost = Topmost;
+        restoredMiniWindowState = GetRestorableWindowState(WindowState);
 
+        WindowState = WindowState.Normal;
         MinWidth = 360;
         MinHeight = 180;
         Width = 430;
@@ -109,6 +124,9 @@ public sealed partial class MainWindow : Window
 
     private void InitializeComponent() => AvaloniaXamlLoader.Load(this);
 
+    private bool IsTrayIntegrationAvailable =>
+        Application.Current is App { IsTrayIntegrationAvailable: true };
+
     private async void MainWindow_OnOpened(object? sender, EventArgs e)
     {
         await viewModel.InitializeAsync();
@@ -123,7 +141,10 @@ public sealed partial class MainWindow : Window
 
         var backgroundStart = Environment.GetCommandLineArgs()
             .Any(argument => string.Equals(argument, "--background", StringComparison.OrdinalIgnoreCase));
-        if (backgroundStart && viewModel.Settings.MinimizeToTray)
+        if (TrayVisibilityPolicy.ShouldStartHidden(
+                backgroundStart,
+                viewModel.Settings.MinimizeToTray,
+                IsTrayIntegrationAvailable))
         {
             Hide();
         }
@@ -131,7 +152,10 @@ public sealed partial class MainWindow : Window
 
     private void MainWindow_OnClosing(object? sender, WindowClosingEventArgs e)
     {
-        if (!allowClose && viewModel.Settings.MinimizeToTray)
+        if (TrayVisibilityPolicy.ShouldHideOnClose(
+                allowClose,
+                viewModel.Settings.MinimizeToTray,
+                IsTrayIntegrationAvailable))
         {
             e.Cancel = true;
             Hide();
@@ -204,6 +228,7 @@ public sealed partial class MainWindow : Window
     private void ExitMiniMode()
     {
         isMiniMode = false;
+        WindowState = WindowState.Normal;
         MinWidth = 780;
         MinHeight = 560;
         Width = restoredWidth;
@@ -213,11 +238,15 @@ public sealed partial class MainWindow : Window
             Position = restoredPosition;
         }
 
-        Topmost = viewModel.Settings.AlwaysOnTop || restoredTopmost;
+        Topmost = viewModel.Settings.AlwaysOnTop;
         SystemDecorations = SystemDecorations.Full;
         SetChromeVisibility(true);
         ApplyLayout(viewModel.Settings.Layout);
+        WindowState = restoredMiniWindowState;
     }
+
+    private static WindowState GetRestorableWindowState(WindowState state) =>
+        state == WindowState.Maximized ? WindowState.Maximized : WindowState.Normal;
 
     private void SetChromeVisibility(bool visible)
     {
@@ -294,6 +323,9 @@ public sealed partial class MainWindow : Window
             await viewModel.RemoveWorldClockAsync(id);
         }
     }
+
+    private async void UndoWorldClock_OnClick(object? sender, RoutedEventArgs e) =>
+        await viewModel.UndoWorldClockRemovalAsync();
 
     private async void MainWindow_OnKeyDown(object? sender, KeyEventArgs e)
     {

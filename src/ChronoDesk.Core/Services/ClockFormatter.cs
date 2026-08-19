@@ -5,16 +5,25 @@ namespace ChronoDesk.Core.Services;
 
 public sealed class ClockFormatter
 {
+    private readonly Func<ClockDisplayLabels>? labelsProvider;
+
+    public ClockFormatter(Func<ClockDisplayLabels>? labelsProvider = null)
+    {
+        this.labelsProvider = labelsProvider;
+    }
+
     public ClockSnapshot CreateSnapshot(
         DateTimeOffset instant,
         TimeZoneInfo timeZone,
         AppSettings settings,
-        CultureInfo? culture = null)
+        CultureInfo? culture = null,
+        ClockDisplayLabels? labels = null)
     {
         ArgumentNullException.ThrowIfNull(timeZone);
         ArgumentNullException.ThrowIfNull(settings);
 
         culture ??= CultureInfo.CurrentCulture;
+        labels ??= labelsProvider?.Invoke() ?? ClockDisplayLabels.English;
         var normalized = settings.Normalize();
         var local = TimeZoneInfo.ConvertTime(instant, timeZone);
         var timeFormat = BuildTimeFormat(normalized.ClockFormat, normalized.ShowSeconds);
@@ -26,10 +35,10 @@ public sealed class ClockFormatter
             ? local.ToString("dddd", culture)
             : string.Empty;
         var weekText = normalized.ShowWeekNumber
-            ? string.Create(CultureInfo.InvariantCulture, $"Week {week:00}")
+            ? string.Create(culture, $"{labels.WeekPrefix} {week:00}")
             : string.Empty;
         var calendarDetails = normalized.ShowCalendarDetails
-            ? BuildCalendarDetails(local, week, culture)
+            ? BuildCalendarDetails(local, week, culture, labels)
             : string.Empty;
         var zoneName = timeZone.IsDaylightSavingTime(local)
             ? timeZone.DaylightName
@@ -57,17 +66,18 @@ public sealed class ClockFormatter
     private static string BuildCalendarDetails(
         DateTimeOffset local,
         int week,
-        CultureInfo culture)
+        CultureInfo culture,
+        ClockDisplayLabels labels)
     {
         var sign = local.Offset < TimeSpan.Zero ? '-' : '+';
         var absolute = local.Offset.Duration();
         var offset = string.Create(
-            CultureInfo.InvariantCulture,
-            $"UTC{sign}{absolute.Hours:00}:{absolute.Minutes:00}");
+            culture,
+            $"{labels.UtcPrefix}{sign}{absolute.Hours:00}:{absolute.Minutes:00}");
         var dayOfYear = local.DayOfYear.ToString(culture);
 
         return string.Create(
             culture,
-            $"Day {dayOfYear} · ISO week {week:00} · {offset}");
+            $"{labels.DayPrefix} {dayOfYear} · {labels.IsoWeekPrefix} {week:00} · {offset}");
     }
 }

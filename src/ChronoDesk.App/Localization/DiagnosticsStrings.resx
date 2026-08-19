@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="DiagnosticsTitle" xml:space="preserve"><value>Local diagnostics</value></data>
+  <data name="DiagnosticsDescription" xml:space="preserve"><value>These values are read locally to help with troubleshooting. ChronoDesk does not upload this diagnostic information.</value></data>
+  <data name="AppVersionLabel" xml:space="preserve"><value>App version</value></data>
+  <data name="OperatingSystemLabel" xml:space="preserve"><value>Operating system</value></data>
+  <data name="FrameworkLabel" xml:space="preserve"><value>.NET runtime</value></data>
+  <data name="ArchitectureLabel" xml:space="preserve"><value>Process architecture</value></data>
+  <data name="DataDirectoryLabel" xml:space="preserve"><value>Data directory</value></data>
+  <data name="SettingsPathLabel" xml:space="preserve"><value>Settings file</value></data>
+  <data name="LogPathLabel" xml:space="preserve"><value>Diagnostic log</value></data>
+  <data name="DiagnosticsSharingNote" xml:space="preserve"><value>Review paths and log contents before sharing diagnostic information publicly.</value></data>
+</root>

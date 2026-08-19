@@ -1,4 +1,5 @@
 using ChronoDesk.App;
+using ChronoDesk.App.Localization;
 using ChronoDesk.App.ViewModels;
 using ChronoDesk.Core.Abstractions;
 using ChronoDesk.Core.Models;
@@ -74,6 +75,86 @@ public sealed class MainWindowViewModelTests
         Assert.True(viewModel.Settings.StartWithSystem);
         Assert.NotNull(store.LastSaved);
         Assert.True(store.LastSaved!.StartWithSystem);
+    }
+
+    [Fact]
+    public async Task AddWorldClockAsync_RejectsAdditionAtMaximumCapacity()
+    {
+        var clocks = Enumerable.Range(0, AppSettings.MaximumWorldClockCount)
+            .Select(index => new WorldClock(
+                $"clock-{index}",
+                $"Clock {index}",
+                $"Test/Zone-{index}"))
+            .ToList();
+        var store = new MemorySettingsStore(new AppSettings
+        {
+            IsFirstRun = false,
+            WorldClocks = clocks,
+        });
+        var viewModel = CreateViewModel(store, new RecordingStartupManager());
+        await viewModel.InitializeAsync();
+
+        await viewModel.AddWorldClockAsync(
+            new TimeZoneDescriptor("Test/New", "New timezone", TimeSpan.Zero));
+
+        Assert.Equal(AppSettings.MaximumWorldClockCount, viewModel.Settings.WorldClocks.Count);
+        Assert.Equal(
+            Strings.Format(
+                nameof(Strings.WorldClockLimitReachedFormat),
+                AppSettings.MaximumWorldClockCount),
+            viewModel.StatusMessage);
+        Assert.Null(store.LastSaved);
+    }
+
+    [Fact]
+    public async Task RemoveAndUndoWorldClock_RestoresOriginalPosition()
+    {
+        var store = new MemorySettingsStore(new AppSettings
+        {
+            IsFirstRun = false,
+            WorldClocks =
+            [
+                new WorldClock("first", "First", "Test/First"),
+                new WorldClock("second", "Second", "Test/Second"),
+            ],
+        });
+        var viewModel = CreateViewModel(store, new RecordingStartupManager());
+        await viewModel.InitializeAsync();
+
+        await viewModel.RemoveWorldClockAsync("first");
+
+        Assert.True(viewModel.CanUndoWorldClockRemoval);
+        Assert.Single(viewModel.Settings.WorldClocks);
+        Assert.Equal("second", viewModel.Settings.WorldClocks[0].Id);
+        Assert.Equal(Strings.WorldClockRemoved, viewModel.StatusMessage);
+
+        await viewModel.UndoWorldClockRemovalAsync();
+
+        Assert.False(viewModel.CanUndoWorldClockRemoval);
+        Assert.Equal(2, viewModel.Settings.WorldClocks.Count);
+        Assert.Equal("first", viewModel.Settings.WorldClocks[0].Id);
+        Assert.Equal("second", viewModel.Settings.WorldClocks[1].Id);
+        Assert.Equal(Strings.WorldClockRestored, viewModel.StatusMessage);
+    }
+
+    [Fact]
+    public async Task SearchTimeZones_ReportsEmptyAndPopulatedStates()
+    {
+        var store = new MemorySettingsStore(new AppSettings { IsFirstRun = false });
+        var viewModel = CreateViewModel(store, new RecordingStartupManager());
+        await viewModel.InitializeAsync();
+
+        viewModel.SearchTimeZones("missing");
+
+        Assert.Empty(viewModel.SearchResults);
+        Assert.Equal(Strings.TimezoneSearchEmpty, viewModel.TimeZoneSearchStatus);
+
+        viewModel.SearchTimeZones("UTC");
+
+        Assert.Single(viewModel.SearchResults);
+        Assert.Equal(
+            Strings.Format(nameof(Strings.TimezoneSearchCountFormat), 1),
+            viewModel.TimeZoneSearchStatus);
     }
 
     private static MainWindowViewModel CreateViewModel(
@@ -169,7 +250,8 @@ public sealed class MainWindowViewModelTests
 
         public TimeZoneInfo Resolve(string timeZoneId) => TimeZoneInfo.Utc;
 
-        public IReadOnlyList<TimeZoneDescriptor> Search(string query, int limit = 50) => [Utc];
+        public IReadOnlyList<TimeZoneDescriptor> Search(string query, int limit = 50) =>
+            string.Equals(query, "missing", StringComparison.OrdinalIgnoreCase) ? [] : [Utc];
     }
 
     private sealed class NullChimePlayer : IChimePlayer

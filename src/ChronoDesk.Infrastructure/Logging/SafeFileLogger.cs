@@ -15,11 +15,13 @@ public sealed class SafeFileLogger : IAppLogger
         RegexOptions.CultureInvariant | RegexOptions.Compiled);
 
     private readonly object sync = new();
-    private readonly string logDirectory;
+    private readonly string logPath;
 
     public SafeFileLogger(string? logDirectory = null)
     {
-        this.logDirectory = logDirectory ?? AppPaths.GetLogDirectory();
+        logPath = logDirectory is null
+            ? AppPaths.GetLogPath()
+            : Path.Combine(logDirectory, "chronodesk.log.jsonl");
     }
 
     public void Info(string eventName, string message) => Write("info", eventName, message, null);
@@ -49,10 +51,11 @@ public sealed class SafeFileLogger : IAppLogger
 
             lock (sync)
             {
-                Directory.CreateDirectory(logDirectory);
-                var path = Path.Combine(logDirectory, "chronodesk.log.jsonl");
-                RotateIfNeeded(path);
-                File.AppendAllText(path, JsonSerializer.Serialize(entry) + Environment.NewLine);
+                var directory = Path.GetDirectoryName(logPath)
+                    ?? throw new InvalidOperationException("ChronoDesk log directory could not be resolved.");
+                Directory.CreateDirectory(directory);
+                RotateIfNeeded(logPath);
+                File.AppendAllText(logPath, JsonSerializer.Serialize(entry) + Environment.NewLine);
             }
         }
         catch (IOException)
@@ -60,6 +63,10 @@ public sealed class SafeFileLogger : IAppLogger
             // Logging must never crash the application.
         }
         catch (UnauthorizedAccessException)
+        {
+            // Logging must never crash the application.
+        }
+        catch (InvalidOperationException)
         {
             // Logging must never crash the application.
         }
@@ -82,7 +89,7 @@ public sealed class SafeFileLogger : IAppLogger
 
         var archive = Path.Combine(
             Path.GetDirectoryName(path)!,
-            $"chronodesk-{DateTimeOffset.UtcNow:yyyyMMdd-HHmmss}.log.jsonl");
+            $"chronodesk-{DateTimeOffset.UtcNow:yyyyMMdd-HHmmssfff}-{Guid.NewGuid():N}.log.jsonl");
         File.Move(path, archive, overwrite: false);
     }
 }

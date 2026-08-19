@@ -4,6 +4,7 @@ using Avalonia.Interactivity;
 using Avalonia.Markup.Xaml;
 using Avalonia.Platform.Storage;
 using ChronoDesk.App.Localization;
+using ChronoDesk.App.Services;
 using ChronoDesk.App.ViewModels;
 using ChronoDesk.Core.Models;
 
@@ -18,9 +19,27 @@ public sealed partial class SettingsWindow : Window
         this.viewModel = viewModel ?? throw new ArgumentNullException(nameof(viewModel));
         InitializeComponent();
         LoadControls(viewModel.Settings);
+        PopulateStaticInformation();
     }
 
     private void InitializeComponent() => AvaloniaXamlLoader.Load(this);
+
+    private void PopulateStaticInformation()
+    {
+        var displayVersion = AppVersionInfo.GetDisplayVersion();
+        Control<TextBlock>("UpdateVersionText").Text = displayVersion;
+        Control<TextBlock>("SettingsAboutVersionText").Text =
+            Strings.Format(nameof(Strings.VersionFormat), displayVersion);
+
+        var diagnostics = AppDiagnosticsInfo.Capture();
+        Control<TextBox>("DiagnosticsVersionText").Text = diagnostics.AppVersion;
+        Control<TextBox>("DiagnosticsOsText").Text = diagnostics.OperatingSystem;
+        Control<TextBox>("DiagnosticsFrameworkText").Text = diagnostics.Framework;
+        Control<TextBox>("DiagnosticsArchitectureText").Text = diagnostics.ProcessArchitecture;
+        Control<TextBox>("DiagnosticsDataDirectoryText").Text = diagnostics.DataDirectory;
+        Control<TextBox>("DiagnosticsSettingsPathText").Text = diagnostics.SettingsPath;
+        Control<TextBox>("DiagnosticsLogPathText").Text = diagnostics.LogPath;
+    }
 
     private void LoadControls(AppSettings settings)
     {
@@ -136,7 +155,7 @@ public sealed partial class SettingsWindow : Window
             await viewModel.UpdateSettingsAsync(updated);
             Close();
         }
-        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or InvalidOperationException)
+        catch (Exception exception) when (IsStorageOrPlatformFailure(exception))
         {
             SetStatus(Strings.SettingsSaveError);
         }
@@ -144,32 +163,59 @@ public sealed partial class SettingsWindow : Window
 
     private void CancelButton_OnClick(object? sender, RoutedEventArgs e) => Close();
 
+    private void OpenReleasesButton_OnClick(object? sender, RoutedEventArgs e)
+    {
+        if (!ExternalUriLauncher.TryOpen(AppLinks.Releases))
+        {
+            SetStatus(UpdateStrings.ReleaseOpenError);
+        }
+    }
+
+    private void SettingsGitHubButton_OnClick(object? sender, RoutedEventArgs e) =>
+        TryOpenApprovedLink(AppLinks.Repository);
+
+    private void SettingsBmcButton_OnClick(object? sender, RoutedEventArgs e) =>
+        TryOpenApprovedLink(AppLinks.Funding);
+
+    private void SettingsBusinessPrimaryButton_OnClick(object? sender, RoutedEventArgs e) =>
+        TryOpenApprovedLink(AppLinks.BusinessPrimary);
+
+    private void SettingsBusinessSecondaryButton_OnClick(object? sender, RoutedEventArgs e) =>
+        TryOpenApprovedLink(AppLinks.BusinessSecondary);
+
+    private void SettingsSupportButton_OnClick(object? sender, RoutedEventArgs e) =>
+        TryOpenApprovedLink(AppLinks.Support);
+
+    private void TryOpenApprovedLink(string destination)
+    {
+        if (!ExternalUriLauncher.TryOpen(destination))
+        {
+            SetStatus(UpdateStrings.ExternalOpenError);
+        }
+    }
+
     private async void ExportButton_OnClick(object? sender, RoutedEventArgs e)
     {
-        var jsonType = new FilePickerFileType(Strings.SettingsFileType)
-        {
-            Patterns = ["*.json"],
-            MimeTypes = ["application/json"],
-        };
-        var file = await StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
-        {
-            Title = Strings.ExportDialogTitle,
-            SuggestedFileName = "chronodesk-settings.json",
-            DefaultExtension = "json",
-            FileTypeChoices = [jsonType],
-        });
-
-        if (file is null)
-        {
-            return;
-        }
-
         try
         {
+            var jsonType = CreateSettingsFileType();
+            var file = await StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
+            {
+                Title = Strings.ExportDialogTitle,
+                SuggestedFileName = "chronodesk-settings.json",
+                DefaultExtension = "json",
+                FileTypeChoices = [jsonType],
+            });
+
+            if (file is null)
+            {
+                return;
+            }
+
             await viewModel.ExportSettingsAsync(file.Path.LocalPath);
             SetStatus(Strings.ExportSuccess);
         }
-        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+        catch (Exception exception) when (IsStorageOrPlatformFailure(exception))
         {
             SetStatus(Strings.ExportError);
         }
@@ -177,31 +223,30 @@ public sealed partial class SettingsWindow : Window
 
     private async void ImportButton_OnClick(object? sender, RoutedEventArgs e)
     {
-        var jsonType = new FilePickerFileType(Strings.SettingsFileType)
-        {
-            Patterns = ["*.json"],
-            MimeTypes = ["application/json"],
-        };
-        var files = await StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
-        {
-            Title = Strings.ImportDialogTitle,
-            AllowMultiple = false,
-            FileTypeFilter = [jsonType],
-        });
-
-        var file = files.FirstOrDefault();
-        if (file is null)
-        {
-            return;
-        }
-
         try
         {
+            var jsonType = CreateSettingsFileType();
+            var files = await StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+            {
+                Title = Strings.ImportDialogTitle,
+                AllowMultiple = false,
+                FileTypeFilter = [jsonType],
+            });
+
+            var file = files.FirstOrDefault();
+            if (file is null)
+            {
+                return;
+            }
+
             await viewModel.ImportSettingsAsync(file.Path.LocalPath);
             LoadControls(viewModel.Settings);
             SetStatus(Strings.ImportSuccess);
         }
-        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or InvalidDataException or System.Text.Json.JsonException)
+        catch (Exception exception) when (
+            IsStorageOrPlatformFailure(exception)
+            || exception is InvalidDataException
+            || exception is System.Text.Json.JsonException)
         {
             SetStatus(Strings.ImportError);
         }
@@ -215,11 +260,25 @@ public sealed partial class SettingsWindow : Window
             LoadControls(viewModel.Settings);
             SetStatus(Strings.DefaultsRestored);
         }
-        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or InvalidOperationException)
+        catch (Exception exception) when (IsStorageOrPlatformFailure(exception))
         {
             SetStatus(Strings.DefaultsSaveError);
         }
     }
+
+    private static FilePickerFileType CreateSettingsFileType() =>
+        new(Strings.SettingsFileType)
+        {
+            Patterns = ["*.json"],
+            MimeTypes = ["application/json"],
+        };
+
+    private static bool IsStorageOrPlatformFailure(Exception exception) =>
+        exception is IOException
+            or UnauthorizedAccessException
+            or InvalidOperationException
+            or NotSupportedException
+            or System.Security.SecurityException;
 
     private T Control<T>(string name)
         where T : Control =>

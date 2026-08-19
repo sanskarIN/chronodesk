@@ -2,6 +2,7 @@ using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
 using ChronoDesk.App;
 using ChronoDesk.App.Localization;
+using ChronoDesk.App.Services;
 using ChronoDesk.App.ViewModels;
 using ChronoDesk.App.Views;
 
@@ -19,6 +20,8 @@ public sealed class HeadlessUiSmokeTests
         Assert.NotNull(window.FindControl<TextBlock>("ClockText"));
         Assert.NotNull(window.FindControl<TextBox>("TimeZoneSearchBox"));
         Assert.NotNull(window.FindControl<ListBox>("TimeZoneResults"));
+        Assert.NotNull(window.FindControl<TextBlock>("TimeZoneSearchStatusText"));
+        Assert.NotNull(window.FindControl<Button>("UndoWorldClockButton"));
     }
 
     [AvaloniaFact]
@@ -41,6 +44,40 @@ public sealed class HeadlessUiSmokeTests
 
         Assert.Equal(1000, window.Width);
         Assert.Equal(700, window.Height);
+        Assert.False(window.Topmost);
+    }
+
+    [AvaloniaFact]
+    public void MainWindow_MiniModePreservesMaximizedWindowState()
+    {
+        var viewModel = new MainWindowViewModel(new AppServices());
+        var window = new MainWindow(viewModel)
+        {
+            WindowState = WindowState.Maximized,
+        };
+
+        window.ToggleMiniMode();
+        Assert.Equal(WindowState.Normal, window.WindowState);
+
+        window.ToggleMiniMode();
+        Assert.Equal(WindowState.Maximized, window.WindowState);
+    }
+
+    [AvaloniaFact]
+    public void MainWindow_MiniModeExitUsesCurrentAlwaysOnTopPreference()
+    {
+        var viewModel = new MainWindowViewModel(new AppServices());
+        var window = new MainWindow(viewModel)
+        {
+            Topmost = true,
+        };
+
+        window.ToggleMiniMode();
+        Assert.True(window.Topmost);
+
+        window.ToggleMiniMode();
+
+        Assert.False(window.Topmost);
     }
 
     [AvaloniaFact]
@@ -61,6 +98,22 @@ public sealed class HeadlessUiSmokeTests
     }
 
     [AvaloniaFact]
+    public void MainWindow_FocusModePreservesMaximizedWindowState()
+    {
+        var viewModel = new MainWindowViewModel(new AppServices());
+        var window = new MainWindow(viewModel)
+        {
+            WindowState = WindowState.Maximized,
+        };
+
+        window.ToggleFocusMode();
+        Assert.Equal(WindowState.FullScreen, window.WindowState);
+
+        window.ToggleFocusMode();
+        Assert.Equal(WindowState.Maximized, window.WindowState);
+    }
+
+    [AvaloniaFact]
     public void SettingsWindow_LoadsAllPrimaryPreferenceControls()
     {
         var viewModel = new MainWindowViewModel(new AppServices());
@@ -72,6 +125,54 @@ public sealed class HeadlessUiSmokeTests
         Assert.NotNull(window.FindControl<CheckBox>("ReducedMotionCheck"));
         Assert.NotNull(window.FindControl<CheckBox>("StartWithSystemCheck"));
         Assert.NotNull(window.FindControl<CheckBox>("ChimeEnabledCheck"));
+    }
+
+    [AvaloniaFact]
+    public void SettingsWindow_LoadsLocalDiagnosticsControls()
+    {
+        var viewModel = new MainWindowViewModel(new AppServices());
+        var window = new SettingsWindow(viewModel);
+        var diagnostics = AppDiagnosticsInfo.Capture();
+
+        Assert.Equal(
+            diagnostics.AppVersion,
+            window.FindControl<TextBox>("DiagnosticsVersionText")?.Text);
+        Assert.Equal(
+            diagnostics.OperatingSystem,
+            window.FindControl<TextBox>("DiagnosticsOsText")?.Text);
+        Assert.Equal(
+            diagnostics.SettingsPath,
+            window.FindControl<TextBox>("DiagnosticsSettingsPathText")?.Text);
+        Assert.Equal(
+            diagnostics.LogPath,
+            window.FindControl<TextBox>("DiagnosticsLogPathText")?.Text);
+    }
+
+    [AvaloniaFact]
+    public void SettingsWindow_LoadsOfflineSafeUpdateControls()
+    {
+        var viewModel = new MainWindowViewModel(new AppServices());
+        var window = new SettingsWindow(viewModel);
+        var version = window.FindControl<TextBlock>("UpdateVersionText");
+        var releases = window.FindControl<Button>("OpenReleasesButton");
+
+        Assert.NotNull(version);
+        Assert.Equal(AppVersionInfo.GetDisplayVersion(), version.Text);
+        Assert.NotNull(releases);
+        Assert.Equal(UpdateStrings.OpenReleases, releases.Content);
+    }
+
+    [AvaloniaFact]
+    public void SettingsWindow_LoadsAboutVersion()
+    {
+        var viewModel = new MainWindowViewModel(new AppServices());
+        var window = new SettingsWindow(viewModel);
+        var version = window.FindControl<TextBlock>("SettingsAboutVersionText");
+
+        Assert.NotNull(version);
+        Assert.Equal(
+            Strings.Format(nameof(Strings.VersionFormat), AppVersionInfo.GetDisplayVersion()),
+            version.Text);
     }
 
     [AvaloniaFact]

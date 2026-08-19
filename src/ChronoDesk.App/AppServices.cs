@@ -1,3 +1,4 @@
+using ChronoDesk.App.Localization;
 using ChronoDesk.Core.Abstractions;
 using ChronoDesk.Core.Services;
 using ChronoDesk.Infrastructure.Logging;
@@ -16,7 +17,7 @@ public sealed class AppServices
         TimeZones = new SystemTimeZoneCatalog();
         StartupManager = new PlatformStartupManager();
         ChimePlayer = new SystemChimePlayer();
-        ClockFormatter = new ClockFormatter();
+        ClockFormatter = CreateLocalizedClockFormatter();
         ChimePolicy = new ChimePolicy();
     }
 
@@ -34,7 +35,7 @@ public sealed class AppServices
         TimeZones = timeZones ?? throw new ArgumentNullException(nameof(timeZones));
         StartupManager = startupManager ?? throw new ArgumentNullException(nameof(startupManager));
         ChimePlayer = chimePlayer ?? throw new ArgumentNullException(nameof(chimePlayer));
-        ClockFormatter = clockFormatter ?? new ClockFormatter();
+        ClockFormatter = clockFormatter ?? CreateLocalizedClockFormatter();
         ChimePolicy = chimePolicy ?? new ChimePolicy();
     }
 
@@ -51,4 +52,7 @@ public sealed class AppServices
     public ClockFormatter ClockFormatter { get; }
 
     public ChimePolicy ChimePolicy { get; }
+
+    private static ClockFormatter CreateLocalizedClockFormatter() =>
+        new(ClockDetailStrings.CreateLabels);
 }

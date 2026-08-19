@@ -7,8 +7,10 @@ Before requesting help:
 1. read `README.md`;
 2. read `docs/setup.md` and `docs/troubleshooting.md`;
 3. check existing GitHub issues;
-4. confirm your OS and .NET SDK version;
+4. open **Settings → Data & Privacy → Local diagnostics** and note the relevant version/platform fields;
 5. retry with the latest `main` commit or newest published release, depending on how you installed ChronoDesk.
+
+The Local diagnostics panel is generated entirely on the current device. ChronoDesk does not upload those values.
 
 ## Support channels
 
@@ -24,25 +26,47 @@ For security vulnerabilities, follow `SECURITY.md` and do not post exploit detai
 
 ## Information that helps
 
-For a technical support request, include:
+For a technical support request, include only the relevant fields from Local diagnostics:
 
-- ChronoDesk version/commit;
-- Windows/macOS/Linux version;
-- CPU architecture;
+- ChronoDesk version;
+- Windows/macOS/Linux description;
+- process architecture;
+- .NET runtime description;
 - desktop environment on Linux when relevant;
 - exact steps that led to the problem;
 - expected and actual behavior;
 - minimal sanitized log lines if relevant.
 
-Do **not** send passwords, access tokens, private keys, full private files, or unrelated personal information.
+The diagnostics panel also shows the data/settings/log paths to help you locate local files. **Do not post those paths blindly**: they can contain a local account name or private folder structure.
+
+Do **not** send passwords, access tokens, private keys, complete private settings exports, complete unreviewed logs, or unrelated personal information.
 
 ## Logs
 
-ChronoDesk writes structured JSONL logs under its local application-data directory. Logs are designed to redact common email and secret patterns, but users should still review any log excerpt before sharing it.
+ChronoDesk writes structured JSONL logs at the local path shown by **Settings → Data & Privacy → Local diagnostics**.
+
+Logs are designed to:
+
+- redact common email and secret-assignment patterns;
+- bound logged event/message lengths;
+- record exception type rather than arbitrary raw exception messages;
+- rotate near 1 MiB using collision-resistant archive names.
+
+Redaction is defense-in-depth, not a guarantee that every possible sensitive string format can be recognized. Review every excerpt before sharing it.
+
+## Updates
+
+ChronoDesk does not automatically contact GitHub to check for releases. Settings → Updates displays the version from local application metadata and opens the official Releases page only when you activate the button.
+
+If that button or an About/support link does not open, include the OS and desktop environment in the report. The application should remain usable when no browser/mail handler is available.
 
 ## Platform-specific limitations
 
-System tray and chime behavior can depend on desktop services installed by the operating system. Linux desktop environments vary most. If tray/chime behavior differs from the main clock behavior, include the desktop environment and available sound/session services in the report.
+System tray and chime behavior can depend on desktop services installed by the operating system. Linux desktop environments vary most.
+
+If tray behavior differs from the main clock behavior, report whether the tray menu was available. ChronoDesk is designed not to hide its only window when reliable tray restoration is unavailable.
+
+If chime behavior differs, include the configured cadence/quiet hours and available local sound facilities. Do not attach unrelated system logs.
 
 ## Funding
 

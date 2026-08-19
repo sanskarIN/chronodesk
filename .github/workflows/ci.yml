@@ -26,6 +26,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
 
+      - name: Verify documentation links
+        shell: pwsh
+        run: ./scripts/verify-doc-links.ps1
+
+      - name: Scan tracked files for high-signal secrets
+        shell: pwsh
+        run: ./scripts/verify-no-secrets.ps1
+
       - name: Setup .NET 9
         uses: actions/setup-dotnet@v6
         with:

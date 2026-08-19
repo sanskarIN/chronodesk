@@ -12,12 +12,15 @@ ChronoDesk currently includes or intentionally supports:
 - semantic automation names on the primary clock and timezone search;
 - text labels alongside controls rather than icon-only critical actions;
 - high-contrast application palette;
+- System theme palette that reacts to runtime OS light/dark changes;
 - reduced-motion preference;
-- no decorative animation in the current baseline;
+- no decorative animation or fake loading delay in the current baseline;
+- explicit localized loading/status/empty text;
 - scalable main-clock typography;
 - reasonably large interactive targets;
 - status messages expressed as text rather than color alone;
-- simple, predictable first-run and settings windows;
+- predictable first-run and settings windows;
+- Settings sections for Clock, Appearance, Accessibility, Behavior, Data & Privacy, Updates, and About;
 - full-screen and compact modes that can be exited from the keyboard.
 
 ## Keyboard shortcuts
@@ -42,11 +45,13 @@ Using no pointing device:
 - [ ] Toggle clock format and seconds.
 - [ ] Focus timezone search with normal tab navigation and `Ctrl+K`.
 - [ ] Enter search text, move through results, and activate the add action.
-- [ ] Reach world-clock remove actions.
+- [ ] Reach world-clock remove and Undo actions.
 - [ ] Open Settings.
-- [ ] Navigate every settings tab.
+- [ ] Navigate every Settings tab, including Updates and About.
 - [ ] Change checkboxes, combos, sliders, and text fields.
 - [ ] Reach import/export/reset actions.
+- [ ] Reach the official Releases action without triggering it accidentally while navigating.
+- [ ] Reach Settings About project/funding/business/support actions.
 - [ ] Close Settings without trapping focus.
 - [ ] Enter/exit focus mode.
 - [ ] Enter/exit mini mode.
@@ -67,15 +72,17 @@ Check that:
 - [ ] checkboxes expose state and label;
 - [ ] combo boxes expose selected value;
 - [ ] settings tabs expose their labels and selected state;
+- [ ] Updates announces current version and makes the external Releases action understandable;
+- [ ] Settings About exposes version, project, funding, and support controls in a logical reading order;
 - [ ] world-clock cards are understandable in reading order;
-- [ ] status/error text is discoverable and not conveyed only visually;
+- [ ] loading, search-empty, success, warning, and error status text is discoverable and not conveyed only visually;
 - [ ] focus/mini transitions do not leave assistive focus on an inaccessible hidden control.
 
 Where an Avalonia control does not expose sufficient semantics by default, add an `AutomationProperties.Name`, help text, or an appropriate structural change instead of relying on tooltip text alone.
 
-## Contrast
+## Contrast and system theme
 
-ChronoDesk provides explicit light, dark, and high-contrast palettes. Release review must inspect:
+ChronoDesk provides explicit light, dark, and high-contrast palettes plus System mode. Release review must inspect:
 
 - clock text against hero/card background;
 - normal body text;
@@ -84,50 +91,38 @@ ChronoDesk provides explicit light, dark, and high-contrast palettes. Release re
 - borders/focus indicators;
 - disabled states;
 - selected list/tab states;
-- error/status text.
+- loading/error/status text;
+- Updates/About cards and external action buttons.
 
 Do not communicate success/error/selection only by a hue difference.
 
-High contrast should remain readable even when the OS also applies contrast/theme overrides.
+For System mode:
+
+- [ ] start under OS light theme and verify the light custom palette;
+- [ ] switch the OS to dark while ChronoDesk remains running and verify the custom palette changes;
+- [ ] switch back to light and verify it changes again;
+- [ ] confirm explicit Light/Dark selection does not unexpectedly follow later system changes;
+- [ ] confirm high contrast remains readable when the OS also applies contrast/theme overrides.
 
 ## Text scaling and typography
 
-The clock size control supports a broad range. Manual review should include:
+Manual review should include minimum/default/maximum clock sizes, increased OS text scaling, the narrowest supported main window, mini mode, and Settings at minimum dimensions.
 
-- minimum clock size;
-- default clock size;
-- maximum clock size;
-- increased OS text scaling where available;
-- narrowest supported main window;
-- mini mode;
-- Settings at minimum supported dimensions.
-
-Text should wrap or scroll rather than become clipped in a way that makes an action impossible to understand.
+Text should wrap or scroll rather than become clipped in a way that makes an action impossible to understand. Pay particular attention to long translated future strings, business/support addresses, release/update explanations, and world-clock labels.
 
 Do not use the main clock's user-selected font as a reason to reduce settings/body legibility; general UI typography stays platform-appropriate.
 
 ## Reduced motion
 
-The current ChronoDesk baseline does not use decorative animation or fake loading delays. The `ReducedMotion` setting is persisted so future transitions/animations have a single product preference to honor.
+The current baseline does not use decorative animation or fake loading delays. `ReducedMotion` is persisted so future transitions/animations have one product preference to honor.
 
-Any future animation must:
-
-- have a functional reason or clear UX value;
-- avoid blocking input;
-- avoid flashing effects;
-- be disabled/reduced when the preference is enabled;
-- preserve state clarity without motion.
+Any future animation must have functional value, avoid blocking input/flashing, be disabled or reduced when requested, and preserve state clarity without motion.
 
 ## Focus and full-screen behavior
 
-Focus mode intentionally hides non-clock chrome. Verify:
+Focus mode intentionally hides non-clock chrome. Verify the clock remains understandable, `Esc`/`F11` exit works, no hidden focused control traps input, and assistive focus can return to meaningful content afterward.
 
-- the clock remains understandable;
-- `Esc`/`F11` exit works;
-- there is no hidden focused interactive control that traps keyboard input;
-- screen-reader focus can return to meaningful content after exiting.
-
-Mini mode similarly hides most controls, but must remain escapable with `Esc`/`Ctrl+M` and must not permanently change the user's normal always-on-top preference.
+Mini mode similarly hides most controls, but must remain escapable with `Esc`/`Ctrl+M` and must not permanently change the current normal always-on-top preference.
 
 ## Chimes
 
@@ -135,22 +130,23 @@ Audio is optional and disabled by default. Important information must never be a
 
 Future audio features should not require sound for core operation and should not autoplay unexpectedly at first run.
 
-## Error messages
+## Error messages and external actions
 
-Errors should:
+Errors should use plain text, avoid raw stack traces, explain what the user can do next when practical, remain readable, not rely on red alone, and avoid exposing private filesystem/import content.
 
-- use plain text;
-- avoid raw stack traces in the user interface;
-- explain what the user can do next when practical;
-- remain visible long enough to read;
-- not rely on red color alone;
-- avoid exposing private filesystem or imported content unnecessarily.
+Updates/About external actions must:
+
+- require explicit activation;
+- have visible descriptive text;
+- leave the app usable if no browser/mail handler exists;
+- surface a safe status message on handler failure;
+- never use background update polling as a hidden substitute for the explicit Releases action.
 
 ## Touch and pointer targets
 
-Although ChronoDesk targets desktop operating systems, controls may be used on touch-capable hardware. Reusable button styles maintain a practical minimum height and spacing.
+Although ChronoDesk targets desktop operating systems, controls may be used on touch-capable hardware. Reusable button styles maintain practical minimum height and spacing.
 
-Avoid densely packing critical actions. Destructive actions should not be placed immediately adjacent to commonly used primary actions without visual/focus separation.
+Avoid densely packing critical actions. Destructive actions should not be immediately adjacent to commonly used primary actions without visual/focus separation.
 
 ## Accessibility regression process
 
@@ -168,4 +164,4 @@ For an accessibility defect:
 
 ## Known limits before GUI validation
 
-Source-level semantics and keyboard design can be reviewed without a GUI session, but actual screen-reader announcements, focus visuals, OS theme interactions, and tray accessibility require a real supported desktop environment. Those checks remain explicit release gates rather than being assumed from source code.
+Source-level semantics and keyboard design can be reviewed without a GUI session, but actual screen-reader announcements, focus visuals, OS theme interactions, tray accessibility, native browser/mail handlers, and platform text scaling require a real supported desktop environment. Those checks remain explicit release gates rather than being assumed from source code.

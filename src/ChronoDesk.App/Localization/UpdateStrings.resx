@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="TabUpdates" xml:space="preserve"><value>Updates</value></data>
+  <data name="UpdatesTitle" xml:space="preserve"><value>Updates and release information</value></data>
+  <data name="UpdatesDescription" xml:space="preserve"><value>ChronoDesk does not perform background update tracking. Open the official GitHub Releases page when you want to check for a newer build.</value></data>
+  <data name="CurrentVersionLabel" xml:space="preserve"><value>Current version</value></data>
+  <data name="OpenReleases" xml:space="preserve"><value>Open official releases</value></data>
+  <data name="UpdatePrivacyNote" xml:space="preserve"><value>The clock remains fully offline. A network connection is used only if you choose to open the releases page in your browser.</value></data>
+  <data name="ReleaseOpenError" xml:space="preserve"><value>The releases page could not be opened with the current system handler.</value></data>
+  <data name="ExternalOpenError" xml:space="preserve"><value>The selected external destination could not be opened with the current system handler.</value></data>
+</root>

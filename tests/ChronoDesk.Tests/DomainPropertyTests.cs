@@ -46,7 +46,7 @@ public sealed class DomainPropertyTests
                 .Select(index => new WorldClock(
                     index % 7 == 0 ? "duplicate" : $"clock-{index}",
                     $"Clock {index}",
-                    "UTC"))
+                    index % 11 == 0 ? "Test/DuplicateZone" : $"Test/Zone-{index}"))
                 .ToList();
 
             var input = new AppSettings
@@ -66,10 +66,16 @@ public sealed class DomainPropertyTests
             Assert.Equal(first.WorldClocks, second.WorldClocks);
             Assert.InRange(first.ClockFontSize, 42, 240);
             Assert.InRange(first.ContentSpacing, 4, 48);
-            Assert.InRange(first.WorldClocks.Count, 1, 24);
+            Assert.InRange(first.WorldClocks.Count, 1, AppSettings.MaximumWorldClockCount);
             Assert.Equal(
                 first.WorldClocks.Count,
                 first.WorldClocks.Select(clock => clock.Id).Distinct(StringComparer.Ordinal).Count());
+            Assert.Equal(
+                first.WorldClocks.Count,
+                first.WorldClocks
+                    .Select(clock => clock.TimeZoneId)
+                    .Distinct(StringComparer.OrdinalIgnoreCase)
+                    .Count());
         }
     }
 

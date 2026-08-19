@@ -34,11 +34,7 @@ public sealed class ChimePolicy
             return true;
         }
 
-        var lastLocal = TimeZoneInfo.ConvertTime(lastChimeInstant.Value, timeZone);
-        return lastLocal.Year != local.Year
-            || lastLocal.DayOfYear != local.DayOfYear
-            || lastLocal.Hour != local.Hour
-            || lastLocal.Minute != local.Minute;
+        return !IsSameUtcMinute(lastChimeInstant.Value, instant);
     }
 
     private static bool IsIntervalBoundary(DateTimeOffset local, ChimeInterval interval)
@@ -55,5 +51,15 @@ public sealed class ChimePolicy
             ChimeInterval.QuarterHourly => local.Minute % 15 == 0,
             _ => false,
         };
+    }
+
+    private static bool IsSameUtcMinute(DateTimeOffset first, DateTimeOffset second)
+    {
+        var firstUtc = first.ToUniversalTime();
+        var secondUtc = second.ToUniversalTime();
+        return firstUtc.Year == secondUtc.Year
+            && firstUtc.DayOfYear == secondUtc.DayOfYear
+            && firstUtc.Hour == secondUtc.Hour
+            && firstUtc.Minute == secondUtc.Minute;
     }
 }
