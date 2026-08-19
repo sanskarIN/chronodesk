@@ -1,19 +1,25 @@
 # ChronoDesk Testing Guide
 
+This guide explains the testing strategy, commands, and manual release boundary. For a file-by-file mapping of every xUnit/headless test, fake, and Python validator test, see `test-catalog.md`.
+
 ## Quality gates
 
-The intended release gate is:
+The intended release-quality local gate is:
 
 ```bash
 python3 scripts/check_markdown_links.py
+python3 scripts/check_documentation_inventory.py
 python3 scripts/check_repository_secrets.py
+python3 -m unittest discover -s scripts/tests -p 'test_*.py'
 dotnet restore ChronoDesk.sln
 dotnet format ChronoDesk.sln --verify-no-changes --no-restore
 dotnet build ChronoDesk.sln -c Release --no-restore
 dotnet test ChronoDesk.sln -c Release --no-build --collect:"XPlat Code Coverage"
 ```
 
-CI validates repository-local Markdown links and committed text for high-confidence credential patterns, then executes equivalent formatting/build/test work on Ubuntu, Windows, and macOS. The .NET matrix also inspects NuGet dependencies for reported vulnerabilities.
+CI validates repository-local Markdown links, complete tracked-file documentation, committed text for high-confidence credential patterns, and the repository validator unit tests. It then executes equivalent formatting/build/test work on Ubuntu, Windows, and macOS. The .NET matrix also inspects NuGet dependencies for reported vulnerabilities.
+
+A green automated suite is necessary but not sufficient for a release because tray, native startup execution, file pickers, real audio, window-manager behavior, external default handlers, and platform accessibility APIs require real desktop environments.
 
 ## Automated test areas
 
@@ -54,9 +60,11 @@ New cadence behavior must remain independent of actual sound playback.
 
 - visual range normalization;
 - default font fallback;
+- invalid/null nested value repair;
 - invalid/duplicate clock removal;
 - at least one clock invariant;
-- 24-card limit.
+- 24-card limit;
+- bounded and flattened imported text.
 
 ### Persistence
 
@@ -64,6 +72,7 @@ New cadence behavior must remain independent of actual sound playback.
 
 - settings save/load round-trip;
 - portable export/import;
+- numeric enum rejection;
 - malformed JSON fallback;
 - corrupt-file preservation.
 
@@ -77,6 +86,8 @@ Tests must not read or write the developer's real ChronoDesk data folder.
 - UTC availability;
 - invalid-ID fallback;
 - bounded case-insensitive search.
+
+The three-OS CI matrix helps catch differences in runtime-provided timezone databases without hard-coding a platform-specific catalog.
 
 ### Startup adapters
 
@@ -133,6 +144,15 @@ This test style gives broad edge coverage while staying deterministic in CI. A f
 
 Fuzz inputs are generated locally inside the test and never contain production/user data.
 
+### View-model transaction tests
+
+`MainWindowViewModelTests` verifies the critical settings/startup consistency boundary:
+
+- startup is rolled back when settings persistence fails after an external startup change;
+- the live settings snapshot does not claim a failed persistence update;
+- imported settings cannot silently enable startup;
+- an explicit user startup change is applied once and persisted.
+
 ### Headless Avalonia UI tests
 
 `AvaloniaTestSetup`, `HeadlessUiSmokeTests`, and `SettingsWindowHeadlessTests` use `Avalonia.Headless.XUnit` with the same Avalonia maintenance baseline as the application. Current coverage verifies:
@@ -153,13 +173,40 @@ File-picker-backed import/export remains outside the headless interaction suite 
 
 Headless UI tests strengthen cross-platform CI but do **not** replace real desktop testing for system tray, native startup registration, sound playback, accessibility APIs, display scaling, external OS handlers, or native file pickers.
 
-### Documentation and repository integrity
+## Documentation and repository integrity
 
-`scripts/check_markdown_links.py` scans every repository Markdown file without network access and validates repository-local link/image targets. Links that escape the repository or point at missing files fail the dedicated CI repository-integrity job.
+### Local Markdown links
+
+`scripts/check_markdown_links.py` scans repository Markdown without network access and validates repository-local link/image targets. Links that escape the repository or point at missing files fail the dedicated CI Repository integrity job.
+
+External URLs are deliberately excluded from deterministic availability checking; release review should still verify important project/support destinations when preparing a tag.
+
+### Tracked-file documentation coverage
+
+`scripts/check_documentation_inventory.py` obtains the authoritative tracked paths from `git ls-files` and compares them with the canonical inventory entries in `docs/repository-reference.md`.
+
+It fails when:
+
+- a tracked file has no reference entry;
+- an inventory entry points at a file that is no longer tracked.
+
+Fenced syntax examples inside the reference are ignored so documentation can explain the inventory format without creating a fake path.
+
+This gate means source, tests, assets, XAML, resources, workflows, templates, scripts, and documentation files cannot be added silently without at least an explicit responsibility entry.
+
+### Credential-pattern scan
 
 `scripts/check_repository_secrets.py` scans committed text for high-confidence private-key and common credential/token patterns without printing matched secret values. It is an automated tripwire rather than proof that every possible private datum is absent.
 
-External URLs are deliberately excluded from deterministic link checking; release review should still verify important project/support links when preparing a tag.
+### Repository validator tests
+
+Run all standard-library validator tests with:
+
+```bash
+python3 -m unittest discover -s scripts/tests -p 'test_*.py'
+```
+
+Current tests protect release metadata rules and documentation-inventory parser/comparison behavior. Add validator tests when a repository script gains nontrivial parsing or policy logic.
 
 ## Manual UI checklist
 
@@ -251,7 +298,7 @@ When fixing a bug:
 
 ## Coverage philosophy
 
-Coverage percentage is not a release target by itself. Prefer tests that protect invariants and failure paths. A high line percentage that does not exercise timezone boundaries, persistence corruption, chime suppression, malformed import handling, startup artifact generation, external-link policy, release version identity, or window-mode transitions is less useful than focused behavioral coverage.
+Coverage percentage is not a release target by itself. Prefer tests that protect invariants and failure paths. A high line percentage that does not exercise timezone boundaries, persistence corruption, chime suppression, malformed import handling, startup artifact generation, external-link policy, release version identity, documentation completeness, or window-mode transitions is less useful than focused behavioral coverage.
 
 ## Performance testing
 
