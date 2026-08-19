@@ -196,6 +196,12 @@ public sealed class MainWindowViewModel : ObservableObject
             return;
         }
 
+        if (Settings.WorldClocks.Count >= AppSettings.MaximumWorldClockCount)
+        {
+            StatusMessage = Strings.WorldClockLimitReached;
+            return;
+        }
+
         var label = string.IsNullOrWhiteSpace(displayName)
             ? descriptor.DisplayName
             : displayName.Trim();
