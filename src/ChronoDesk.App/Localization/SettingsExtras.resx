@@ -10,6 +10,7 @@
   <data name="UpdatesBody" xml:space="preserve"><value>ChronoDesk does not silently contact an update server. Choose the button below when you want to open the public GitHub Releases page in your browser.</value></data>
   <data name="OpenReleases" xml:space="preserve"><value>Open GitHub Releases</value></data>
   <data name="UpdatePrivacyNote" xml:space="preserve"><value>Opening Releases is user-initiated and leaves the offline app for your default web browser.</value></data>
+  <data name="LinkOpenError" xml:space="preserve"><value>The link could not be opened with the default system handler.</value></data>
   <data name="AboutSectionTitle" xml:space="preserve"><value>About ChronoDesk</value></data>
   <data name="AboutSectionBody" xml:space="preserve"><value>View version, license, project links, support contacts, funding information, privacy notes, and credits.</value></data>
   <data name="OpenAbout" xml:space="preserve"><value>Open About</value></data>
