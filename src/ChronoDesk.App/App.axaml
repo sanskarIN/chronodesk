@@ -1,0 +1,17 @@
+<Application
+    x:Class="ChronoDesk.App.App"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    RequestedThemeVariant="Default">
+  <Application.Resources>
+    <SolidColorBrush x:Key="ChronoSurfaceBrush" Color="#10131A" />
+    <SolidColorBrush x:Key="ChronoCardBrush" Color="#1AFFFFFF" />
+    <SolidColorBrush x:Key="ChronoMutedBrush" Color="#AEB7C7" />
+    <SolidColorBrush x:Key="ChronoAccentBrush" Color="#6D5DFB" />
+    <SolidColorBrush x:Key="ChronoBorderBrush" Color="#2AFFFFFF" />
+  </Application.Resources>
+  <Application.Styles>
+    <FluentTheme />
+    <StyleInclude Source="avares://ChronoDesk/Styles/DesignSystem.axaml" />
+  </Application.Styles>
+</Application>
