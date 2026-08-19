@@ -155,7 +155,7 @@ public sealed partial class SettingsWindow : Window
             await viewModel.UpdateSettingsAsync(updated);
             Close();
         }
-        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or InvalidOperationException)
+        catch (Exception exception) when (IsStorageOrPlatformFailure(exception))
         {
             SetStatus(Strings.SettingsSaveError);
         }
@@ -196,30 +196,26 @@ public sealed partial class SettingsWindow : Window
 
     private async void ExportButton_OnClick(object? sender, RoutedEventArgs e)
     {
-        var jsonType = new FilePickerFileType(Strings.SettingsFileType)
-        {
-            Patterns = ["*.json"],
-            MimeTypes = ["application/json"],
-        };
-        var file = await StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
-        {
-            Title = Strings.ExportDialogTitle,
-            SuggestedFileName = "chronodesk-settings.json",
-            DefaultExtension = "json",
-            FileTypeChoices = [jsonType],
-        });
-
-        if (file is null)
-        {
-            return;
-        }
-
         try
         {
+            var jsonType = CreateSettingsFileType();
+            var file = await StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
+            {
+                Title = Strings.ExportDialogTitle,
+                SuggestedFileName = "chronodesk-settings.json",
+                DefaultExtension = "json",
+                FileTypeChoices = [jsonType],
+            });
+
+            if (file is null)
+            {
+                return;
+            }
+
             await viewModel.ExportSettingsAsync(file.Path.LocalPath);
             SetStatus(Strings.ExportSuccess);
         }
-        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+        catch (Exception exception) when (IsStorageOrPlatformFailure(exception))
         {
             SetStatus(Strings.ExportError);
         }
@@ -227,31 +223,30 @@ public sealed partial class SettingsWindow : Window
 
     private async void ImportButton_OnClick(object? sender, RoutedEventArgs e)
     {
-        var jsonType = new FilePickerFileType(Strings.SettingsFileType)
-        {
-            Patterns = ["*.json"],
-            MimeTypes = ["application/json"],
-        };
-        var files = await StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
-        {
-            Title = Strings.ImportDialogTitle,
-            AllowMultiple = false,
-            FileTypeFilter = [jsonType],
-        });
-
-        var file = files.FirstOrDefault();
-        if (file is null)
-        {
-            return;
-        }
-
         try
         {
+            var jsonType = CreateSettingsFileType();
+            var files = await StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+            {
+                Title = Strings.ImportDialogTitle,
+                AllowMultiple = false,
+                FileTypeFilter = [jsonType],
+            });
+
+            var file = files.FirstOrDefault();
+            if (file is null)
+            {
+                return;
+            }
+
             await viewModel.ImportSettingsAsync(file.Path.LocalPath);
             LoadControls(viewModel.Settings);
             SetStatus(Strings.ImportSuccess);
         }
-        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or InvalidDataException or System.Text.Json.JsonException)
+        catch (Exception exception) when (
+            IsStorageOrPlatformFailure(exception)
+            || exception is InvalidDataException
+            || exception is System.Text.Json.JsonException)
         {
             SetStatus(Strings.ImportError);
         }
@@ -265,11 +260,25 @@ public sealed partial class SettingsWindow : Window
             LoadControls(viewModel.Settings);
             SetStatus(Strings.DefaultsRestored);
         }
-        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or InvalidOperationException)
+        catch (Exception exception) when (IsStorageOrPlatformFailure(exception))
         {
             SetStatus(Strings.DefaultsSaveError);
         }
     }
+
+    private static FilePickerFileType CreateSettingsFileType() =>
+        new(Strings.SettingsFileType)
+        {
+            Patterns = ["*.json"],
+            MimeTypes = ["application/json"],
+        };
+
+    private static bool IsStorageOrPlatformFailure(Exception exception) =>
+        exception is IOException
+            or UnauthorizedAccessException
+            or InvalidOperationException
+            or NotSupportedException
+            or System.Security.SecurityException;
 
     private T Control<T>(string name)
         where T : Control =>
