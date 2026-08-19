@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Reflection;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Markup.Xaml;
@@ -18,9 +19,17 @@ public sealed partial class SettingsWindow : Window
         this.viewModel = viewModel ?? throw new ArgumentNullException(nameof(viewModel));
         InitializeComponent();
         LoadControls(viewModel.Settings);
+        LoadVersionText();
     }
 
     private void InitializeComponent() => AvaloniaXamlLoader.Load(this);
+
+    private void LoadVersionText()
+    {
+        var version = AppVersionProvider.GetDisplayVersion(Assembly.GetExecutingAssembly());
+        Control<TextBlock>("SettingsVersionText").Text =
+            Strings.Format(nameof(Strings.VersionFormat), version);
+    }
 
     private void LoadControls(AppSettings settings)
     {
@@ -148,6 +157,20 @@ public sealed partial class SettingsWindow : Window
     }
 
     private void CancelButton_OnClick(object? sender, RoutedEventArgs e) => Close();
+
+    private void OpenReleasesButton_OnClick(object? sender, RoutedEventArgs e)
+    {
+        if (!ExternalLinkLauncher.TryOpen("https://github.com/sanskarIN/chronodesk/releases"))
+        {
+            SetStatus(SettingsExtras.LinkOpenError);
+        }
+    }
+
+    private async void OpenAboutButton_OnClick(object? sender, RoutedEventArgs e)
+    {
+        var about = new AboutWindow();
+        await about.ShowDialog(this);
+    }
 
     private async void ExportButton_OnClick(object? sender, RoutedEventArgs e)
     {
