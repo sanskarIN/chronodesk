@@ -1,0 +1,39 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChronoDesk.Core", "src\ChronoDesk.Core\ChronoDesk.Core.csproj", "{713CF02E-0FAB-4CF8-A11B-DFA3B5904757}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChronoDesk.Infrastructure", "src\ChronoDesk.Infrastructure\ChronoDesk.Infrastructure.csproj", "{DCEEA951-1DD6-4D03-A2A5-84DD0D885B64}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChronoDesk.App", "src\ChronoDesk.App\ChronoDesk.App.csproj", "{7D1CE75F-1C83-45CB-A477-DB391CBFCA70}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChronoDesk.Tests", "tests\ChronoDesk.Tests\ChronoDesk.Tests.csproj", "{AD9234AA-E5EA-4F58-A293-8F3A12645038}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{713CF02E-0FAB-4CF8-A11B-DFA3B5904757}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{713CF02E-0FAB-4CF8-A11B-DFA3B5904757}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{713CF02E-0FAB-4CF8-A11B-DFA3B5904757}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{713CF02E-0FAB-4CF8-A11B-DFA3B5904757}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DCEEA951-1DD6-4D03-A2A5-84DD0D885B64}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DCEEA951-1DD6-4D03-A2A5-84DD0D885B64}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DCEEA951-1DD6-4D03-A2A5-84DD0D885B64}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DCEEA951-1DD6-4D03-A2A5-84DD0D885B64}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7D1CE75F-1C83-45CB-A477-DB391CBFCA70}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7D1CE75F-1C83-45CB-A477-DB391CBFCA70}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7D1CE75F-1C83-45CB-A477-DB391CBFCA70}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7D1CE75F-1C83-45CB-A477-DB391CBFCA70}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AD9234AA-E5EA-4F58-A293-8F3A12645038}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AD9234AA-E5EA-4F58-A293-8F3A12645038}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AD9234AA-E5EA-4F58-A293-8F3A12645038}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AD9234AA-E5EA-4F58-A293-8F3A12645038}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
