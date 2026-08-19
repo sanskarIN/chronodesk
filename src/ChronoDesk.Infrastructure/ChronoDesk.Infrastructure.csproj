@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>ChronoDesk.Infrastructure</RootNamespace>
+    <AssemblyName>ChronoDesk.Infrastructure</AssemblyName>
+    <Description>Persistence and platform integration services for ChronoDesk.</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\ChronoDesk.Core\ChronoDesk.Core.csproj" />
+  </ItemGroup>
+</Project>
