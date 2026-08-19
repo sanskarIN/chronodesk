@@ -22,8 +22,7 @@ public static class ExternalUriLauncher
         catch (Exception exception) when (
             exception is Win32Exception
                 or InvalidOperationException
-                or NotSupportedException
-                or PlatformNotSupportedException)
+                or NotSupportedException)
         {
             return false;
         }
