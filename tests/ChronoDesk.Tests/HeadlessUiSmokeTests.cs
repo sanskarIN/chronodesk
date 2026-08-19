@@ -1,5 +1,6 @@
 using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
+using Avalonia.VisualTree;
 using ChronoDesk.App;
 using ChronoDesk.App.Localization;
 using ChronoDesk.App.Services;
