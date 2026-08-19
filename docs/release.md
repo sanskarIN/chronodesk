@@ -46,6 +46,7 @@ Update:
 - `ROADMAP.md` — reflect completed/replanned items;
 - `what_changed.md` — record the release candidate state;
 - `README.md` — replace the explicit screenshot placeholder with a verified release-build capture and update compatibility notes when needed;
+- `docs/repository-reference.md` — ensure every tracked release file has a current responsibility entry;
 - `PRIVACY.md` / `SECURITY.md` if release behavior changed their scope.
 
 For a planned tag, run:
@@ -78,6 +79,7 @@ git clone https://github.com/sanskarIN/chronodesk.git chronodesk-release
 cd chronodesk-release
 git checkout <release-commit>
 python3 scripts/check_markdown_links.py
+python3 scripts/check_documentation_inventory.py
 python3 scripts/check_repository_secrets.py
 python3 -m unittest discover -s scripts/tests -p 'test_*.py'
 dotnet --info
@@ -90,7 +92,9 @@ dotnet list ChronoDesk.sln package --vulnerable --include-transitive
 
 Then run `check_release_metadata.py` with the exact intended tag as shown above.
 
-Do not proceed if documentation integrity, credential scanning, repository-script tests, release metadata, restore, formatting, build, tests, or vulnerability review reports an unresolved blocker.
+Do not proceed if local Markdown integrity, tracked-file documentation coverage, credential scanning, repository-script tests, release metadata, restore, formatting, build, tests, or vulnerability review reports an unresolved blocker.
+
+The documentation inventory validator uses `git ls-files` as its source of truth. A source, test, asset, workflow, resource, template, script, or documentation file is not release-documented until it has exactly one canonical entry in `docs/repository-reference.md`.
 
 The credential script intentionally uses high-confidence patterns and is not a substitute for reviewing staged/release files for private names, screenshots, certificates, database exports, or other sensitive material that may not resemble a token.
 
@@ -105,9 +109,11 @@ For the exact release commit, confirm the repository checks that actually exist 
 - CodeQL;
 - dependency review where applicable to the release pull request.
 
+The Repository integrity job includes local Markdown validation, complete tracked-file documentation inventory validation, high-confidence credential scanning, and Python validator unit tests.
+
 Do not add a README badge for a workflow that does not exist. If branch protection requires named checks, use the exact check names shown on the release-candidate pull request rather than guessing them from workflow filenames.
 
-The tag-triggered Release workflow repeats critical release-metadata, repository-integrity, formatting, Release build, tests, and NuGet vulnerability checks in a `Release preflight` job before any platform package is created. This is a second gate, not a replacement for pull-request/main validation.
+The tag-triggered Release workflow repeats critical release-metadata, local Markdown, tracked-file documentation, credential, formatting, Release build, tests, and NuGet vulnerability checks in a `Release preflight` job before any platform package is created. This is a second gate, not a replacement for pull-request/main validation.
 
 ## 4. Manual desktop verification
 
@@ -195,7 +201,7 @@ Launch the produced executable on the matching platform before tagging whenever 
 
 ## 7. Create the tag
 
-Only after the release commit is finalized **and** `check_release_metadata.py` passes for the exact intended tag:
+Only after the release commit is finalized **and** all release metadata/repository integrity checks pass for the exact intended tag:
 
 ```bash
 git tag -a vX.Y.Z -m "ChronoDesk vX.Y.Z"
@@ -209,7 +215,7 @@ git tag -a vX.Y.Z-rc.1 -m "ChronoDesk vX.Y.Z-rc.1"
 git push origin vX.Y.Z-rc.1
 ```
 
-The `Release` GitHub Actions workflow accepts the supported semantic tag form, validates release metadata, runs release preflight, stamps package metadata from the tag, builds self-contained platform artifacts, generates checksums, verifies the downloaded artifacts, and creates the GitHub Release only after those steps succeed.
+The `Release` GitHub Actions workflow accepts the supported semantic tag form, validates release metadata and repository integrity, runs release preflight, stamps package metadata from the tag, builds self-contained platform artifacts, generates checksums, verifies the downloaded artifacts, and creates the GitHub Release only after those steps succeed.
 
 ## 8. Inspect and verify generated artifacts
 
@@ -286,9 +292,10 @@ After publication:
 2. download at least one archive and checksum again from the public release page and verify them independently;
 3. install/extract at least one artifact from the release page rather than the local build directory;
 4. confirm the running artifact displays the expected tag-derived version;
-5. confirm README download/release references remain valid;
-6. update `what_changed.md` with the tag, release URL, verified platforms, and any follow-up task;
-7. open focused issues for non-blocking follow-up defects discovered after release.
+5. confirm README/download/documentation references remain valid;
+6. rerun `scripts/check_documentation_inventory.py` on the released source tree if any release-only documentation commit was added before tagging;
+7. update `what_changed.md` with the tag, release URL, verified platforms, and any follow-up task;
+8. open focused issues for non-blocking follow-up defects discovered after release.
 
 ## Rollback
 
@@ -304,8 +311,9 @@ If a severe regression is discovered:
 
 A release candidate is not ready to tag until:
 
-- repository-integrity checks pass;
-- repository validation-script tests pass;
+- repository-local Markdown integrity passes;
+- every tracked file is represented in `docs/repository-reference.md`;
+- credential scanning and repository validation-script tests pass;
 - release metadata validation passes for the exact intended tag;
 - clean restore/build/test/format checks pass;
 - dependency/security checks are reviewed;
