@@ -23,8 +23,11 @@ public static class Strings
     public static string ChimeStatus => Get(nameof(ChimeStatus));
     public static string ChimeUnavailable => Get(nameof(ChimeUnavailable));
     public static string TimezoneAlreadyAdded => Get(nameof(TimezoneAlreadyAdded));
+    public static string TimezoneSearchEmpty => Get(nameof(TimezoneSearchEmpty));
+    public static string TimezoneSearchCountFormat => Get(nameof(TimezoneSearchCountFormat));
     public static string KeepOneWorldClock => Get(nameof(KeepOneWorldClock));
     public static string WorldClockRemoved => Get(nameof(WorldClockRemoved));
+    public static string WorldClockRestored => Get(nameof(WorldClockRestored));
     public static string SettingsExported => Get(nameof(SettingsExported));
     public static string SettingsImported => Get(nameof(SettingsImported));
     public static string SettingsReset => Get(nameof(SettingsReset));
@@ -34,6 +37,7 @@ public static class Strings
     public static string ActionSettings => Get(nameof(ActionSettings));
     public static string ActionAbout => Get(nameof(ActionAbout));
     public static string ActionRemove => Get(nameof(ActionRemove));
+    public static string ActionUndo => Get(nameof(ActionUndo));
     public static string ActionClose => Get(nameof(ActionClose));
     public static string ActionCancel => Get(nameof(ActionCancel));
     public static string ActionSaveChanges => Get(nameof(ActionSaveChanges));
