@@ -48,6 +48,22 @@ public sealed class HeadlessUiSmokeTests
     }
 
     [AvaloniaFact]
+    public void MainWindow_MiniModePreservesMaximizedWindowState()
+    {
+        var viewModel = new MainWindowViewModel(new AppServices());
+        var window = new MainWindow(viewModel)
+        {
+            WindowState = WindowState.Maximized,
+        };
+
+        window.ToggleMiniMode();
+        Assert.Equal(WindowState.Normal, window.WindowState);
+
+        window.ToggleMiniMode();
+        Assert.Equal(WindowState.Maximized, window.WindowState);
+    }
+
+    [AvaloniaFact]
     public void MainWindow_MiniModeExitUsesCurrentAlwaysOnTopPreference()
     {
         var viewModel = new MainWindowViewModel(new AppServices());
@@ -79,6 +95,22 @@ public sealed class HeadlessUiSmokeTests
 
         window.ToggleFocusMode();
         Assert.True(header.IsVisible);
+    }
+
+    [AvaloniaFact]
+    public void MainWindow_FocusModePreservesMaximizedWindowState()
+    {
+        var viewModel = new MainWindowViewModel(new AppServices());
+        var window = new MainWindow(viewModel)
+        {
+            WindowState = WindowState.Maximized,
+        };
+
+        window.ToggleFocusMode();
+        Assert.Equal(WindowState.FullScreen, window.WindowState);
+
+        window.ToggleFocusMode();
+        Assert.Equal(WindowState.Maximized, window.WindowState);
     }
 
     [AvaloniaFact]
