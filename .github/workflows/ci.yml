@@ -1,0 +1,68 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}-${{ github.workflow }}
+  cancel-in-progress: true
+
+jobs:
+  build-test:
+    name: ${{ matrix.os }} / .NET 9
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 9
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 9.0.x
+          cache: true
+          cache-dependency-path: |
+            **/*.csproj
+            Directory.Packages.props
+
+      - name: Restore
+        run: dotnet restore ChronoDesk.sln
+
+      - name: Verify formatting
+        run: dotnet format ChronoDesk.sln --verify-no-changes --no-restore
+
+      - name: Build
+        run: dotnet build ChronoDesk.sln --configuration Release --no-restore
+
+      - name: Test
+        run: dotnet test ChronoDesk.sln --configuration Release --no-build --collect:"XPlat Code Coverage" --results-directory TestResults
+
+      - name: Check vulnerable packages
+        shell: pwsh
+        run: |
+          $output = dotnet list ChronoDesk.sln package --vulnerable --include-transitive 2>&1 | Out-String
+          $output | Write-Host
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          if ($output -match "has the following vulnerable packages") {
+            Write-Error "Vulnerable NuGet dependencies were reported."
+            exit 1
+          }
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-${{ matrix.os }}
+          path: TestResults
+          if-no-files-found: ignore
+          retention-days: 14
