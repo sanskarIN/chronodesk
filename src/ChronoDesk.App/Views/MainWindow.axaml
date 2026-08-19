@@ -2,8 +2,9 @@
     x:Class="ChronoDesk.App.Views.MainWindow"
     xmlns="https://github.com/avaloniaui"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:loc="using:ChronoDesk.App.Localization"
     xmlns:vm="using:ChronoDesk.App.ViewModels"
-    Title="ChronoDesk"
+    Title="{x:Static loc:Strings.AppName}"
     Width="1180"
     Height="760"
     MinWidth="780"
@@ -11,20 +12,20 @@
     WindowStartupLocation="CenterScreen"
     Icon="/Assets/chronodesk.ico"
     KeyDown="MainWindow_OnKeyDown"
-    AutomationProperties.Name="ChronoDesk digital clock">
+    AutomationProperties.Name="{x:Static loc:Strings.AutomationWindow}">
 
   <Grid RowDefinitions="Auto,*,Auto">
     <Border x:Name="HeaderPanel" Padding="24,18" BorderBrush="{DynamicResource ChronoBorderBrush}" BorderThickness="0,0,0,1">
       <Grid ColumnDefinitions="*,Auto">
         <StackPanel Spacing="2">
-          <TextBlock Text="ChronoDesk" FontSize="24" FontWeight="SemiBold" />
-          <TextBlock Text="Your focused desktop time companion" Classes="muted" />
+          <TextBlock Text="{x:Static loc:Strings.AppName}" FontSize="24" FontWeight="SemiBold" />
+          <TextBlock Text="{x:Static loc:Strings.Tagline}" Classes="muted" />
         </StackPanel>
         <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-          <Button Content="Focus" Click="FocusButton_OnClick" ToolTip.Tip="Focus clock (F11)" />
-          <Button Content="Mini" Click="MiniButton_OnClick" ToolTip.Tip="Mini clock (Ctrl+M)" />
-          <Button Content="Settings" Click="SettingsButton_OnClick" ToolTip.Tip="Settings (Ctrl+,)" />
-          <Button Content="About" Click="AboutButton_OnClick" />
+          <Button Content="{x:Static loc:Strings.ActionFocus}" Click="FocusButton_OnClick" ToolTip.Tip="{x:Static loc:Strings.TooltipFocus}" />
+          <Button Content="{x:Static loc:Strings.ActionMini}" Click="MiniButton_OnClick" ToolTip.Tip="{x:Static loc:Strings.TooltipMini}" />
+          <Button Content="{x:Static loc:Strings.ActionSettings}" Click="SettingsButton_OnClick" ToolTip.Tip="{x:Static loc:Strings.TooltipSettings}" />
+          <Button Content="{x:Static loc:Strings.ActionAbout}" Click="AboutButton_OnClick" />
         </StackPanel>
       </Grid>
     </Border>
@@ -40,7 +41,7 @@
                   Classes="heroClock"
                   FontSize="{Binding Settings.ClockFontSize}"
                   FontFamily="{Binding Settings.FontFamilyName}"
-                  AutomationProperties.Name="Current local time" />
+                  AutomationProperties.Name="{x:Static loc:Strings.AutomationCurrentTime}" />
               <WrapPanel HorizontalAlignment="Center">
                 <TextBlock Text="{Binding CurrentWeekday}" Margin="8,2" FontSize="18" />
                 <TextBlock Text="{Binding CurrentDate}" Margin="8,2" FontSize="18" />
@@ -51,8 +52,8 @@
             </StackPanel>
 
             <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Center" Spacing="8" Margin="0,16,0,0">
-              <Button Content="12 / 24 hour" Click="FormatButton_OnClick" />
-              <Button Content="Toggle seconds" Click="SecondsButton_OnClick" />
+              <Button Content="{x:Static loc:Strings.ActionToggleFormat}" Click="FormatButton_OnClick" />
+              <Button Content="{x:Static loc:Strings.ActionToggleSeconds}" Click="SecondsButton_OnClick" />
             </StackPanel>
           </Grid>
         </Border>
@@ -60,8 +61,8 @@
         <StackPanel x:Name="WorldClockSection" Spacing="10">
           <Grid ColumnDefinitions="*,Auto">
             <StackPanel>
-              <TextBlock Text="World clocks" Classes="sectionTitle" />
-              <TextBlock Text="Up to 24 saved timezone cards, stored locally." Classes="muted" />
+              <TextBlock Text="{x:Static loc:Strings.WorldClocksTitle}" Classes="sectionTitle" />
+              <TextBlock Text="{x:Static loc:Strings.WorldClocksDescription}" Classes="muted" />
             </StackPanel>
             <TextBlock Grid.Column="1" Text="{Binding WorldClocks.Count, StringFormat='{}{0} clocks'}" Classes="muted" VerticalAlignment="Center" />
           </Grid>
@@ -77,7 +78,7 @@
                 <Border Classes="softCard" MinWidth="250" Margin="0,0,10,10">
                   <Grid RowDefinitions="Auto,Auto,Auto" ColumnDefinitions="*,Auto">
                     <TextBlock Text="{Binding DisplayName}" FontSize="17" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
-                    <Button Grid.Column="1" Content="Remove" Classes="compact" Tag="{Binding Id}" Click="RemoveWorldClock_OnClick" />
+                    <Button Grid.Column="1" Content="{x:Static loc:Strings.ActionRemove}" Classes="compact" Tag="{Binding Id}" Click="RemoveWorldClock_OnClick" />
                     <TextBlock Grid.Row="1" Grid.ColumnSpan="2" Text="{Binding TimeText}" FontSize="30" FontWeight="SemiBold" Margin="0,8,0,0" />
                     <StackPanel Grid.Row="2" Grid.ColumnSpan="2" Spacing="2" Margin="0,4,0,0">
                       <TextBlock Text="{Binding DateText}" Classes="muted" />
@@ -93,15 +94,15 @@
         <Border x:Name="QuickAddSection" Classes="card">
           <Grid ColumnDefinitions="2*,3*" ColumnSpacing="20">
             <StackPanel Spacing="8">
-              <TextBlock Text="Add a timezone" Classes="sectionTitle" />
-              <TextBlock Text="Search the timezone database provided by your operating system." TextWrapping="Wrap" Classes="muted" />
+              <TextBlock Text="{x:Static loc:Strings.AddTimezoneTitle}" Classes="sectionTitle" />
+              <TextBlock Text="{x:Static loc:Strings.AddTimezoneDescription}" TextWrapping="Wrap" Classes="muted" />
               <TextBox
                   x:Name="TimeZoneSearchBox"
                   Classes="searchBox"
-                  Watermark="Search city, region, or timezone ID"
+                  Watermark="{x:Static loc:Strings.TimezoneSearchPlaceholder}"
                   TextChanged="TimeZoneSearchBox_OnTextChanged"
-                  AutomationProperties.Name="Search timezones" />
-              <TextBlock Text="Timezone data stays offline; OS updates provide tzdata updates." Classes="muted" TextWrapping="Wrap" />
+                  AutomationProperties.Name="{x:Static loc:Strings.AutomationSearchTimezones}" />
+              <TextBlock Text="{x:Static loc:Strings.TimezoneOfflineNote}" Classes="muted" TextWrapping="Wrap" />
             </StackPanel>
 
             <Grid Grid.Column="1" RowDefinitions="*,Auto">
@@ -118,7 +119,7 @@
                   </DataTemplate>
                 </ListBox.ItemTemplate>
               </ListBox>
-              <Button Grid.Row="1" Content="Add selected timezone" Classes="primary" HorizontalAlignment="Right" Margin="0,10,0,0" Click="AddTimeZoneButton_OnClick" />
+              <Button Grid.Row="1" Content="{x:Static loc:Strings.ActionAddSelectedTimezone}" Classes="primary" HorizontalAlignment="Right" Margin="0,10,0,0" Click="AddTimeZoneButton_OnClick" />
             </Grid>
           </Grid>
         </Border>
@@ -128,7 +129,7 @@
     <Border x:Name="FooterPanel" Grid.Row="2" Padding="24,12" BorderBrush="{DynamicResource ChronoBorderBrush}" BorderThickness="0,1,0,0">
       <Grid ColumnDefinitions="*,Auto">
         <TextBlock Text="{Binding StatusMessage}" Classes="muted" />
-        <TextBlock Grid.Column="1" Text="Made by the Sanskar" FontWeight="SemiBold" />
+        <TextBlock Grid.Column="1" Text="{x:Static loc:Strings.Credit}" FontWeight="SemiBold" />
       </Grid>
     </Border>
   </Grid>
