@@ -62,6 +62,7 @@ Status: **Source implementation present; manual validation required**
 - [x] Best-effort local system chime adapters.
 - [x] Redacted structured logging.
 - [x] Centralized safe external URI launching for fixed product/support links.
+- [x] Explicit stepwise settings migration pipeline for supported legacy schemas.
 - [ ] Validate tray behavior on Windows 11.
 - [ ] Validate tray behavior on current macOS Intel and Apple Silicon hardware/runners with a GUI session.
 - [ ] Validate tray behavior on representative Linux GNOME/KDE sessions.
@@ -77,6 +78,7 @@ Status: **Implemented for domain/persistence/headless UI; native-desktop validat
 - [x] Chime cadence tests.
 - [x] Settings normalization tests.
 - [x] JSON persistence/import/export/corruption tests.
+- [x] Missing-schema/schema-0 migration tests and invalid/future schema rejection tests.
 - [x] Timezone catalog tests.
 - [x] Startup registration generation/escaping tests without modifying real startup locations.
 - [x] Startup preference rollback/import-consistency tests.
@@ -104,6 +106,7 @@ Status: **Infrastructure implemented; release candidate not declared**
 - [x] Preview assembly/package metadata established (`0.1.0-preview`).
 - [x] CI-local Markdown target verification.
 - [x] CI high-signal tracked-file secret verification.
+- [x] CI/CodeQL/dependency-review concurrency cancellation for superseded same-ref runs.
 - [ ] Replace placeholder with real verified screenshots from release builds.
 - [ ] Complete clean-checkout manual verification on Windows, macOS, and Linux.
 - [ ] Confirm CI and CodeQL are green for the release commit.
@@ -116,7 +119,8 @@ Status: **Automated audit in progress; native GUI release gates remain**
 
 - [ ] Run the complete release checklist in `docs/release.md` on real supported desktops.
 - [ ] Validate accessibility checklist on each primary platform.
-- [ ] Validate settings migration path after the first tagged preview creates a real prior-version fixture.
+- [x] Establish an explicit migration path for pre-versioned/schema-0 settings and regression tests.
+- [ ] Validate migration from the first real tagged preview if a future schema increment changes persisted semantics.
 - [ ] Confirm the local-link verifier passes against the exact tagged tree.
 - [ ] Confirm vulnerability scan has no unresolved moderate-or-higher dependency finding.
 - [ ] Confirm tracked-file secret scan and GitHub security review show no real credentials/private data.
@@ -136,6 +140,9 @@ Status: **Implementation complete on the continuation branch; automated verifica
 - [x] Add high-signal tracked-file secret CI gate without printing matched values.
 - [x] Add release archive checksums and integrity manifest.
 - [x] Document release integrity verification.
+- [x] Add versioned settings migration pipeline and legacy schema tests.
+- [x] Record the migration design in ADR 0007.
+- [x] Add same-ref cancellation to CodeQL and dependency-review workflows to limit superseded run buildup.
 - [ ] Obtain green CI, CodeQL, and dependency-review results for the final continuation commit.
 - [ ] Merge the continuation pull request after automated verification.
 
