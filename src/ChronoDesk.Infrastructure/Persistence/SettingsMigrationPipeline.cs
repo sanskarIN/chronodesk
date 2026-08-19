@@ -1,12 +1,17 @@
+using System.Text.Json;
+using System.Text.Json.Nodes;
 using ChronoDesk.Core.Models;
 
 namespace ChronoDesk.Infrastructure.Persistence;
 
 public sealed class SettingsMigrationPipeline
 {
-    public AppSettings Migrate(AppSettings settings, int sourceSchemaVersion)
+    public JsonObject Migrate(JsonElement document, int sourceSchemaVersion)
     {
-        ArgumentNullException.ThrowIfNull(settings);
+        if (document.ValueKind != JsonValueKind.Object)
+        {
+            throw new InvalidDataException("Settings document root must be a JSON object.");
+        }
 
         if (sourceSchemaVersion < 0)
         {
@@ -19,7 +24,8 @@ public sealed class SettingsMigrationPipeline
                 "Settings were created by a newer unsupported ChronoDesk version.");
         }
 
-        var migrated = settings;
+        var migrated = JsonNode.Parse(document.GetRawText()) as JsonObject
+            ?? throw new InvalidDataException("Settings document root must be a JSON object.");
         var version = sourceSchemaVersion;
         while (version < AppSettings.CurrentSchemaVersion)
         {
@@ -32,9 +38,12 @@ public sealed class SettingsMigrationPipeline
             version++;
         }
 
-        return migrated.Normalize();
+        return migrated;
     }
 
-    private static AppSettings MigrateVersionZeroToOne(AppSettings settings) =>
-        settings with { SchemaVersion = 1 };
+    private static JsonObject MigrateVersionZeroToOne(JsonObject document)
+    {
+        document["schemaVersion"] = 1;
+        return document;
+    }
 }
