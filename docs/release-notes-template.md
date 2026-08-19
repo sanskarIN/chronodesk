@@ -56,12 +56,31 @@ Release workflow targets:
 - `chronodesk-vX.Y.Z-osx-x64.zip`
 - `chronodesk-vX.Y.Z-osx-arm64.zip`
 
+Each ZIP should have a sibling `.sha256` file. The release should also include:
+
+- `release-manifest.json`
+- `release-manifest.json.sha256`
+
 Only list artifacts that were actually produced and verified for the release.
+
+## Integrity verification
+
+- ZIP checksum sidecars: PASS
+- Release manifest checksum: PASS
+- Manifest `version` matches tag: PASS
+- Manifest `commit` matches tagged commit: PASS
+- Expected runtime archives listed: PASS
+
+Checksums verify artifact bytes against the published expected values; they do not replace code signing/notarization or prove publisher identity.
 
 ## Verification
 
 - CI: PASS / link in GitHub release context
 - CodeQL: PASS
+- Dependency review: PASS / N/A with reason
+- Documentation local-link gate: PASS
+- Tracked-file secret gate: PASS
+- NuGet vulnerability review: PASS
 - Clean checkout: PASS
 - Windows manual smoke test: PASS / details
 - macOS manual smoke test: PASS / details
