@@ -9,8 +9,55 @@ permissions:
   contents: read
 
 jobs:
+  preflight:
+    name: Release preflight
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Validate local Markdown links
+        run: python3 scripts/check_markdown_links.py
+
+      - name: Scan committed text for credentials
+        run: python3 scripts/check_repository_secrets.py
+
+      - name: Setup .NET 9
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 9.0.x
+          cache: true
+          cache-dependency-path: |
+            **/*.csproj
+            Directory.Packages.props
+
+      - name: Restore
+        run: dotnet restore ChronoDesk.sln
+
+      - name: Verify formatting
+        run: dotnet format ChronoDesk.sln --verify-no-changes --no-restore
+
+      - name: Build
+        run: dotnet build ChronoDesk.sln --configuration Release --no-restore
+
+      - name: Test
+        run: dotnet test ChronoDesk.sln --configuration Release --no-build
+
+      - name: Check vulnerable packages
+        shell: pwsh
+        run: |
+          $output = dotnet list ChronoDesk.sln package --vulnerable --include-transitive 2>&1 | Out-String
+          $output | Write-Host
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          if ($output -match "has the following vulnerable packages") {
+            Write-Error "Vulnerable NuGet dependencies were reported."
+            exit 1
+          }
+
   package:
     name: Package ${{ matrix.rid }}
+    needs: preflight
     strategy:
       fail-fast: false
       matrix:
