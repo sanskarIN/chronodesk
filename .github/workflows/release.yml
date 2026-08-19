@@ -173,6 +173,33 @@ jobs:
           path: artifacts
           merge-multiple: true
 
+      - name: Verify downloaded checksums
+        shell: pwsh
+        run: |
+          $checksums = @(Get-ChildItem -Path artifacts -Filter *.sha256 -File)
+          $archives = @(Get-ChildItem -Path artifacts -File | Where-Object { $_.Name -notlike '*.sha256' })
+          if ($checksums.Count -ne 4 -or $archives.Count -ne 4) {
+            throw "Expected four archives and four checksum files; found $($archives.Count) archives and $($checksums.Count) checksums."
+          }
+
+          foreach ($checksum in $checksums) {
+            $line = (Get-Content -Path $checksum.FullName -Raw).Trim()
+            if ($line -notmatch '^(?<hash>[0-9a-fA-F]{64})  (?<file>.+)$') {
+              throw "Malformed checksum file '$($checksum.Name)'."
+            }
+
+            $archivePath = Join-Path $checksum.DirectoryName $Matches.file
+            if (-not (Test-Path -LiteralPath $archivePath -PathType Leaf)) {
+              throw "Checksum '$($checksum.Name)' references missing archive '$($Matches.file)'."
+            }
+
+            $actual = (Get-FileHash -LiteralPath $archivePath -Algorithm SHA256).Hash.ToLowerInvariant()
+            $expected = $Matches.hash.ToLowerInvariant()
+            if ($actual -ne $expected) {
+              throw "SHA-256 mismatch for '$($Matches.file)'."
+            }
+          }
+
       - name: Create release
         shell: pwsh
         env:
