@@ -2,7 +2,7 @@
 
 ## Current milestone
 
-**Phase 7 — release hardening implementation complete; automated and native release verification still gated.**
+**Phase 7 — release-hardening source implementation complete; latest-head automated verification and real-desktop release validation remain gated.**
 
 Date: **2026-08-19**
 
@@ -12,9 +12,19 @@ Continuation branch: `phase-7-release-hardening`
 
 Pull request: `https://github.com/sanskarIN/chronodesk/pull/15`
 
-Phase 7 base commit on `main`: `8695efc3ba81b3e408630691a3da7b8093954ad9`
+Phase 7 base on `main`: `8695efc3ba81b3e408630691a3da7b8093954ad9`
 
-Latest branch commit immediately before this handoff update: `fc845252242584cb9485ff7ca01bd3549986de70`
+Latest code/docs head observed **before this handoff commit**: `0a1fc4b3021b9fd9bc8f7ff648960e4518317874`
+
+PR state at that observation:
+
+- OPEN
+- mergeable: true
+- draft: false
+- 101 commits
+- 55 changed files
+- 3199 additions
+- 392 deletions
 
 Repository policy: **PUBLIC / OPEN SOURCE / MIT**
 
@@ -22,494 +32,617 @@ Required visible credit: **Made by the Sanskar**
 
 Requested Git author/contact email: `sanskarin@outlook.in`
 
-The connected GitHub contents/write API does not expose an author-email field for normal file commits. Commits created through that API use the authenticated GitHub identity. Local contributor setup continues to document the requested Git email.
+Connected GitHub file writes use the authenticated GitHub identity. Earlier raw commit inspection for this repository showed the requested email in Git author metadata; the contents API itself does not provide an author-email override field per write. Local contributor documentation continues to set `sanskarin@outlook.in` explicitly.
 
 ---
 
-## Source of truth
+# Source of truth
 
-ChronoDesk continues to be implemented against the uploaded `10_chronodesk_master_prompt.md` and the actual repository state. The implementation is not being replaced with unrelated features merely to increase commit count.
+ChronoDesk is implemented against the uploaded `10_chronodesk_master_prompt.md` and the actual repository source tree.
 
-Phase 7 specifically closes prompt-level gaps around:
+This continuation did **not** add unrelated functionality to inflate commit count. Commits remain small and concern-oriented across feature, fix, security, test, documentation, CI, and refactor changes.
 
-- reversible/destructive world-clock UX;
-- explicit empty/search feedback;
-- deterministic startup integration generation;
-- startup path/input hardening;
-- settings schema migration infrastructure;
-- release artifact integrity metadata;
-- documentation-link verification;
-- high-signal tracked-secret verification;
-- centralized safe external-link launching;
-- deeper automated tests;
-- GitHub Actions queue/concurrency behavior during granular development.
+The current implementation is a C#/.NET 9 + Avalonia desktop clock for Windows, macOS, and Linux with an offline-first/local-data design.
 
 ---
 
-## Application scope implemented
+# Product capabilities implemented
 
-ChronoDesk now contains a production-oriented C#/.NET 9 + Avalonia desktop clock application for Windows, macOS, and Linux with:
+## Clock and calendar
 
-- live local digital time;
+- live local digital clock;
 - 12-hour and 24-hour modes;
 - seconds toggle;
-- date and weekday display;
-- ISO week number and optional calendar/UTC-offset details;
-- multiple offline world-clock cards;
-- OS-provided timezone discovery/search;
-- localized timezone-search result count and empty-state feedback;
-- undo for the most recently removed world-clock card;
-- local settings persistence;
-- explicit settings schema versioning and legacy migration pipeline;
-- bounded and normalized settings import/export;
-- first-run onboarding;
-- full-screen focus clock;
-- mini always-on-top mode;
-- normal always-on-top preference;
-- system/light/dark/high-contrast presentation choices;
-- typography, clock-size, spacing, and layout controls;
+- date and weekday;
+- ISO week number;
+- optional calendar details/day-of-year/UTC offset;
+- configurable font family;
+- configurable clock size;
+- configurable spacing;
+- Centered/Compact/Dashboard layouts.
+
+## World clocks
+
+- OS/.NET `TimeZoneInfo` catalog;
+- timezone search by ID/display/search text;
+- up to `AppSettings.MaximumWorldClockCount` = 24 saved cards;
+- visible search result count;
+- explicit no-results state;
+- duplicate timezone add protection;
+- duplicate timezone normalization during imported/local settings normalization;
+- case-insensitive timezone uniqueness;
+- duplicate clock-ID normalization;
+- remove action;
+- last-removal Undo;
+- Undo restores the previous card position;
+- last remaining clock cannot be removed;
+- Windows/IANA mapping attempts through .NET;
+- UTC fallback when a saved timezone cannot be resolved on the current platform.
+
+## Desktop modes
+
+- F11 full-screen focus clock;
+- Esc exits focus;
+- Ctrl+M mini mode;
+- mini mode always topmost;
+- normal always-on-top setting;
+- mini-mode exit uses the **current saved** always-on-top preference rather than stale pre-mini state;
+- previous mini-mode dimensions/position are restored;
+- tray Show/Focus/Mini/Quit actions where reliable tray-menu integration exists;
+- close/background hiding only when a reliable tray restoration route exists;
+- when tray integration is unavailable, ChronoDesk stays visible/closeable instead of intentionally creating an unreachable hidden process.
+
+## Themes and accessibility
+
+- System theme;
+- Light;
+- Dark;
+- High Contrast;
+- separate high-contrast preference;
 - reduced-motion preference;
-- hourly, half-hourly, and quarter-hourly chime policies;
-- quiet hours including ranges that cross midnight;
-- current-user startup integration on Windows, macOS, and Linux;
-- deterministic/testable startup registration builders;
-- system tray actions where supported by the desktop environment;
-- keyboard shortcuts;
-- local structured logs with redaction and rotation;
-- About/support/funding UI;
-- centralized approved external destinations with `https`/`mailto` launch policy;
-- English-first `.resx` localization architecture;
-- no required ChronoDesk account, telemetry service, analytics endpoint, advertising SDK, cloud database, or product secret.
-
----
-
-## Architecture implemented
-
-Solution projects:
-
-- `src/ChronoDesk.Core` — domain models, abstractions, clock formatting, quiet hours, chime policy;
-- `src/ChronoDesk.Infrastructure` — persistence, migrations, logging, timezone catalog, startup integration, platform chime integration;
-- `src/ChronoDesk.App` — Avalonia application, views, localization resources, UI services, view models, composition root;
-- `tests/ChronoDesk.Tests` — deterministic domain/integration/persistence/security/headless UI tests.
-
-The design remains a modular desktop monolith. Platform side effects are kept behind abstractions or deterministic helper functions where practical so business and formatting behavior can be tested without a real GUI/session startup directory.
-
----
-
-# Phase 7 completed work
-
-## 1. Deterministic startup registration generation
-
-Added:
-
-- `src/ChronoDesk.Infrastructure/Platform/StartupRegistrationDocuments.cs`
-
-Changed:
-
-- `src/ChronoDesk.Infrastructure/Platform/PlatformStartupManager.cs`
-
-Implemented:
-
-- deterministic Windows Run-command generation;
-- deterministic macOS LaunchAgent XML generation;
-- deterministic Linux XDG desktop-entry generation;
-- fixed `--background` startup argument;
-- trimming/normalization of executable paths;
-- rejection of executable paths containing control characters;
-- rejection of embedded double quotes for Windows Run commands;
-- XML escaping for macOS executable paths;
-- escaping for Linux desktop-entry `Exec` path characters including backslashes, quotes, backticks, and dollar signs;
-- exact expected-registration comparison when checking whether startup is enabled;
-- atomic temporary-file + move replacement for macOS/Linux startup files;
-- cleanup of temporary registration files on failure;
-- current-user integration only.
-
-Why this changed:
-
-Previously startup generation was embedded in `PlatformStartupManager`, which made escaping and expected-registration behavior harder to test without touching real platform state. The builder layer now keeps string/document generation deterministic and testable.
-
-## 2. Startup registration tests
-
-Added:
-
-- `tests/ChronoDesk.Tests/StartupRegistrationDocumentsTests.cs`
-
-Coverage includes:
-
-- quoted Windows executable command;
-- required background argument;
-- embedded Windows quote rejection;
-- valid macOS plist XML;
-- macOS XML escaping;
-- Linux desktop-entry generation;
-- Linux executable escaping;
-- control-character rejection;
-- outer-whitespace normalization.
-
-A follow-up compatibility fix removed use of a newer/uncertain xUnit `Assert.Contains` overload and keeps assertions compatible with the pinned xUnit baseline.
-
-## 3. World-clock undo and clearer search state
-
-Changed:
-
-- `src/ChronoDesk.App/ViewModels/MainWindowViewModel.cs`
-- `src/ChronoDesk.App/Views/MainWindow.axaml`
-- `src/ChronoDesk.App/Views/MainWindow.axaml.cs`
-- `src/ChronoDesk.App/Localization/Strings.resx`
-- `src/ChronoDesk.App/Localization/Strings.cs`
-
-Implemented:
-
-- capture of the most recently removed world-clock record and its previous index;
-- `CanUndoWorldClockRemoval` state;
-- `UndoWorldClockRemovalAsync`;
-- restoration at the previous dashboard position;
-- duplicate-timezone protection during undo;
-- undo candidate cleared after settings import/reset;
-- localized `Undo` action;
-- localized `World clock restored` status;
-- localized timezone-search empty state;
-- localized timezone-search result-count format;
-- visible search feedback text below the timezone search field;
-- visible undo button only when a reversible removal exists.
-
-This addresses the master prompt requirement for undo on destructive operations where practical and stronger empty/status states.
-
-## 4. World-clock and search regression tests
-
-Changed:
-
-- `tests/ChronoDesk.Tests/MainWindowViewModelTests.cs`
-- `tests/ChronoDesk.Tests/HeadlessUiSmokeTests.cs`
-
-Added coverage for:
-
-- remove + undo round trip;
-- restoration to original ordering position;
-- undo state clearing;
-- removal/restoration status strings;
-- populated timezone-search feedback;
-- empty timezone-search feedback;
-- presence of `UndoWorldClockButton` in headless XAML;
-- presence of `TimeZoneSearchStatusText` in headless XAML.
-
-## 5. Centralized approved application links
-
-Added:
-
-- `src/ChronoDesk.App/Services/AppLinks.cs`
-- `src/ChronoDesk.App/Services/ExternalUriLauncher.cs`
-
-Changed:
-
-- `src/ChronoDesk.App/Views/AboutWindow.axaml.cs`
-
-Implemented:
-
-- one centralized source for repository, release, funding, business, and support destinations;
-- reusable URI validation;
-- `https` only for browser destinations;
-- `mailto` allowed for mail destinations;
-- rejection of `http`, `file`, script schemes, relative paths, malformed destinations, and HTTPS user-info/credential URLs;
-- safe failure when no browser/mail handler is available.
-
-Approved product destinations remain fixed constants; user settings/import files do not supply executable external destinations.
-
-## 6. External URI policy tests
-
-Added:
-
-- `tests/ChronoDesk.Tests/ExternalUriLauncherTests.cs`
-
-Coverage includes:
-
-- GitHub HTTPS accepted;
-- BMC HTTPS accepted;
-- business mail accepted;
-- insecure HTTP rejected;
-- local file URI rejected;
-- script URI rejected;
-- credential-bearing HTTPS rejected;
-- relative path rejected;
-- empty/whitespace rejected;
-- every `AppLinks` destination remains allowed by the launcher policy.
-
-Tests validate policy only and do not open a real browser/mail client.
-
-## 7. Settings schema migration pipeline
-
-Added:
-
-- `src/ChronoDesk.Infrastructure/Persistence/SettingsMigrationPipeline.cs`
-
-Changed:
-
-- `src/ChronoDesk.Infrastructure/Persistence/JsonSettingsStore.cs`
-
-Implemented:
-
-- JSON root validation before treating content as settings;
-- source schema extraction from raw JSON;
-- missing `schemaVersion` treated explicitly as legacy schema `0`;
-- explicit schema `0 -> 1` migration;
-- negative schema versions rejected;
-- future schema versions rejected;
-- stepwise migration loop with an explicit migration switch;
-- failure when no intermediate migration is known instead of guessing;
-- migration before final `Normalize()`;
-- current saves/exports still emit current normalized schema.
-
-The current `0 -> 1` migration is intentionally data-preserving. Pre-versioned development documents used the same preference semantics; Phase 7 makes the transition explicit/testable without inventing a fake incompatible change.
-
-## 8. Settings migration tests
-
-Changed:
-
-- `tests/ChronoDesk.Tests/JsonSettingsStoreTests.cs`
-
-Added coverage for:
-
-- missing-schema legacy document migration;
-- explicit schema-0 migration;
-- preference preservation during migration;
-- negative schema rejection;
-- future schema rejection;
-- current schema result after migration.
-
-Existing coverage for numeric enum rejection, corrupt JSON recovery, persistence round trip, and import/export remains.
-
-## 9. Settings migration architecture documentation
-
-Added:
-
-- `docs/adr/0007-stepwise-settings-schema-migrations.md`
-
-Changed:
-
-- `docs/adr/0002-json-settings-persistence.md`
-- `docs/testing.md`
-- `ROADMAP.md`
-- `CHANGELOG.md`
-
-ADR 0007 records:
-
-- missing schema = legacy schema `0`;
-- one-version-at-a-time migration;
-- future/negative version rejection;
-- migration before normalization;
-- required regression-test policy for future schema increments;
-- why a database migration framework is unnecessary for this bounded JSON preference document.
-
-ADR 0002 now links directly to ADR 0007.
-
-## 10. Release archive integrity
-
-Changed:
-
-- `.github/workflows/release.yml`
-- `docs/release.md`
-- `docs/release-notes-template.md`
-
-Implemented in the release workflow:
-
-- SHA-256 sidecar for every runtime ZIP;
-- publication job verifies every archive against its sidecar before creating a release;
-- expected current artifact count checked;
-- generated `release-manifest.json` containing:
-  - schema version;
-  - product;
-  - Git tag/version;
-  - source commit;
-  - generation timestamp;
-  - archive names;
-  - archive sizes;
-  - archive SHA-256 values;
-- `release-manifest.json.sha256`;
-- release uploads include ZIPs, sidecars, and manifest files.
-
-Documentation now explains verification on PowerShell, Linux, and macOS and explicitly states that checksums are integrity metadata, not a replacement for publisher code signing/notarization.
-
-## 11. Local documentation-link verification
-
-Added:
-
-- `scripts/verify-doc-links.ps1`
-
-Changed:
-
-- `.github/workflows/ci.yml`
-- `docs/testing.md`
-
-Implemented:
-
-- recursive Markdown scan;
-- repository/file-relative local target resolution;
-- fragment/query stripping for local paths;
-- URI decoding;
-- external schemes and same-document anchors ignored;
-- build/generated directories excluded;
-- CI failure for missing local targets;
-- script runs on all three CI operating systems.
-
-This is intentionally a deterministic local-link gate and not an internet crawler.
-
-## 12. High-signal tracked-file secret verification
-
-Added:
-
-- `scripts/verify-no-secrets.ps1`
-
-Changed:
-
-- `.github/workflows/ci.yml`
-- `SECURITY.md`
-- `docs/testing.md`
-
-Implemented:
-
-- enumerates Git-tracked files with `git ls-files`;
-- skips known binary/archive extensions;
-- skips files above the scanner inspection limit;
-- checks selected high-signal patterns including private-key headers and common token families;
-- excludes the scanner's own pattern source to avoid self-detection;
-- reports only file + detector rule;
-- never prints the matched secret value;
-- runs in CI on Ubuntu, Windows, and macOS.
-
-This is a defense-in-depth check, not a claim that every possible secret format can be detected.
-
-## 13. GitHub Actions queue/concurrency hardening
-
-Changed:
-
-- `.github/workflows/codeql.yml`
-- `.github/workflows/dependency-review.yml`
-
-The main CI workflow already cancelled superseded same-ref runs. Phase 7 adds equivalent same-ref cancellation to:
-
-- CodeQL;
-- Dependency Review.
-
-Reason: granular commits across multiple concurrent project sessions created many obsolete queued workflow runs. Newer workflow definitions now cancel superseded runs for the same ref, reducing future queue pressure while preserving the final branch-head verification run.
-
-Older runs created before these concurrency definitions may remain in GitHub's queue until GitHub processes/cancels them; the available connected GitHub action API does not expose a general workflow-run cancellation operation in this environment.
-
----
-
-# Repository engineering state
-
-The repository contains:
-
-- solution/project configuration;
-- central package management;
-- strict nullable/analyzer/compiler settings;
-- editor/build settings;
-- `.gitignore`, `.gitattributes`, and safe `.env.example`;
-- MIT `LICENSE`;
-- `README.md`;
-- `CHANGELOG.md`;
-- `ROADMAP.md`;
-- `SECURITY.md`;
-- `PRIVACY.md`;
-- `SUPPORT.md`;
-- `CONTRIBUTING.md`;
-- `CODE_OF_CONDUCT.md`;
-- architecture/development/setup/testing/release/troubleshooting/accessibility/performance/GitHub-maintenance documentation;
-- seven ADRs including persistence, timezone, startup, logging, localization, and schema migration decisions;
-- GitHub issue forms and pull-request template;
-- Buy Me a Coffee funding configuration;
-- Dependabot configuration;
-- multi-OS CI;
-- local documentation-link verification;
-- high-signal tracked-secret verification;
-- CodeQL;
-- dependency review;
-- tagged release packaging workflow;
-- release archive checksums and integrity manifest.
-
----
-
-# Security and resilience state
-
-Implemented protections include:
-
-- maximum settings-import size;
-- JSON object-root validation;
-- explicit source schema detection;
-- schema-version migration pipeline;
-- negative/future schema rejection;
-- JSON string-enum parsing with numeric enum values rejected;
-- normalization of invalid runtime enum values;
-- normalization of nullable nested settings values;
-- bounded font/world-clock/timezone text;
-- control-character flattening for imported display text;
-- maximum world-clock count;
-- atomic settings writes;
-- preservation of corrupt primary settings documents;
-- safe fallback to defaults after unreadable primary settings;
-- imported backup files cannot silently modify OS startup registration;
-- best-effort startup rollback if startup registration changes but settings persistence then fails;
-- deterministic generated startup registration;
-- startup executable control-character rejection;
+- no decorative fake-loading animation/delay;
+- localized loading/status/error/empty feedback;
+- system palette follows Avalonia `ActualThemeVariant`;
+- custom palette refreshes when the OS theme changes at runtime while System mode is selected;
+- initial system palette is applied before creating the first desktop window;
+- keyboard-first shortcuts and native control navigation;
+- semantic automation naming on key controls;
+- scalable typography;
+- accessibility release checklist in `docs/accessibility.md`.
+
+## Settings
+
+Settings now contains the required functional sections:
+
+- Clock;
+- Appearance;
+- Accessibility;
+- Behavior;
+- Data & Privacy;
+- Updates;
+- About.
+
+The Updates section:
+
+- displays the exact application informational version;
+- preserves prerelease labels such as `0.1.0-preview`;
+- strips `+build-metadata` from user-facing display text;
+- performs **no background update polling**;
+- opens only the fixed official GitHub Releases HTTPS destination after explicit user activation;
+- keeps all normal clock behavior offline.
+
+The Settings About section includes:
+
+- product description;
+- version + MIT License text;
+- privacy/license summary;
+- GitHub repository action;
+- Buy Me a Coffee action;
+- primary business email;
+- secondary business email;
+- support email;
+- visible **Made by the Sanskar** credit.
+
+A standalone About window remains available from the main window and uses the same version helper and safe external link policy.
+
+## Chimes
+
+- disabled by default;
+- hourly/30-minute/15-minute cadence;
+- quiet hours;
+- overnight quiet-hour ranges;
+- duplicate suppression for the same cadence minute;
+- Windows local beep path;
+- fixed-path macOS/Linux helpers when present;
+- no shell command construction;
+- user text is not inserted into helper arguments;
+- unused stdout/stderr streams are no longer redirected, avoiding unnecessary pipe buffering/wait risks.
+
+## Startup integration
+
+- opt-in only;
+- current-user scope;
+- Windows Run key;
+- macOS LaunchAgent;
+- Linux XDG autostart;
+- fixed `--background` argument;
+- deterministic/testable registration document builders;
+- executable path validation;
 - Windows embedded-quote rejection;
 - macOS XML escaping;
-- Linux desktop-entry path escaping;
-- atomic macOS/Linux startup-file replacement;
-- exact startup-registration matching;
-- centralized `https`/`mailto` external URI policy;
-- rejection of credential-bearing HTTPS URLs;
-- no imported executable/shell-command/credential fields;
-- argument-list/fixed-path process launching for optional Unix chime helpers;
-- redacted local logging;
-- tracked-file high-signal secret scan;
-- NuGet vulnerability inspection;
-- dependency review;
+- Linux desktop-entry escaping;
+- exact expected-registration comparison;
+- atomic macOS/Linux registration-file replacement;
+- imported settings cannot silently alter the local startup setting;
+- if an explicit startup change succeeds but settings persistence fails, ChronoDesk attempts to restore the previous startup state;
+- rollback uses `CancellationToken.None`, so cancellation of the failed save does not itself prevent startup-state restoration.
+
+---
+
+# Persistence and migration implementation
+
+Primary implementation:
+
+- `src/ChronoDesk.Infrastructure/Persistence/JsonSettingsStore.cs`
+- `src/ChronoDesk.Infrastructure/Persistence/SettingsMigrationPipeline.cs`
+- `src/ChronoDesk.Core/Models/AppSettings.cs`
+
+Current settings schema: **1**.
+
+Implemented rules:
+
+- settings document maximum = 2 MiB;
+- input size is checked from the **opened FileStream** before JSON parsing;
+- JSON root must be an object;
+- missing `schemaVersion` is interpreted as legacy schema 0;
+- schema 0 -> schema 1 migration;
+- negative schema rejected;
+- future schema rejected;
+- migration advances one schema version at a time;
+- missing intermediate migration fails instead of guessing;
+- string-enum parsing rejects numeric enum values;
+- invalid runtime enum values normalize to safe defaults;
+- null nested settings values normalize safely;
+- imported font/world-clock/timezone text is bounded and flattened to a single line;
+- duplicate clock IDs are removed;
+- duplicate timezone IDs are removed case-insensitively;
+- world-clock count is capped by the single domain constant;
+- at least one world clock remains;
+- writes use unique temporary files followed by replacement;
+- corrupt primary settings are preserved when possible;
+- corrupt recovery names now use millisecond timestamp precision plus a GUID, preventing rapid repeated recovery filename collisions;
+- import cannot change current device startup registration implicitly.
+
+Migration decision: `docs/adr/0007-stepwise-settings-schema-migrations.md`.
+
+Persistence decision: `docs/adr/0002-json-settings-persistence.md`.
+
+---
+
+# External destinations and privacy
+
+Centralized destinations:
+
+- `src/ChronoDesk.App/Services/AppLinks.cs`
+
+Safe launcher:
+
+- `src/ChronoDesk.App/Services/ExternalUriLauncher.cs`
+
+Allowed schemes:
+
+- HTTPS;
+- mailto.
+
+Rejected examples/policies:
+
+- HTTP;
+- file URI;
+- script URI;
+- relative path;
+- malformed URI;
+- credential-bearing HTTPS user-info.
+
+Fixed product destinations include:
+
+- repository;
+- GitHub Releases;
+- Buy Me a Coffee;
+- primary business email;
+- secondary business email;
+- support email.
+
+The application contains no required account, telemetry SDK, advertising SDK, analytics endpoint, cloud database, background update tracker, API key, or product credential.
+
+`PRIVACY.md` now explicitly documents:
+
+- no background update polling;
+- user-initiated Releases navigation only;
+- local informational version reading;
+- opened-stream import size validation;
+- object/schema validation;
+- duplicate timezone normalization;
+- collision-resistant corrupt recovery files;
+- cancellation-independent startup rollback;
+- tray-unavailable behavior;
+- local chime helper behavior.
+
+---
+
+# Loading and state quality
+
+Added:
+
+- `src/ChronoDesk.App/Localization/StateStrings.resx`
+- `src/ChronoDesk.App/Localization/StateStrings.cs`
+
+Main-window state now begins with a real localized:
+
+`Loading local clock data…`
+
+There is no fake delay.
+
+`MainWindowViewModel` exposes:
+
+- `IsInitialized`;
+- `IsLoading`;
+- localized status text;
+- localized singular/plural world-clock count.
+
+World-clock count no longer lowercases an English section heading, which improves localization correctness.
+
+---
+
+# Version/update implementation
+
+Added:
+
+- `src/ChronoDesk.App/Services/AppVersionInfo.cs`
+- `src/ChronoDesk.App/Localization/UpdateStrings.resx`
+- `src/ChronoDesk.App/Localization/UpdateStrings.cs`
+
+`AppVersionInfo.GetDisplayVersion()`:
+
+1. reads `AssemblyInformationalVersionAttribute`;
+2. uses it when present;
+3. strips build metadata after `+`;
+4. preserves prerelease identifiers;
+5. falls back to assembly version/development only when informational version is unavailable.
+
+A static review caught and fixed an invalid `IndexOf(char, StringComparison)` call in the first version; the final implementation uses the valid character overload.
+
+Updates section behavior:
+
+- version only from local assembly metadata;
+- no feed/API call;
+- no timer/background worker;
+- explicit user click opens `AppLinks.Releases` through `ExternalUriLauncher`;
+- safe failure status if no system handler is available.
+
+---
+
+# Theme implementation follow-through
+
+Added:
+
+- `src/ChronoDesk.App/Services/ThemePaletteSelector.cs`
+
+`ThemePaletteSelector` centralizes fixed palette selection for:
+
+- Light;
+- Dark;
+- High Contrast;
+- System using Avalonia's current actual theme variant.
+
+`App.axaml.cs` now:
+
+- stores active normalized settings used for theme selection;
+- subscribes to `ActualThemeVariantChanged`;
+- applies the current system palette before first desktop-window construction;
+- applies the requested explicit/System variant when settings change;
+- recomputes the five custom brushes when the actual OS theme changes.
+
+Official Avalonia source/API was checked during this work to verify the relevant theme and tray properties/events rather than relying on stale memory.
+
+Real visual behavior still needs native Windows/macOS/Linux validation.
+
+---
+
+# Tray safety follow-through
+
+Primary files:
+
+- `src/ChronoDesk.App/Services/TrayVisibilityPolicy.cs`
+- `src/ChronoDesk.App/App.axaml.cs`
+- `src/ChronoDesk.App/Views/MainWindow.axaml.cs`
+
+`App.IsTrayIntegrationAvailable` starts false and is set true only when the created Avalonia tray icon exposes a native menu exporter.
+
+Official Avalonia source was inspected and confirms `TrayIcon.NativeMenuExporter` maps to the platform implementation's menu exporter.
+
+Close-to-tray requires:
+
+- not explicit application quit;
+- MinimizeToTray enabled;
+- reliable tray restoration available.
+
+Background startup hiding requires:
+
+- `--background` requested;
+- MinimizeToTray enabled;
+- reliable tray restoration available.
+
+This protects Linux/other desktop environments where tray support can be absent or incomplete.
+
+---
+
+# Release and repository quality
+
+Repository includes:
+
+- MIT `LICENSE`;
+- README;
+- CHANGELOG;
+- ROADMAP;
+- SECURITY;
+- PRIVACY;
+- SUPPORT;
+- CONTRIBUTING;
+- CODE_OF_CONDUCT;
+- architecture/setup/development/testing/release/troubleshooting/accessibility/performance/GitHub-maintenance docs;
+- seven ADRs;
+- issue forms;
+- PR template;
+- funding config;
+- Dependabot;
+- CI;
 - CodeQL;
-- Dependabot.
+- Dependency Review;
+- tagged release workflow;
+- documentation local-link verifier;
+- high-signal tracked-secret verifier.
+
+Release workflow creates self-contained ZIPs for:
+
+- win-x64;
+- linux-x64;
+- osx-x64;
+- osx-arm64.
+
+Release integrity output:
+
+- one `.sha256` per ZIP;
+- checksum verification before publication;
+- `release-manifest.json` containing version/tag/source commit/archive name/archive size/archive SHA-256;
+- `release-manifest.json.sha256`.
+
+Checksums are documented as integrity metadata, not a replacement for code signing/notarization.
+
+CodeQL and Dependency Review now use same-ref concurrency cancellation to reduce obsolete workflow queue buildup from granular development.
 
 ---
 
 # Automated test inventory
 
-Current automated coverage includes:
+## Domain/core
 
-- clock formatting;
-- 12/24-hour behavior;
-- seconds rendering;
-- ISO week/calendar details;
-- quiet-hour boundaries;
-- overnight quiet-hour ranges;
+- `ClockFormatterTests`
+- `QuietHoursTests`
+- `ChimePolicyTests`
+- `AppSettingsTests`
+- `DomainPropertyTests`
+
+Coverage includes:
+
+- 12/24-hour formatting;
+- seconds;
+- date/week/calendar details;
+- quiet-hour boundaries and overnight logic;
 - chime cadence and duplicate suppression;
-- settings normalization and invariants;
-- JSON save/load round trips;
-- portable export/import;
-- corrupt JSON recovery;
-- unsupported/numeric enum rejection;
-- oversized import rejection;
-- deterministic malformed-import fuzz corpus;
-- missing-schema/schema-0 migration;
+- visual-setting bounds;
+- null/invalid enum normalization;
+- imported text bounds;
+- single-world-clock invariant;
+- maximum-world-clock invariant;
+- duplicate clock IDs;
+- duplicate timezone IDs case-insensitively;
+- deterministic property-style idempotence;
+- deterministic timezone uniqueness property assertions.
+
+## Persistence/import
+
+- `JsonSettingsStoreTests`
+- `SettingsImportFuzzTests`
+
+Coverage includes:
+
+- save/load;
+- export/import;
+- corrupt JSON;
+- corrupt backup preservation;
+- repeated corrupt recovery creates unique files;
+- non-object JSON root rejection;
+- missing-schema migration;
+- schema-0 migration;
 - negative/future schema rejection;
-- system timezone discovery/search/fallback;
-- deterministic property-style domain coverage;
-- startup registration generation/escaping;
-- startup-preference persistence consistency through the main view model;
-- startup rollback behavior when persistence fails;
-- safe import behavior preserving the device startup preference;
-- world-clock remove/undo ordering;
-- timezone-search feedback state;
-- external URI allow-list policy;
-- Avalonia headless smoke tests for primary windows;
-- mini/focus window-mode transitions;
-- undo/search-feedback control presence;
-- localized resource loading in primary windows.
+- numeric enum rejection;
+- oversized import rejection;
+- deterministic malformed binary/JSON fuzz corpus;
+- primary settings remain untouched by failed import.
+
+## Timezones
+
+- `SystemTimeZoneCatalogTests`
+
+Coverage includes catalog availability, UTC, invalid fallback, bounded/case-insensitive search.
+
+## Startup/platform policies
+
+- `StartupRegistrationDocumentsTests`
+- `MainWindowViewModelTests`
+- `StartupRollbackCancellationTests`
+- `TrayVisibilityPolicyTests`
+
+Coverage includes:
+
+- platform registration document/command generation;
+- escaping/path validation;
+- startup rollback after normal persistence failure;
+- imported startup isolation;
+- explicit startup change application;
+- startup rollback even when the failed save cancels its caller token;
+- close/background tray safety truth tables.
+
+## App policies/services
+
+- `ExternalUriLauncherTests`
+- `AppVersionInfoTests`
+- `ThemePaletteSelectorTests`
+- `MainWindowStateTests`
+
+Coverage includes:
+
+- safe URI policy;
+- approved product destinations;
+- display-version prerelease/build-metadata behavior;
+- System/Light/Dark/High Contrast palette selection;
+- loading -> initialized/ready transition;
+- localized singular/plural world-clock count.
+
+## Headless Avalonia UI
+
+- `AvaloniaTestSetup`
+- `HeadlessUiSmokeTests`
+
+Coverage includes:
+
+- main-window XAML/resources;
+- named clock/search/search-status/undo controls;
+- mini dimensions and topmost restoration;
+- focus-mode chrome hide/restore;
+- primary Settings controls;
+- Settings Updates controls/version;
+- Settings About version;
+- onboarding;
+- standalone About.
+
+Headless tests do not prove native tray, startup, sound, browser/mail handlers, file pickers, screen readers, display scaling, or OS-theme visual integration.
 
 ---
 
-# Commands/checks actually run in this continuation
+# Current documentation aligned in this continuation
+
+Updated:
+
+- `README.md`
+- `CHANGELOG.md`
+- `ROADMAP.md`
+- `PRIVACY.md`
+- `SECURITY.md`
+- `docs/testing.md`
+- `docs/accessibility.md`
+- `docs/performance.md`
+- `what_changed.md`
+
+Documentation now reflects:
+
+- offline-safe Updates section;
+- Settings About section;
+- informational version display;
+- loading/count states;
+- runtime System-theme refresh;
+- duplicate timezone normalization;
+- cancellation-independent startup rollback;
+- opened-stream settings size validation;
+- collision-resistant corrupt recovery;
+- tray safety;
+- non-redirected chime helper output;
+- current expanded tests;
+- exact verification limitations.
+
+---
+
+# Errors/bugs found and fixed in the latest continuation
+
+## App version helper compile/API issue
+
+First implementation used:
+
+`informationalVersion.IndexOf('+', StringComparison.Ordinal)`
+
+That char + `StringComparison` overload is not the correct API form for the target.
+
+Fixed to:
+
+`informationalVersion.IndexOf('+')`
+
+## Startup rollback cancellation consistency
+
+Problem:
+
+If startup integration was changed, then settings persistence cancelled the same caller token and failed, rollback reused that cancelled token and could be prevented from restoring the previous OS startup state.
+
+Fix:
+
+Rollback now calls `SetEnabledAsync(previousValue, CancellationToken.None)` and has dedicated regression coverage.
+
+## Duplicate imported timezone invariant
+
+Problem:
+
+Normal UI prevented adding the same timezone twice, but imported/in-memory normalized settings only deduplicated clock IDs. Two different IDs could reference the same timezone.
+
+Fix:
+
+Normalization now also applies case-insensitive `TimeZoneId` uniqueness. Existing capacity/property tests were updated so they continue exercising real list bounds rather than collapsing all synthetic clocks to `UTC`.
+
+## Settings input size observation
+
+Improvement:
+
+The import/load size limit previously used `FileInfo.Length` before the actual file open. Validation now occurs from `stream.Length` on the opened stream immediately before parsing, keeping the bound tied to the actual read handle.
+
+## Corrupt recovery filename collision
+
+Problem:
+
+Corrupt backups originally used only second-resolution timestamp suffixes. Two failures in the same second could collide and prevent preservation.
+
+Fix:
+
+Recovery name now includes milliseconds plus a GUID. A repeated-corruption regression test verifies two distinct backups.
+
+## Unix chime output redirection
+
+Problem/risk:
+
+Optional system helper processes redirected stdout/stderr but ChronoDesk never read those streams. A sufficiently chatty helper can block on a full pipe while the app awaits process exit.
+
+Fix:
+
+Unused redirects were removed. Fixed executable paths and `ArgumentList` remain.
+
+## System theme custom-palette staleness
+
+Problem:
+
+Requested System theme could let Avalonia's underlying Fluent theme follow the OS while ChronoDesk's custom brushes stayed at the palette computed during the last settings application.
+
+Fix:
+
+Centralized palette selection + `ActualThemeVariantChanged` subscription updates custom brushes when the OS theme changes.
+
+## Settings baseline gaps
+
+The master prompt expects Settings sections for Updates and About. These are now implemented rather than deferred to the standalone About window or documentation.
+
+---
+
+# Verification actually observed
 
 ## Local execution environment
 
-Checked command availability from the connected execution environment:
+Earlier checks in this implementation session established:
 
 ```text
 dotnet: not installed / not on PATH
@@ -518,244 +651,224 @@ git: /usr/bin/git
 git version 2.47.3
 ```
 
-Therefore this continuation does **not** claim a local `dotnet restore`, `dotnet build`, `dotnet test`, `dotnet format`, PowerShell script execution, native GUI launch, or native package launch.
+The connected execution environment therefore cannot truthfully claim local:
 
-Earlier network clone attempts from this execution environment also encountered DNS/network access limitations, so GitHub repository inspection/writes and GitHub Actions remain the authoritative remote verification mechanism available here.
+- `dotnet restore`;
+- `dotnet format`;
+- `dotnet build`;
+- `dotnet test`;
+- PowerShell verification scripts;
+- Avalonia GUI launch;
+- native publish/package launch.
 
-## GitHub Actions status observed before this handoff commit
+Earlier direct clone/network attempts also hit DNS/network restrictions, so connected GitHub repository operations plus GitHub Actions are the authoritative remote verification route available in this session.
 
-For branch commit:
+## PR state observed before this handoff commit
 
-`fc845252242584cb9485ff7ca01bd3549986de70`
+PR #15 at source head:
 
-GitHub registered:
+`0a1fc4b3021b9fd9bc8f7ff648960e4518317874`
 
-- Dependency Review run `32216403945` — **queued** at observation time;
-- CI run `32216403971` — **queued** at observation time;
-- CodeQL run `32216403949` — **queued** at observation time.
+was:
 
-This status is intentionally recorded as queued, not PASS.
+- open;
+- not merged;
+- mergeable;
+- 101 commits;
+- 55 changed files.
 
-The queue is affected by many superseded runs created during granular development. Phase 7 added concurrency cancellation to CodeQL and Dependency Review; the CI workflow already had cancellation. The connected GitHub tooling does not expose a general action for cancelling all historic queued workflow runs, so old queue entries cannot be truthfully cleared from this session.
+## GitHub Actions state observed for that exact head
 
-This handoff update creates another documentation-only branch commit, so GitHub may register a newer set of branch-head checks after this file is committed. The final release/merge gate remains: use the latest branch-head CI/CodeQL/dependency-review results, not the older run IDs above.
+- CodeQL run `32223266917` — **queued**;
+- Dependency Review run `32223266931` — **queued**;
+- CI run `32223266921` — **queued**.
 
----
+These are recorded as queued, **not PASS**.
 
-# Errors/bugs found and fixed during Phase 7
-
-## C# startup path validation compile/API issue
-
-Initial startup builder code used a `string.Contains(char, StringComparison)` shape that is not a valid API form for the target baseline.
-
-Fixed by using the valid character overload:
-
-```csharp
-path.Contains('"')
-```
-
-Regression-test coverage remains.
-
-## Startup document assertions
-
-Startup tests initially used `Assert.Contains(..., StringComparison.Ordinal)` overloads whose compatibility with the pinned xUnit baseline was unnecessary to depend on.
-
-Fixed by using baseline-compatible `Assert.Contains(string, string)` assertions.
-
-## Secret-scan Git enumeration portability
-
-The first scanner version used null-delimited `git ls-files -z` output through PowerShell string handling. To avoid platform/host differences, it was simplified to normal line-based `git ls-files`, whose tracked paths are safe for this repository's file naming policy.
-
-## GitHub contents stale-SHA write conflict
-
-One sequential edit of `scripts/verify-no-secrets.ps1` received an HTTP 409 because the supplied blob SHA had already changed.
-
-Resolution:
-
-1. fetched the branch file again;
-2. used the returned current blob SHA;
-3. applied the intended fix successfully.
-
-No content was lost.
-
-## Workflow queue accumulation
-
-Many atomic commits caused old CodeQL/dependency-review runs to accumulate because those workflows did not originally have same-ref concurrency cancellation.
-
-Fixed for future runs by adding `cancel-in-progress: true` concurrency groups to both workflows.
+This handoff update creates a newer documentation-only branch commit, so GitHub may register a newer workflow set. Any future merge/release decision must use checks from the actual latest branch head, not the run IDs above.
 
 ---
 
-# Migration notes
+# Stable-release gates that are still open
 
-Current settings schema: **1**.
+These are execution/verification gates, not missing source features:
 
-Migration policy now implemented:
+1. latest exact branch-head CI must finish successfully on Ubuntu, Windows, and macOS;
+2. latest exact branch-head CodeQL must finish successfully;
+3. latest exact branch-head Dependency Review must finish successfully;
+4. any CI/compiler/format/test/security failure must be fixed before merge;
+5. PR #15 should remain open until latest-head automated verification is satisfactory;
+6. real Windows 11 GUI/tray/startup/chime/file-picker/theme/accessibility validation;
+7. real macOS x64/arm64 GUI/tray/LaunchAgent/chime/file-picker/theme/accessibility validation;
+8. representative Linux GNOME/KDE GUI/tray/XDG/chime/file-picker/theme/accessibility validation;
+9. verify tray-unavailable environments keep the app reachable;
+10. verify System theme switches live with the OS;
+11. verify browser/mail handler behavior and safe failure state;
+12. verify idle Updates UI performs no ChronoDesk background network activity;
+13. verify display scaling and large text;
+14. capture real screenshots from verified release builds and replace the explicit placeholder;
+15. publish only artifacts that pass checksum/manifest inspection;
+16. signing/notarization remains optional future infrastructure and requires protected signing credentials not stored in Git;
+17. do not tag stable `v1.0.0` before the repository Definition-of-Done/release checklist gates are actually satisfied.
 
-- no `schemaVersion` field -> interpret as legacy schema `0`;
-- schema `0` -> migrate to schema `1`;
-- schema `< 0` -> reject;
-- schema `> CurrentSchemaVersion` -> reject;
-- every future migration must advance exactly one version at a time;
-- a missing migration step must fail rather than guess;
-- final migrated settings pass through normal bounded/default-safe normalization;
-- importing settings still preserves the current device startup preference and cannot silently change operating-system startup registration.
+---
 
-The current `0 -> 1` migration does not rename/remove fields because pre-versioned development settings used the same semantics. It establishes the real migration mechanism and tests without manufacturing a fake breaking change.
+# Migration notes for future schema changes
 
-For the first future schema increment:
+Current schema: 1.
+
+For a future schema 2:
 
 1. increment `AppSettings.CurrentSchemaVersion`;
-2. add a `1 -> 2` migration case;
-3. retain all `0 -> 1` tests;
-4. add a real previous-version fixture;
-5. test a multi-step `0 -> 1 -> 2` upgrade;
-6. update ADR 0007, CHANGELOG, release notes, and this file.
+2. add explicit `1 -> 2` migration;
+3. retain `0 -> 1` coverage;
+4. add a real schema-1 fixture from an actual released version;
+5. test direct `1 -> 2` and multi-step `0 -> 1 -> 2`;
+6. verify import still cannot alter startup registration implicitly;
+7. verify normalized timezone/capacity/text invariants after migration;
+8. update ADR 0007;
+9. update CHANGELOG/release notes/this handoff.
 
 ---
 
-# Release notes draft for Phase 7 changes
+# Release notes draft — current Phase 7 branch
 
 ## Added
 
-- world-clock removal undo;
-- timezone-search count/empty feedback;
-- deterministic startup registration builders and tests;
-- explicit settings schema migration pipeline;
-- migration compatibility tests;
-- centralized external URI policy and tests;
-- documentation local-link CI gate;
-- tracked-file high-signal secret CI gate;
-- release archive SHA-256 sidecars;
-- release integrity manifest and manifest checksum.
+- deterministic cross-platform startup registration builders;
+- world-clock remove Undo;
+- timezone search count/no-results feedback;
+- world-clock capacity feedback;
+- explicit loading state and localized world-clock count text;
+- Settings Updates section;
+- Settings About section;
+- informational version display helper;
+- runtime System-theme palette selection helper;
+- stepwise settings migration pipeline;
+- release ZIP SHA-256 files and integrity manifest;
+- local documentation-link verifier;
+- non-echoing high-signal tracked-secret verifier;
+- expanded unit/property/fuzz/headless regression suite.
 
 ## Changed
 
-- startup enabled-state detection now requires the exact expected registration;
-- macOS/Linux startup files use atomic replacement;
-- settings reads identify and migrate source schema before normalization;
-- About external destinations use centralized approved constants/launcher policy;
-- CodeQL/dependency-review workflows cancel superseded same-ref runs.
+- macOS/Linux startup registration uses atomic replacement;
+- startup enabled-state check requires exact expected registration;
+- settings imports normalize duplicate timezone cards;
+- settings file size is checked from the opened stream;
+- corrupt recovery filenames are collision-resistant;
+- system theme custom brushes refresh when OS theme changes;
+- optional Unix chime helpers do not redirect unused output;
+- external product/release/support/funding links are centralized and scheme-restricted;
+- CodeQL/dependency-review cancel superseded same-ref runs;
+- README/security/privacy/testing/accessibility/performance docs match current behavior.
 
-## Security
+## Fixed
 
-- startup executable paths reject control characters;
-- Windows startup commands reject embedded quotes;
-- macOS/Linux startup registration escapes path content appropriately;
-- external launch policy rejects insecure/local/script/credential-bearing destinations;
-- negative/future settings schemas fail closed;
-- tracked-file scanner adds a non-echoing high-signal secret gate;
-- release archives receive verified integrity digests.
+- false success at the 24-world-clock limit;
+- stale always-on-top state after mini mode;
+- unreachable hidden-process risk when tray restoration is unavailable;
+- startup rollback after a cancelled settings save;
+- displayed prerelease version losing informational-version suffix;
+- potential corrupt recovery filename collision;
+- custom System-theme palette remaining stale after OS theme change;
+- invalid char/StringComparison API usage found during static review.
 
-## Release state
+## Security/privacy
 
-No stable release tag has been created by Phase 7. Native desktop verification and latest-head GitHub Actions checks remain release gates.
+- bounded object-root settings input;
+- explicit schema migration/rejection rules;
+- duplicate timezone normalization;
+- safe startup document generation and rollback;
+- fixed safe external destinations;
+- no background update polling;
+- high-signal tracked-secret CI gate;
+- release artifact integrity metadata.
 
----
-
-# Native validation still required before stable v1.0.0
-
-These are release gates rather than unimplemented source features:
-
-- Windows 11 tray behavior in an interactive desktop session;
-- macOS tray/menu behavior on current Intel and Apple Silicon GUI environments;
-- Linux tray behavior on representative GNOME/KDE sessions;
-- startup enable/disable using real current-user OS integration;
-- chime behavior with platform sound facilities present/absent;
-- real native file-picker import/export flows;
-- screen-reader and keyboard accessibility on each primary platform;
-- high contrast with actual platform accessibility settings;
-- display scaling and large-text behavior;
-- real packaged application launch for each release RID;
-- replacement of the README/documentation screenshot placeholder with screenshots from verified release builds;
-- signed/notarized installers if signing infrastructure is later supplied.
-
-These tasks cannot be truthfully marked complete from a repository-only API session.
+No stable release tag has been created from this branch.
 
 ---
 
-# Open issues / remaining release gates
+# Next exact continuation
 
-1. Latest branch-head CI must complete successfully on Ubuntu, Windows, and macOS.
-2. Latest branch-head CodeQL must complete successfully.
-3. Latest branch-head dependency review must complete successfully.
-4. Any failure reported by those jobs must be fixed before merge/release.
-5. PR #15 should be merged only after the automated branch-head verification is satisfactory.
-6. Real desktop manual checks from `docs/testing.md`, `docs/accessibility.md`, and `docs/release.md` remain mandatory before stable `v1.0.0`.
-7. Real screenshots must replace the placeholder only after a verified build is run.
-8. Branch-protection required-check names should be confirmed against actual successful workflow check names before the release branch policy is declared final.
-9. Signing/notarization remains optional future infrastructure and requires protected secrets/certificates not stored in Git.
-
----
-
-# Next exact tasks
-
-If resuming while PR #15 is still open:
+If PR #15 is still open:
 
 1. read this file first;
-2. inspect the current PR head;
-3. fetch the latest CI/CodeQL/Dependency Review runs for that exact head;
-4. if a job failed, fetch the failed job/log details and fix the concrete defect with a focused commit + regression test where applicable;
-5. update this file with the actual result;
-6. merge PR #15 only after automated verification is satisfactory;
-7. after merge, confirm `main` contains the Phase 7 files and update this handoff only if the merge changes the final state materially.
+2. fetch PR #15 and record its exact current head SHA;
+3. fetch CI/CodeQL/Dependency Review for **that exact SHA**;
+4. if any latest-head job failed, inspect the failed job/log and fix the concrete failure with a focused commit plus regression test where practical;
+5. update this file with the real result;
+6. merge only after latest-head automated verification is satisfactory;
+7. after merge, verify `main` contains the Phase 7 files.
 
-If PR #15 has already been merged in a later session:
+If PR #15 has already been merged in a later continuation:
 
-1. do not reimplement Phase 7;
-2. proceed to real release-candidate desktop validation;
-3. record OS/version/architecture/desktop details and pass/fail evidence in the release checklist;
-4. replace screenshots only with real verified application captures;
-5. prepare the first tagged preview/release candidate only when documented gates pass;
-6. do not publish stable `v1.0.0` until all Definition-of-Done gates that require real execution are satisfied.
+1. do not reimplement this branch;
+2. move to real release-candidate desktop validation;
+3. record OS/version/architecture/desktop environment and actual pass/fail evidence;
+4. replace screenshot placeholders only with real verified captures;
+5. prepare the first preview/release-candidate tag only after the release checklist passes;
+6. keep stable `v1.0.0` blocked until all required real-execution gates are complete.
 
 ---
 
-# Recent meaningful Phase 7 commits
+# Recent meaningful continuation commits
 
-- `fc845252242584cb9485ff7ca01bd3549986de70` — `docs: link persistence decision to migration pipeline`
-- `25b7ea92d3b5b596bf295c05bfbd450d28016ee1` — `docs: document settings schema migration coverage`
-- `0950e3220e149be5e2069dfcb3a241fb10e02321` — `docs: mark settings migration hardening implemented`
-- `0f7f869db6c6edda689aa6776a62bba098b5de4b` — `docs: record settings migrations and workflow queue hardening`
-- `7e15e0008a0767662951907a650ca6c0c7db699c` — `ci: cancel superseded dependency review runs`
-- `1c32ba3897b930db99dfd7123dd17ea30b195799` — `ci: cancel superseded CodeQL runs`
-- `85dbfbc8f24caee9c68a0366172d99f7d21ba6d3` — `docs: record stepwise settings migration architecture`
-- `5354bce0f8da8eb99e198004aaa25521c462af31` — `test: cover legacy and unsupported settings schema versions`
-- `866a1f0b82f1cc4619e94bfbccf2e96b3f1dfde7` — `refactor: route settings reads through schema migration pipeline`
-- `517ea90f1480d67c3b4b2ba9ad142a4f72caffdb` — `feat: add versioned settings migration pipeline`
-- `1afc13c64c37573b480d229e7d17682a0b44741f` — `docs: add release integrity fields to notes template`
-- `138aec3a9cb9665c84f6af75186f1ca3803e61cb` — `docs: align testing guide with release hardening checks`
-- `8b251bdc0e41a6d2775721cf3141d5f79fdde043` — `docs: document startup and tracked-secret hardening`
-- `a1fcb5d6183bb2eac9584ff78d74d37ac2caa591` — `test: keep startup assertions compatible with baseline xunit API`
-- `aade97f2bc4083388a229d3a1212a937388a0ded` — `docs: add phase 7 release hardening roadmap`
-- `b83824821d178ef8144ad084b061d9816d1eb068` — `docs: record phase 7 release hardening changes`
-- `a3d9d86c1c5a449eb7e6116ac3a05baa231347f9` — `ci: scan tracked files for high-signal secrets`
-- `87a2ae98f6fbfecb7275e2c703cc06390c618126` — `fix: enumerate tracked files portably in secret scan`
-- `38a72976c211efa767e66403a43e0104c68ac261` — `ci: add release checksums and integrity manifest`
-- `a2c6516e7c5efbb71b138831c4cd79337717e77d` — `fix: use valid quote validation for Windows startup paths`
-- `55476b18758dafa012023ea79552427868d6afd8` — `test: cover startup registration document generation`
-- `d4954ca4e9dc1f5d6e950865db02cf31e9464a3a` — `refactor: centralize platform startup registration generation`
-- `59073ce3cc146907786aca15aa79864519b9d3b9` — `security: add deterministic startup registration builders`
-- `97778629ca5eb095cfbeffddcf36783479b9d17e` — `docs: refresh ChronoDesk implementation handoff`
+Latest observed sequence before this handoff includes:
 
-Additional Phase 7 commits exist for localization, undo/search UI, URI services/tests, documentation scripts, and release documentation. Use the pull request commit list as the authoritative complete sequence.
+- `0a1fc4b3021b9fd9bc8f7ff648960e4518317874` — `test: cover timezone uniqueness in property-style normalization`
+- `eccab09920dc6cd499e3d875b73517d90d2eae46` — `docs: add update and theme performance constraints`
+- `d40b9c1ce069e5fb6e2dbbb47731f989f2bbc1a7` — `docs: add update About and live-theme accessibility checks`
+- `3586fa32a3790a0f76ec125e2029be7073439734` — `docs: mark update About theme and recovery hardening complete`
+- `c9d830edbc91bb6b8bb5c8e56d056348855cc91c` — `docs: align testing guide with final hardening coverage`
+- `cdf5e37483b280a3f8318976da0d0cd3e3623fbb` — `docs: align security policy with latest hardening`
+- `1a7ed33bc531d2afebf79f9583e4c579b6ab8e29` — `docs: record final settings and reliability hardening`
+- `150ddf09f8d610fdf82bcadabb98796d90f87c35` — `docs: document offline update and recovery privacy behavior`
+- `ab70197f30016c183b859fa826261666f41625af` — `docs: align README with release hardening behavior`
+- `59ff2dbbf3d6bf9e48920b94318a9ffd9dbdff1f` — `test: cover settings root validation and corrupt backup uniqueness`
+- `f36c2bf9f32dea2ad9eedf96cb16722bb606bcde` — `fix: avoid unread redirected output in chime helpers`
+- `bed4b4cde26a214f97bcb7683e4e2f3c85e97b8c` — `security: validate settings size from opened stream`
+- `6d6dfe0f96b572cd2ee1ec2f4c1d58fec2c278d4` — `fix: use valid build metadata separator lookup`
+- `58388addf2ddfd3b6ecd2ae2eb21f43af0d46d93` — `fix: apply system palette before first desktop window`
+- `d82149cdaa2b910a01967836a57b923be0d257ad` — `test: cover system and explicit theme palette selection`
+- `6ec93f61ce472ded5571adb30e440941d5343062` — `fix: refresh custom palette when system theme changes`
+- `8257eaecf12316145557e3118736eb7aab6ca23b` — `refactor: centralize theme palette selection`
+- `f4002e4c22778259f81d4cbd53d64d3e02531b80` — `test: cover localized loading and world clock count state`
+- `d126aaefd7022e3fae90e79c4cb0c2c1df0ab6d4` — `feat: expose localized loading and world clock count state`
+- `33648f3be00ce43382f3cf88426364d391efe945` — `feat: expose localized loading and count resources`
+- `74c6ddcbdf95660c5966a1448def3e6e1e725565` — `feat: add localized loading and count resources`
+- `afbeb600a24f4391b4182dd54e7efd84f96ccf05` — `test: align world clock normalization invariants`
+- `a69c16ca5c2772e0fd5dbfa6311c12c420d53973` — `fix: normalize duplicate timezone cards consistently`
+- `82a0fda228c6d6770a2ebfa0c4f8566e1bd0cc16` — `test: restore startup state after cancelled settings save`
+- `8febb263a47d441f05afe0bf670c19548baf084c` — `fix: make startup rollback independent of cancelled save token`
+- `455cbe1be7fc2efeb4c8741dfa218ff5179e178c` — `test: cover update settings controls in headless UI`
+- `7df0fe780557d0c37fc93284d9d50c99dce7d4e2` — `test: cover application display version metadata`
+- `1e0dc939f9fe982452ad91f4c117a5dfca92d101` — `feat: wire settings release information action`
+- `296907f0fc847d0cb1cc5b6ddbd623aa85f245bd` — `feat: add offline-safe updates section to settings`
+- `aa9f9809f1f97ae2ac835314328b677009fc9c7d` — `feat: expose localized update settings resources`
+- `ac4451ce93843595ad66ed03526dd61399fb061f` — `feat: add localized update settings resources`
+- `0fc27c571c55f924256c1a632091eab9796d6464` — `refactor: use centralized version metadata in About`
+- `46e4a38f1166fbb4812b220e68fbc6eb6e180ca3` — `feat: centralize application version metadata`
+
+Additional commits between these milestones implement Settings About, generic safe external-handler feedback, headless About coverage, and related review fixes. PR #15's commit list is the authoritative complete sequence because this file itself adds one newer commit.
 
 ---
 
 # Handoff rule
 
-For every later meaningful milestone, update this file with:
+Every future continuation must keep this file current with:
 
-- current version/milestone;
-- completed work;
-- files/modules added or changed;
-- tests added;
-- commands/checks that actually ran and exact results;
+- milestone/version;
+- exact repository branch/PR/head;
+- files/features changed;
+- tests added/changed;
+- commands/checks actually run and actual result;
+- bugs/errors found and fixes;
 - known limitations;
-- open issues;
-- next exact tasks;
+- open issues/release gates;
 - migration notes;
 - release notes draft;
-- latest meaningful commit hashes/messages.
+- exact next tasks;
+- meaningful commit hashes/messages.
 
-Do not convert queued checks into PASS, do not claim native verification from headless tests, and do not call ChronoDesk stable-release complete until the actual Definition-of-Done gates in the master prompt and repository release documentation are satisfied.
+Never convert queued/pending checks into PASS. Never treat headless coverage as proof of native desktop behavior. Never claim a stable ChronoDesk release until the master-prompt Definition-of-Done and repository release checklist are actually satisfied.
