@@ -65,6 +65,7 @@ public sealed class HeadlessUiSmokeTests
     {
         var viewModel = new MainWindowViewModel(new AppServices());
         var window = new SettingsWindow(viewModel);
+        var settingsVersion = window.FindControl<TextBlock>("SettingsVersionText");
 
         Assert.Equal(Strings.SettingsTitle, window.Title);
         Assert.NotNull(window.FindControl<ComboBox>("FormatCombo"));
@@ -72,6 +73,11 @@ public sealed class HeadlessUiSmokeTests
         Assert.NotNull(window.FindControl<CheckBox>("ReducedMotionCheck"));
         Assert.NotNull(window.FindControl<CheckBox>("StartWithSystemCheck"));
         Assert.NotNull(window.FindControl<CheckBox>("ChimeEnabledCheck"));
+        Assert.NotNull(window.FindControl<Button>("OpenReleasesButton"));
+        Assert.NotNull(window.FindControl<Button>("OpenAboutButton"));
+        Assert.NotNull(settingsVersion);
+        Assert.Contains("0.1.0-preview", settingsVersion.Text, StringComparison.Ordinal);
+        Assert.Equal("Updates & About", SettingsExtras.TabUpdatesAbout);
     }
 
     [AvaloniaFact]
