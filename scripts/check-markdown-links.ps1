@@ -5,6 +5,9 @@ param(
 
 $ErrorActionPreference = 'Stop'
 $root = [System.IO.Path]::GetFullPath($RepositoryRoot)
+$rootWithSeparator = $root.TrimEnd(
+    [System.IO.Path]::DirectorySeparatorChar,
+    [System.IO.Path]::AltDirectorySeparatorChar) + [System.IO.Path]::DirectorySeparatorChar
 $failures = [System.Collections.Generic.List[string]]::new()
 $linkPattern = [regex]'!?(?:\[[^\]]*\])\((?<target>[^)]+)\)'
 
@@ -21,13 +24,16 @@ function Get-LocalTargetPath {
     )
 
     $target = $RawTarget.Trim()
-    if ($target.StartsWith('<') -and $target.EndsWith('>')) {
-        $target = $target.Substring(1, $target.Length - 2)
+    if ($target.StartsWith('<')) {
+        $closingBracket = $target.IndexOf('>')
+        if ($closingBracket -gt 0) {
+            $target = $target.Substring(1, $closingBracket - 1)
+        }
     }
-
-    # Strip an optional Markdown title after a whitespace delimiter.
-    if ($target -match '^(?<path>\S+)(?:\s+["''][^"'']*["''])$') {
-        $target = $Matches.path
+    else {
+        # Markdown titles follow the destination after whitespace. Repository paths
+        # containing spaces should use %20 or the angle-bracket destination form.
+        $target = ($target -split '\s+', 2)[0]
     }
 
     if (Test-IsExternalTarget -Target $target) {
@@ -58,8 +64,14 @@ foreach ($file in $markdownFiles) {
             continue
         }
 
-        if (-not $localPath.StartsWith($root, [System.StringComparison]::OrdinalIgnoreCase)) {
-            $failures.Add("$($file.FullName): link escapes repository root: $rawTarget")
+        $isRepositoryPath = $localPath.Equals(
+            $root,
+            [System.StringComparison]::OrdinalIgnoreCase) -or $localPath.StartsWith(
+                $rootWithSeparator,
+                [System.StringComparison]::OrdinalIgnoreCase)
+        if (-not $isRepositoryPath) {
+            $relativeFile = [System.IO.Path]::GetRelativePath($root, $file.FullName)
+            $failures.Add("${relativeFile}: link escapes repository root: $rawTarget")
             continue
         }
 
