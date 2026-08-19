@@ -17,7 +17,7 @@
   <data name="TimezoneSearchEmpty" xml:space="preserve"><value>No matching timezones found</value></data>
   <data name="TimezoneSearchCountFormat" xml:space="preserve"><value>{0} timezones found</value></data>
   <data name="KeepOneWorldClock" xml:space="preserve"><value>Keep at least one world clock</value></data>
-  <data name="WorldClockLimitReached" xml:space="preserve"><value>You can save up to 24 world clocks</value></data>
+  <data name="WorldClockLimitReachedFormat" xml:space="preserve"><value>You can save up to {0} world clocks</value></data>
   <data name="WorldClockRemoved" xml:space="preserve"><value>World clock removed</value></data>
   <data name="WorldClockRestored" xml:space="preserve"><value>World clock restored</value></data>
   <data name="SettingsExported" xml:space="preserve"><value>Settings exported</value></data>
