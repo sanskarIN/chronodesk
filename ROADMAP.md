@@ -47,6 +47,7 @@ Status: **Implemented in source; platform validation pending**
 - [x] User-facing English strings externalized for future localization.
 - [x] Timezone search empty/result-count feedback.
 - [x] Undo for the most recently removed world clock.
+- [x] Explicit world-clock capacity feedback before persistence.
 
 ## Phase 3 — Platform hardening
 
@@ -63,6 +64,7 @@ Status: **Source implementation present; manual validation required**
 - [x] Redacted structured logging.
 - [x] Centralized safe external URI launching for fixed product/support links.
 - [x] Explicit stepwise settings migration pipeline for supported legacy schemas.
+- [x] Close/background hiding requires verified tray-menu restoration availability.
 - [ ] Validate tray behavior on Windows 11.
 - [ ] Validate tray behavior on current macOS Intel and Apple Silicon hardware/runners with a GUI session.
 - [ ] Validate tray behavior on representative Linux GNOME/KDE sessions.
@@ -82,11 +84,13 @@ Status: **Implemented for domain/persistence/headless UI; native-desktop validat
 - [x] Timezone catalog tests.
 - [x] Startup registration generation/escaping tests without modifying real startup locations.
 - [x] Startup preference rollback/import-consistency tests.
-- [x] World-clock undo and timezone-search feedback tests.
+- [x] World-clock capacity, undo, and timezone-search feedback tests.
+- [x] Tray visibility policy tests.
 - [x] External URI allow-list policy tests.
 - [x] Deterministic property-style tests for quiet hours/settings invariants.
 - [x] Deterministic malformed-import fuzz coverage and oversized-input rejection.
 - [x] Avalonia headless XUnit smoke tests for primary windows and focus/mini transitions.
+- [x] Headless mini-mode topmost restoration regression coverage.
 - [x] Headless presence checks for world-clock undo/search-feedback controls.
 - [x] Multi-OS CI.
 - [ ] Add direct OS registry/session integration tests only if a reliable isolated runner strategy can avoid touching user startup state.
@@ -135,6 +139,9 @@ Status: **Implementation complete on the continuation branch; automated verifica
 - [x] Add atomic startup registration file replacement.
 - [x] Add world-clock removal undo.
 - [x] Add visible timezone-search empty/count feedback.
+- [x] Enforce world-clock capacity before save with localized feedback.
+- [x] Restore the current always-on-top preference after mini mode.
+- [x] Prevent close/background hiding when reliable tray restoration is unavailable.
 - [x] Centralize external support/repository/funding links and URI policy.
 - [x] Add deterministic documentation local-link CI gate.
 - [x] Add high-signal tracked-file secret CI gate without printing matched values.
