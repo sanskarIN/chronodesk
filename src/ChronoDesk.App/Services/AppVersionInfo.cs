@@ -12,7 +12,7 @@ public static class AppVersionInfo
             .InformationalVersion;
         if (!string.IsNullOrWhiteSpace(informationalVersion))
         {
-            var buildMetadataIndex = informationalVersion.IndexOf('+', StringComparison.Ordinal);
+            var buildMetadataIndex = informationalVersion.IndexOf('+');
             return buildMetadataIndex >= 0
                 ? informationalVersion[..buildMetadataIndex]
                 : informationalVersion;
