@@ -76,24 +76,18 @@ public sealed class JsonSettingsStore : ISettingsStore
         string path,
         CancellationToken cancellationToken)
     {
-        var file = new FileInfo(path);
-        if (!file.Exists)
-        {
-            throw new FileNotFoundException("Settings file was not found.", path);
-        }
-
-        if (file.Length > MaximumSettingsBytes)
-        {
-            throw new InvalidDataException("Settings file exceeds the allowed size.");
-        }
-
         await using var stream = new FileStream(
             path,
             FileMode.Open,
             FileAccess.Read,
             FileShare.Read,
             bufferSize: 16 * 1024,
-            useAsync: true);
+            options: FileOptions.Asynchronous | FileOptions.SequentialScan);
+        if (stream.Length > MaximumSettingsBytes)
+        {
+            throw new InvalidDataException("Settings file exceeds the allowed size.");
+        }
+
         using var document = await JsonDocument.ParseAsync(
             stream,
             new JsonDocumentOptions
@@ -153,7 +147,7 @@ public sealed class JsonSettingsStore : ISettingsStore
                 FileAccess.Write,
                 FileShare.None,
                 bufferSize: 16 * 1024,
-                useAsync: true))
+                options: FileOptions.Asynchronous | FileOptions.SequentialScan))
             {
                 await JsonSerializer.SerializeAsync(
                     stream,
@@ -183,7 +177,8 @@ public sealed class JsonSettingsStore : ISettingsStore
                 return;
             }
 
-            var backup = SettingsPath + $".corrupt-{DateTimeOffset.UtcNow:yyyyMMdd-HHmmss}.json";
+            var backup = SettingsPath
+                + $".corrupt-{DateTimeOffset.UtcNow:yyyyMMdd-HHmmssfff}-{Guid.NewGuid():N}.json";
             File.Move(SettingsPath, backup, overwrite: false);
             logger.Warning("settings.corrupt_preserved", "A corrupt settings file was preserved for manual recovery.");
         }
