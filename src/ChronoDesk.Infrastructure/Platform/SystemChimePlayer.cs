@@ -76,8 +76,6 @@ public sealed class SystemChimePlayer : IChimePlayer
             FileName = executable,
             UseShellExecute = false,
             CreateNoWindow = true,
-            RedirectStandardError = true,
-            RedirectStandardOutput = true,
         };
 
         foreach (var argument in arguments)
@@ -96,7 +94,8 @@ public sealed class SystemChimePlayer : IChimePlayer
             await process.WaitForExitAsync(cancellationToken);
             return process.ExitCode == 0;
         }
-        catch (Exception exception) when (exception is InvalidOperationException or IOException)
+        catch (Exception exception) when (
+            exception is InvalidOperationException or IOException or System.ComponentModel.Win32Exception)
         {
             return false;
         }
