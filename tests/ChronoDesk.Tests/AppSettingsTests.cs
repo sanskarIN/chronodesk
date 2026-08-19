@@ -43,14 +43,14 @@ public sealed class AppSettingsTests
     [Fact]
     public void Normalize_LimitsWorldClockCount()
     {
-        var clocks = Enumerable.Range(0, 40)
+        var clocks = Enumerable.Range(0, AppSettings.MaximumWorldClockCount + 16)
             .Select(index => new WorldClock(index.ToString(), $"Clock {index}", "UTC"))
             .ToList();
         var settings = new AppSettings { WorldClocks = clocks };
 
         var normalized = settings.Normalize();
 
-        Assert.Equal(24, normalized.WorldClocks.Count);
+        Assert.Equal(AppSettings.MaximumWorldClockCount, normalized.WorldClocks.Count);
     }
 
     [Fact]
