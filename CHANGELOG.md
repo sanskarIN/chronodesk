@@ -24,13 +24,14 @@ All notable ChronoDesk changes are documented here. The project uses semantic-ve
 - User-controlled startup integration for Windows, macOS, and Linux.
 - Deterministic startup-registration document builders for Windows, macOS, and Linux.
 - Local JSON settings with atomic writes and corrupt-file preservation.
+- Explicit stepwise settings-schema migration pipeline, including compatibility for pre-versioned/schema-0 development documents.
 - Settings import/export and defaults reset.
 - PII/secret-pattern-redacting structured JSONL logger.
 - Editable SVG logo plus application ICO asset.
 - Native Avalonia vector rendering for the About-screen logo.
 - About screen with project, license, support, GitHub, funding, and **Made by the Sanskar** credit.
 - English-first `.resx` localization resource architecture for user-facing application strings.
-- xUnit coverage for clock formatting, calendar details, quiet hours, chime cadence, settings normalization, persistence/recovery, timezone lookup, startup registration, startup-preference consistency, world-clock undo, and URI validation.
+- xUnit coverage for clock formatting, calendar details, quiet hours, chime cadence, settings normalization, persistence/recovery, schema migration, timezone lookup, startup registration, startup-preference consistency, world-clock undo, and URI validation.
 - Deterministic property-style tests for quiet-hour and settings invariants.
 - Deterministic malformed-import fuzz coverage and oversized-import rejection.
 - Avalonia headless XUnit smoke tests for primary windows, world-clock feedback controls, and focus/mini transitions.
@@ -52,6 +53,8 @@ All notable ChronoDesk changes are documented here. The project uses semantic-ve
 - Startup integration now compares the generated registration with the expected current executable registration rather than treating any same-path registration file as enabled.
 - macOS/Linux startup registration writes use temporary files followed by atomic replacement.
 - External support/project/funding destinations are centralized behind a reusable `https`/`mailto` launcher policy.
+- Settings reads determine the source schema from JSON before deserialization and migrate older supported schemas before normalization.
+- CodeQL and dependency-review workflows now cancel superseded runs for the same ref to reduce queue buildup during granular development.
 
 ### Fixed
 
@@ -59,11 +62,13 @@ All notable ChronoDesk changes are documented here. The project uses semantic-ve
 - Imported settings preserve the device's current startup preference instead of allowing a portable JSON file to enable or disable operating-system startup registration.
 - About-screen branding no longer relies on unsupported built-in SVG image decoding and remains visible across theme variants.
 - World-clock removal now preserves enough state to restore the removed card at its prior dashboard position.
+- Pre-versioned settings documents no longer rely on a C# property initializer to appear current; missing `schemaVersion` is explicitly treated as legacy schema `0` and migrated to the current schema.
 
 ### Security
 
 - Bounded imported settings documents.
 - JSON settings schema-version validation.
+- Negative and future settings schema versions are rejected rather than guessed or silently reinterpreted.
 - Numeric enum values are rejected in settings JSON; enum strings must be recognized by the serializer.
 - Imported font, world-clock label/ID, and timezone-ID text is length-bounded and normalized to single-line values.
 - Runtime-null nested settings values and invalid in-memory enum values are normalized to safe defaults.
@@ -80,8 +85,9 @@ All notable ChronoDesk changes are documented here. The project uses semantic-ve
 - Complete README baseline.
 - Contribution, support, security, privacy, code-of-conduct, roadmap, architecture, setup, development, testing, release, troubleshooting, accessibility, performance, GitHub-maintenance, release-note-template, and ADR documentation.
 - Privacy documentation explicitly covers safe import/startup behavior.
-- Testing and roadmap documents are aligned with property, fuzz, headless UI, and startup-registration coverage.
+- Testing and roadmap documents are aligned with property, fuzz, headless UI, startup-registration, migration, and repository-verification coverage.
 - Release documentation includes ZIP checksum and integrity-manifest verification on PowerShell, Linux, and macOS.
+- ADR 0007 records explicit stepwise settings-schema migration behavior and test requirements for future schema changes.
 
 ## Release policy
 
