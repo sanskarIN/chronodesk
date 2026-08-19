@@ -5,6 +5,7 @@ using Avalonia.Markup.Xaml;
 using Avalonia.Media;
 using Avalonia.Platform;
 using Avalonia.Styling;
+using ChronoDesk.App.Localization;
 using ChronoDesk.App.ViewModels;
 using ChronoDesk.App.Views;
 using ChronoDesk.Core.Models;
@@ -90,7 +91,7 @@ public sealed partial class App : Application
             trayIcon = new TrayIcon
             {
                 Icon = icon,
-                ToolTipText = "ChronoDesk",
+                ToolTipText = Strings.AppName,
                 Menu = BuildTrayMenu(window, desktop),
                 IsVisible = true,
             };
@@ -109,21 +110,21 @@ public sealed partial class App : Application
     {
         var menu = new NativeMenu();
 
-        var show = new NativeMenuItem("Show ChronoDesk");
+        var show = new NativeMenuItem(Strings.TrayShow);
         show.Click += (_, _) => window.ShowFromTray();
         menu.Add(show);
 
-        var focus = new NativeMenuItem("Toggle focus clock");
+        var focus = new NativeMenuItem(Strings.TrayFocus);
         focus.Click += (_, _) => window.ToggleFocusMode();
         menu.Add(focus);
 
-        var mini = new NativeMenuItem("Toggle mini mode");
+        var mini = new NativeMenuItem(Strings.TrayMini);
         mini.Click += (_, _) => window.ToggleMiniMode();
         menu.Add(mini);
 
         menu.Add(new NativeMenuItemSeparator());
 
-        var quit = new NativeMenuItem("Quit");
+        var quit = new NativeMenuItem(Strings.TrayQuit);
         quit.Click += (_, _) =>
         {
             window.AllowClose();
