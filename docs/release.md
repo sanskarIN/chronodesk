@@ -162,18 +162,60 @@ git push origin vX.Y.Z
 
 The `Release` GitHub Actions workflow is configured to build self-contained ZIP packages and create the GitHub Release for tags matching `v*.*.*`.
 
-## 8. Inspect generated artifacts
+For every runtime ZIP, the workflow also creates a sibling `.sha256` file. Before publication, the release job recalculates every archive hash and refuses to create the GitHub Release if a checksum is missing or does not match.
+
+The release job also creates:
+
+- `release-manifest.json` — product, tag/version, source commit, generation timestamp, archive names, sizes, and SHA-256 hashes;
+- `release-manifest.json.sha256` — SHA-256 checksum for the manifest itself.
+
+The manifest is metadata for integrity/auditing; it is not a code-signing substitute.
+
+## 8. Inspect and verify generated artifacts
 
 For each release ZIP:
 
-- download it from the GitHub release/artifact output;
+- download the ZIP and its sibling `.sha256` file from the GitHub release;
+- verify the checksum before extraction;
 - inspect the archive contents;
 - extract to a fresh folder;
 - verify the application launches;
 - repeat a clock/settings smoke test;
-- check that no settings/log/test result files were packaged accidentally.
+- check that no settings/log/test-result files were packaged accidentally.
 
-Record SHA-256 checksums in release notes if checksums are introduced as a formal release artifact.
+### Verify on PowerShell
+
+```powershell
+$archive = "chronodesk-vX.Y.Z-win-x64.zip"
+$expected = ((Get-Content -Raw "$archive.sha256").Trim() -split '\s+')[0].ToLowerInvariant()
+$actual = (Get-FileHash -Algorithm SHA256 $archive).Hash.ToLowerInvariant()
+if ($actual -ne $expected) { throw "Checksum mismatch" }
+```
+
+### Verify on Linux/macOS
+
+If `sha256sum` is available:
+
+```bash
+sha256sum -c chronodesk-vX.Y.Z-linux-x64.zip.sha256
+```
+
+On macOS systems using `shasum` instead:
+
+```bash
+expected="$(awk '{print $1}' chronodesk-vX.Y.Z-osx-arm64.zip.sha256)"
+actual="$(shasum -a 256 chronodesk-vX.Y.Z-osx-arm64.zip | awk '{print $1}')"
+test "$expected" = "$actual"
+```
+
+Also inspect `release-manifest.json` and confirm:
+
+- `version` equals the Git tag;
+- `commit` equals the tagged source commit;
+- exactly four expected runtime archives are listed for the current matrix;
+- each listed `sizeBytes` is non-zero;
+- each listed SHA-256 matches its archive;
+- the manifest's own `.sha256` file verifies before relying on its contents.
 
 ## 9. Signing and notarization
 
@@ -186,6 +228,8 @@ The repository does not commit private signing keys. If code signing/notarizatio
 
 Never place a `.pfx`, private key, Apple certificate private material, or password in Git history.
 
+Checksums detect accidental or malicious byte changes after the expected hash is known, but they do not establish publisher identity. Code signing/notarization remains a separate future capability.
+
 ## 10. Release notes
 
 Every release note should cover:
@@ -197,6 +241,7 @@ Every release note should cover:
 - platform-specific known limitations;
 - upgrade/settings migration notes;
 - artifact list;
+- checksum/manifest verification note;
 - support/security reporting links;
 - license/funding credit without making funding intrusive.
 
@@ -207,10 +252,12 @@ Use `docs/release-notes-template.md` as the starting point.
 After publication:
 
 1. verify the release page is public and artifacts are downloadable;
-2. install/extract at least one artifact from the release page rather than the local build directory;
-3. confirm README download/release references remain valid;
-4. update `what_changed.md` with the tag, release URL, verified platforms, and any follow-up task;
-5. open focused issues for non-blocking follow-up defects discovered after release.
+2. verify at least one downloaded ZIP against its published `.sha256` file;
+3. verify `release-manifest.json.sha256` and inspect the manifest commit/tag values;
+4. install/extract at least one artifact from the release page rather than the local build directory;
+5. confirm README download/release references remain valid;
+6. update `what_changed.md` with the tag, release URL, verified platforms, and any follow-up task;
+7. open focused issues for non-blocking follow-up defects discovered after release.
 
 ## Rollback
 
@@ -233,5 +280,6 @@ A release candidate is not ready to tag until:
 - startup/tray/chime platform differences are documented accurately;
 - real release screenshots contain no private data;
 - documentation matches the exact source tree;
+- generated ZIP/checksum pairs and the release integrity manifest verify;
 - `CHANGELOG.md`, `ROADMAP.md`, and `what_changed.md` are current;
 - no critical/blocker defect remains known.
