@@ -75,9 +75,11 @@ These files define repository-wide behavior or are conventional GitHub/open-sour
 - `docs/runtime-behavior.md` — Process lifecycle, composition, initialization, ticking, settings transaction/rollback, focus/mini/tray, chime, network, errors, and shutdown behavior.
 - `docs/settings-reference.md` — Complete persistent settings schema, defaults, bounds, normalization, quiet-hour/world-clock semantics, atomic persistence, import/export, and UI mapping.
 - `docs/setup.md` — Platform-oriented prerequisites, clone/build/run instructions, local data isolation, and initial environment/setup notes.
+- `docs/source-code-reference.md` — Maintainer-facing production-code reference covering every source namespace/type, key method contracts, extension paths, concurrency/failure rules, and security/testability hotspots.
 - `docs/test-catalog.md` — File-by-file automated test and test-double catalog mapping each suite file to the production contract it protects and explicit manual-test boundaries.
 - `docs/testing.md` — Test strategy and quality-gate commands covering unit/integration/headless/repository checks, CI matrix, and manual validation expectations.
 - `docs/troubleshooting.md` — Diagnostic guidance for startup, settings, tray, chime, timezone, import/export, UI, logging, packaging, and platform-specific failure cases.
+- `docs/user-guide.md` — Complete end-user operation guide covering first run, clocks, world clocks, modes, tray/startup, chimes, settings, backup/restore, updates, privacy, diagnostics, and release archive verification.
 
 ## Architecture decision records
 
