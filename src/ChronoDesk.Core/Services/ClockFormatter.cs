@@ -5,6 +5,13 @@ namespace ChronoDesk.Core.Services;
 
 public sealed class ClockFormatter
 {
+    private readonly Func<ClockDisplayLabels>? labelsProvider;
+
+    public ClockFormatter(Func<ClockDisplayLabels>? labelsProvider = null)
+    {
+        this.labelsProvider = labelsProvider;
+    }
+
     public ClockSnapshot CreateSnapshot(
         DateTimeOffset instant,
         TimeZoneInfo timeZone,
@@ -16,7 +23,7 @@ public sealed class ClockFormatter
         ArgumentNullException.ThrowIfNull(settings);
 
         culture ??= CultureInfo.CurrentCulture;
-        labels ??= ClockDisplayLabels.English;
+        labels ??= labelsProvider?.Invoke() ?? ClockDisplayLabels.English;
         var normalized = settings.Normalize();
         var local = TimeZoneInfo.ConvertTime(instant, timeZone);
         var timeFormat = BuildTimeFormat(normalized.ClockFormat, normalized.ShowSeconds);
