@@ -7,4 +7,5 @@
   <data name="LoadingLocalData" xml:space="preserve"><value>Loading local clock data…</value></data>
   <data name="WorldClockCountOne" xml:space="preserve"><value>1 world clock</value></data>
   <data name="WorldClockCountManyFormat" xml:space="preserve"><value>{0} world clocks</value></data>
+  <data name="WorldClockAddedFormat" xml:space="preserve"><value>Added {0}</value></data>
 </root>
