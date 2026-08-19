@@ -53,7 +53,7 @@ ChronoDesk intentionally:
 - allows only fixed `https` and `mailto` support destinations from the About window;
 - uses argument lists rather than a shell command string for optional Unix chime helpers;
 - redacts common email/secret patterns from structured logs;
-- uses GitHub CodeQL, dependency review, Dependabot, and NuGet vulnerability inspection in repository automation.
+- uses GitHub CodeQL, dependency review, Dependabot, NuGet vulnerability inspection, and a high-confidence committed-credential scan in repository automation.
 
 ## Import threat model
 
@@ -111,6 +111,10 @@ ChronoDesk requires no production secrets. Never commit:
 - credentials in screenshots or logs.
 
 `.env.example` contains placeholders/configuration names only.
+
+`scripts/check_repository_secrets.py` scans committed text files for high-confidence private-key and credential/token patterns as part of CI. A passing scan is only one defense: it does not prove that every private file, screenshot, endpoint, identifier, or novel credential format is absent. Release preparation must still include a human review of staged files and generated artifacts.
+
+If a real secret is ever committed, removing it in a later commit is not sufficient. Revoke or rotate it immediately and follow the appropriate Git history remediation process before treating the incident as resolved.
 
 ## Hardening contributions
 
