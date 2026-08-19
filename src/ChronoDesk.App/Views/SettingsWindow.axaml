@@ -167,6 +167,39 @@
           </StackPanel>
         </ScrollViewer>
       </TabItem>
+
+      <TabItem Header="{x:Static loc:SettingsExtras.TabUpdatesAbout}">
+        <ScrollViewer>
+          <StackPanel Margin="8,18" Spacing="18">
+            <Border Classes="card">
+              <StackPanel Spacing="12">
+                <TextBlock Text="{x:Static loc:SettingsExtras.UpdatesTitle}" Classes="sectionTitle" />
+                <TextBlock Text="{x:Static loc:SettingsExtras.UpdatesBody}" TextWrapping="Wrap" />
+                <Button
+                    x:Name="OpenReleasesButton"
+                    Content="{x:Static loc:SettingsExtras.OpenReleases}"
+                    HorizontalAlignment="Left"
+                    Click="OpenReleasesButton_OnClick" />
+                <TextBlock Text="{x:Static loc:SettingsExtras.UpdatePrivacyNote}" Classes="muted" TextWrapping="Wrap" />
+              </StackPanel>
+            </Border>
+
+            <Border Classes="card">
+              <StackPanel Spacing="12">
+                <TextBlock Text="{x:Static loc:SettingsExtras.AboutSectionTitle}" Classes="sectionTitle" />
+                <TextBlock x:Name="SettingsVersionText" FontWeight="SemiBold" />
+                <TextBlock Text="{x:Static loc:SettingsExtras.AboutSectionBody}" TextWrapping="Wrap" />
+                <Button
+                    x:Name="OpenAboutButton"
+                    Content="{x:Static loc:SettingsExtras.OpenAbout}"
+                    HorizontalAlignment="Left"
+                    Click="OpenAboutButton_OnClick" />
+                <TextBlock Text="{x:Static loc:Strings.Credit}" FontWeight="SemiBold" />
+              </StackPanel>
+            </Border>
+          </StackPanel>
+        </ScrollViewer>
+      </TabItem>
     </TabControl>
 
     <Border Grid.Row="2" BorderBrush="{DynamicResource ChronoBorderBrush}" BorderThickness="0,1,0,0" Padding="24,14">
