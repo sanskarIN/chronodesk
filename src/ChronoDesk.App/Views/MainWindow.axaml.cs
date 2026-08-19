@@ -4,6 +4,7 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Markup.Xaml;
 using Avalonia.Threading;
+using ChronoDesk.App.Services;
 using ChronoDesk.App.ViewModels;
 using ChronoDesk.Core.Models;
 
@@ -107,6 +108,9 @@ public sealed partial class MainWindow : Window
 
     private void InitializeComponent() => AvaloniaXamlLoader.Load(this);
 
+    private bool IsTrayIntegrationAvailable =>
+        Application.Current is App { IsTrayIntegrationAvailable: true };
+
     private async void MainWindow_OnOpened(object? sender, EventArgs e)
     {
         await viewModel.InitializeAsync();
@@ -121,7 +125,10 @@ public sealed partial class MainWindow : Window
 
         var backgroundStart = Environment.GetCommandLineArgs()
             .Any(argument => string.Equals(argument, "--background", StringComparison.OrdinalIgnoreCase));
-        if (backgroundStart && viewModel.Settings.MinimizeToTray)
+        if (TrayVisibilityPolicy.ShouldStartHidden(
+                backgroundStart,
+                viewModel.Settings.MinimizeToTray,
+                IsTrayIntegrationAvailable))
         {
             Hide();
         }
@@ -129,7 +136,10 @@ public sealed partial class MainWindow : Window
 
     private void MainWindow_OnClosing(object? sender, WindowClosingEventArgs e)
     {
-        if (!allowClose && viewModel.Settings.MinimizeToTray)
+        if (TrayVisibilityPolicy.ShouldHideOnClose(
+                allowClose,
+                viewModel.Settings.MinimizeToTray,
+                IsTrayIntegrationAvailable))
         {
             e.Cancel = true;
             Hide();
