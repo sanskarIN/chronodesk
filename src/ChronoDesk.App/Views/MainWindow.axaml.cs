@@ -295,6 +295,9 @@ public sealed partial class MainWindow : Window
         }
     }
 
+    private async void UndoWorldClock_OnClick(object? sender, RoutedEventArgs e) =>
+        await viewModel.UndoWorldClockRemovalAsync();
+
     private async void MainWindow_OnKeyDown(object? sender, KeyEventArgs e)
     {
         if (e.Key == Key.F11)
