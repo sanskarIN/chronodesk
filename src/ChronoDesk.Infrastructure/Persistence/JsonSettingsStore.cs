@@ -10,6 +10,7 @@ public sealed class JsonSettingsStore : ISettingsStore
     private const long MaximumSettingsBytes = 2 * 1024 * 1024;
     private readonly IAppLogger logger;
     private readonly JsonSerializerOptions serializerOptions;
+    private readonly SettingsMigrationPipeline migrationPipeline = new();
 
     public JsonSettingsStore(IAppLogger logger, string? settingsPath = null)
     {
@@ -93,22 +94,44 @@ public sealed class JsonSettingsStore : ISettingsStore
             FileShare.Read,
             bufferSize: 16 * 1024,
             useAsync: true);
-        var settings = await JsonSerializer.DeserializeAsync<AppSettings>(
+        using var document = await JsonDocument.ParseAsync(
             stream,
-            serializerOptions,
+            new JsonDocumentOptions
+            {
+                AllowTrailingCommas = true,
+                CommentHandling = JsonCommentHandling.Skip,
+            },
             cancellationToken);
 
+        var sourceSchemaVersion = ReadSourceSchemaVersion(document.RootElement);
+        var settings = document.RootElement.Deserialize<AppSettings>(serializerOptions);
         if (settings is null)
         {
             throw new InvalidDataException("Settings document is empty.");
         }
 
-        if (settings.SchemaVersion > AppSettings.CurrentSchemaVersion)
+        return migrationPipeline.Migrate(settings, sourceSchemaVersion);
+    }
+
+    private static int ReadSourceSchemaVersion(JsonElement root)
+    {
+        if (root.ValueKind != JsonValueKind.Object)
         {
-            throw new InvalidDataException("Settings were created by a newer unsupported ChronoDesk version.");
+            throw new InvalidDataException("Settings document root must be a JSON object.");
         }
 
-        return settings.Normalize();
+        if (!root.TryGetProperty("schemaVersion", out var versionElement))
+        {
+            return 0;
+        }
+
+        if (versionElement.ValueKind != JsonValueKind.Number
+            || !versionElement.TryGetInt32(out var version))
+        {
+            throw new InvalidDataException("Settings schemaVersion must be an integer.");
+        }
+
+        return version;
     }
 
     private async Task WriteAtomicallyAsync(
