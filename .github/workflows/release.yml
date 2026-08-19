@@ -43,17 +43,23 @@ jobs:
       - name: Publish self-contained app
         run: dotnet publish src/ChronoDesk.App/ChronoDesk.App.csproj --configuration Release --runtime ${{ matrix.rid }} --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:DebugType=None --output publish/${{ matrix.rid }}
 
-      - name: Package ZIP
+      - name: Package ZIP and checksum
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force -Path dist | Out-Null
-          Compress-Archive -Path "publish/${{ matrix.rid }}/*" -DestinationPath "dist/chronodesk-${{ github.ref_name }}-${{ matrix.rid }}.zip"
+          $zip = "dist/chronodesk-${{ github.ref_name }}-${{ matrix.rid }}.zip"
+          Compress-Archive -Path "publish/${{ matrix.rid }}/*" -DestinationPath $zip
+          $hash = (Get-FileHash -Path $zip -Algorithm SHA256).Hash.ToLowerInvariant()
+          $name = Split-Path -Leaf $zip
+          "$hash  $name" | Set-Content -Path "$zip.sha256" -Encoding utf8NoBOM -NoNewline
 
       - name: Upload package
         uses: actions/upload-artifact@v7
         with:
           name: chronodesk-${{ matrix.rid }}
-          path: dist/*.zip
+          path: |
+            dist/*.zip
+            dist/*.sha256
           if-no-files-found: error
           retention-days: 14
 
@@ -70,7 +76,53 @@ jobs:
           path: artifacts
           merge-multiple: true
 
+      - name: Verify package checksums
+        shell: pwsh
+        run: |
+          $archives = Get-ChildItem -Path artifacts -Filter '*.zip' | Sort-Object Name
+          if ($archives.Count -ne 4) {
+            throw "Expected 4 release archives, found $($archives.Count)."
+          }
+
+          foreach ($archive in $archives) {
+            $checksumPath = "$($archive.FullName).sha256"
+            if (-not (Test-Path $checksumPath)) {
+              throw "Missing checksum file for $($archive.Name)."
+            }
+
+            $expected = ((Get-Content -Raw $checksumPath).Trim() -split '\s+')[0].ToLowerInvariant()
+            $actual = (Get-FileHash -Path $archive.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+            if ($expected -ne $actual) {
+              throw "Checksum mismatch for $($archive.Name)."
+            }
+          }
+
+      - name: Create release integrity manifest
+        shell: pwsh
+        run: |
+          $files = Get-ChildItem -Path artifacts -Filter '*.zip' | Sort-Object Name | ForEach-Object {
+            [ordered]@{
+              name = $_.Name
+              sha256 = (Get-FileHash -Path $_.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+              sizeBytes = $_.Length
+            }
+          }
+
+          $manifest = [ordered]@{
+            schemaVersion = 1
+            product = 'ChronoDesk'
+            version = $env:GITHUB_REF_NAME
+            commit = $env:GITHUB_SHA
+            generatedAtUtc = (Get-Date).ToUniversalTime().ToString('o')
+            files = @($files)
+          }
+
+          $manifestPath = 'artifacts/release-manifest.json'
+          $manifest | ConvertTo-Json -Depth 6 | Set-Content -Path $manifestPath -Encoding utf8NoBOM
+          $manifestHash = (Get-FileHash -Path $manifestPath -Algorithm SHA256).Hash.ToLowerInvariant()
+          "$manifestHash  release-manifest.json" | Set-Content -Path "$manifestPath.sha256" -Encoding utf8NoBOM -NoNewline
+
       - name: Create release
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release create "${GITHUB_REF_NAME}" artifacts/*.zip --repo "${GITHUB_REPOSITORY}" --verify-tag --generate-notes --title "ChronoDesk ${GITHUB_REF_NAME}"
+        run: gh release create "${GITHUB_REF_NAME}" artifacts/*.zip artifacts/*.sha256 artifacts/release-manifest.json --repo "${GITHUB_REPOSITORY}" --verify-tag --generate-notes --title "ChronoDesk ${GITHUB_REF_NAME}"
