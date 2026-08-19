@@ -39,11 +39,16 @@ The application does not require sign-in, analytics, a cloud database, or a netw
 - ISO week number.
 - Optional calendar detail line with day-of-year, ISO week, and UTC offset.
 - Configurable clock font family, font size, spacing, theme, and layout.
+- A localized local-loading state before initialization completes.
+- System theme mode tracks runtime operating-system light/dark changes instead of requiring a settings restart.
 
 ### World clocks
 
-- Up to 24 local world-clock cards.
+- Up to 24 local world-clock cards with one domain-level capacity rule.
 - Search the timezone database available through `TimeZoneInfo` on the host OS.
+- Visible result-count and no-results feedback.
+- Duplicate timezone cards are rejected by both normal UI adds and settings normalization/import.
+- Removing a clock offers undo for the most recently removed card and restores its previous position.
 - Portable IANA/Windows timezone-ID conversion fallback where .NET can map an ID.
 - Graceful UTC fallback when a persisted timezone is unavailable on the current OS.
 - No remote timezone API is required.
@@ -52,9 +57,10 @@ The application does not require sign-in, analytics, a cloud database, or a netw
 
 - **Focus mode:** `F11` full-screen clock.
 - **Mini mode:** `Ctrl+M` compact always-on-top clock.
-- Configurable normal always-on-top behavior.
-- System tray menu with Show, Focus, Mini, and Quit actions where the platform tray implementation is available.
+- Configurable normal always-on-top behavior; leaving mini mode restores the current saved preference.
+- System tray menu with Show, Focus, Mini, and Quit actions where the platform tray implementation exposes reliable menu restoration.
 - Optional minimize-to-tray behavior.
+- If reliable tray restoration is unavailable, closing/background startup does not hide the only application window and leave an unreachable process.
 
 ### Chimes and quiet hours
 
@@ -63,6 +69,14 @@ The application does not require sign-in, analytics, a cloud database, or a netw
 - Quiet hours can span midnight.
 - Duplicate chimes within the same minute are suppressed.
 - Playback uses OS-appropriate best-effort system facilities without a remote dependency.
+- Unix helper processes use fixed executable paths and argument lists without shell-command construction or unused redirected output streams.
+
+### Updates and releases
+
+- Settings includes an **Updates** section with the exact application informational version.
+- ChronoDesk performs no background update polling or tracking.
+- The only update-related network action is user initiated: **Open official releases** launches the repository's HTTPS GitHub Releases page through the same restricted external-URI policy used by About links.
+- The core clock remains fully usable offline.
 
 ### Accessibility
 
@@ -72,14 +86,18 @@ The application does not require sign-in, analytics, a cloud database, or a netw
 - Visible native focus behavior from Avalonia/Fluent controls.
 - Semantic automation names on key clock/search controls.
 - Scalable clock typography and touch-friendly control sizing.
-- Non-color-only status text.
+- Non-color-only loading, success, warning, empty, and error status text.
 
 ### Privacy and reliability
 
 - Local JSON settings only.
 - Atomic temporary-file writes before settings replacement.
-- Corrupt settings are preserved for manual recovery instead of silently destroyed.
-- Import/export is size-bounded and schema-validated.
+- Settings files are size-checked from the opened stream before parsing.
+- Corrupt settings are preserved with collision-resistant recovery names instead of silently destroyed.
+- Import/export is size-bounded, root-validated, schema-versioned, and migrated explicitly.
+- Missing legacy schema is treated as schema `0`; negative/future schemas are rejected.
+- Imported settings cannot silently change the current machine's startup registration.
+- Startup changes are best-effort rolled back if persistence fails, including when the caller's save operation was cancelled.
 - Structured JSONL logging with common email/secret-pattern redaction.
 - No credentials or API keys are required.
 - Startup behavior is opt-in and user-scoped.
@@ -94,7 +112,7 @@ ChronoDesk targets desktop systems supported by Avalonia and .NET 9:
 | macOS | x64 / arm64 | User LaunchAgent startup integration. |
 | Linux | x64 | XDG autostart integration; tray/chime behavior can vary by desktop environment. |
 
-Release automation produces self-contained ZIP artifacts for `win-x64`, `linux-x64`, `osx-x64`, and `osx-arm64` when a semantic version tag is pushed.
+Release automation produces self-contained ZIP artifacts for `win-x64`, `linux-x64`, `osx-x64`, and `osx-arm64` when a semantic version tag is pushed. Every release ZIP receives a SHA-256 sidecar and the release workflow creates a source-commit/file-size/hash integrity manifest.
 
 ## Technology stack
 
@@ -116,12 +134,13 @@ No database server, web service, authentication provider, telemetry SDK, or clou
 chronodesk/
 ├─ .github/                     # CI, CodeQL, release, Dependabot, templates
 ├─ docs/                        # Architecture, setup, testing, ADRs, operations
+├─ scripts/                     # Deterministic repository verification scripts
 ├─ src/
 │  ├─ ChronoDesk.Core/          # Domain models, formatting, chime policy, contracts
 │  ├─ ChronoDesk.Infrastructure/# JSON persistence, timezone/startup/chime/log adapters
 │  └─ ChronoDesk.App/           # Avalonia shell, views, view models, assets
 ├─ tests/
-│  └─ ChronoDesk.Tests/         # Unit/integration-oriented automated tests
+│  └─ ChronoDesk.Tests/         # Unit/integration/headless UI regression tests
 ├─ ChronoDesk.sln
 ├─ Directory.Build.props
 ├─ Directory.Packages.props
@@ -154,6 +173,8 @@ For platform-specific prerequisites and packaging notes, read [docs/setup.md](do
 ## Development setup
 
 ```bash
+pwsh ./scripts/verify-doc-links.ps1
+pwsh ./scripts/verify-no-secrets.ps1
 dotnet --info
 dotnet restore ChronoDesk.sln
 dotnet format ChronoDesk.sln --verify-no-changes --no-restore
@@ -177,15 +198,22 @@ More detail: [docs/development.md](docs/development.md).
 
 ## Testing
 
-The current automated suite covers:
+The automated suite includes coverage for:
 
-- 12/24-hour and seconds formatting.
-- ISO week/calendar details.
-- overnight quiet-hour boundaries.
-- chime cadence and duplicate suppression.
-- settings normalization invariants.
-- JSON settings round-trip, backup/export/import, and corrupt-file recovery.
-- timezone catalog discovery/search/fallback behavior.
+- 12/24-hour, seconds, ISO week, calendar, and UTC-offset formatting;
+- overnight quiet-hour boundaries, chime cadence, and duplicate suppression;
+- settings normalization, capacity, duplicate timezone invariants, and text bounds;
+- JSON round trips, import/export, corrupt-file recovery, unique corrupt backups, root/schema validation, and explicit schema migration;
+- malformed/oversized import fuzz cases and deterministic property-style invariants;
+- timezone catalog discovery/search/fallback behavior;
+- startup registration generation/escaping and startup-setting rollback/import consistency;
+- rollback after a settings-save cancellation;
+- external URI allow-list behavior;
+- tray visibility safety policy;
+- application informational-version display behavior;
+- system/light/dark/high-contrast palette selection;
+- localized loading/world-clock-count states;
+- Avalonia headless loading of main/settings/onboarding/About, update controls, and focus/mini transitions.
 
 Run:
 
@@ -193,7 +221,7 @@ Run:
 dotnet test ChronoDesk.sln -c Release --collect:"XPlat Code Coverage"
 ```
 
-CI runs formatting, build, tests, and NuGet vulnerability checks across Ubuntu, Windows, and macOS. See [docs/testing.md](docs/testing.md).
+CI runs documentation links, tracked-file secret checks, formatting, build, tests, and NuGet vulnerability checks across Ubuntu, Windows, and macOS. See [docs/testing.md](docs/testing.md).
 
 ## Build and publish
 
@@ -250,7 +278,7 @@ ChronoDesk/
    └─ chronodesk.log.jsonl
 ```
 
-If a settings document is malformed, ChronoDesk returns to safe defaults and renames the malformed document with a timestamped `.corrupt-...json` suffix when possible.
+If a settings document is malformed, ChronoDesk returns to safe defaults and renames the malformed document with a collision-resistant `.corrupt-...json` suffix when possible.
 
 For the complete data policy, see [PRIVACY.md](PRIVACY.md).
 
@@ -259,11 +287,13 @@ For the complete data policy, see [PRIVACY.md](PRIVACY.md).
 ChronoDesk is an offline-first clock, but local desktop software still has a security boundary. The repository therefore uses:
 
 - user-scoped startup integration;
-- bounded settings imports;
-- safe JSON parsing;
+- deterministic/escaped startup registration documents;
+- bounded, schema-versioned settings imports;
+- safe JSON parsing and explicit migrations;
 - atomic settings writes;
-- restricted external-link schemes;
+- restricted HTTPS/mailto external-link schemes;
 - redacted structured logs;
+- a non-echoing high-signal tracked-file secret scanner;
 - CodeQL;
 - dependency review;
 - Dependabot;
@@ -274,7 +304,7 @@ Do not report vulnerabilities in a public issue. Follow [SECURITY.md](SECURITY.m
 
 ## Accessibility
 
-Accessibility is a release criterion rather than a post-release extra. Before a tagged release, manually review keyboard-only use, visible focus, screen-reader naming, contrast, text scaling, reduced-motion behavior, and focus/mini window transitions on each primary platform.
+Accessibility is a release criterion rather than a post-release extra. Before a tagged release, manually review keyboard-only use, visible focus, screen-reader naming, contrast, text scaling, reduced-motion behavior, update/settings navigation, and focus/mini window transitions on each primary platform.
 
 See [docs/accessibility.md](docs/accessibility.md).
 
@@ -323,11 +353,10 @@ The repository includes issue forms, a pull request checklist, dependency automa
 
 See [ROADMAP.md](ROADMAP.md). The immediate release path is:
 
-- stabilize first public preview;
-- capture real per-platform screenshots;
-- validate tray and startup behavior on supported desktops;
-- expand UI automation/headless coverage;
-- tag the first verified release only after the clean-checkout release checklist passes.
+- obtain green latest-head CI, CodeQL, and dependency review;
+- capture real per-platform screenshots from verified builds;
+- validate tray, startup, chime, file-picker, theme, and accessibility behavior on supported desktops;
+- tag the first verified preview/release candidate only after the clean-checkout release checklist passes.
 
 ## License
 
