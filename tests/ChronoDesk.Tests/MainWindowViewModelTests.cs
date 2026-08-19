@@ -23,7 +23,7 @@ public sealed class MainWindowViewModelTests
         await Assert.ThrowsAsync<IOException>(() =>
             viewModel.UpdateSettingsAsync(viewModel.Settings with { StartWithSystem = true }));
 
-        Assert.Equal([true, false], startup.SetCalls);
+        Assert.Equal(new[] { true, false }, startup.SetCalls);
         Assert.False(viewModel.Settings.StartWithSystem);
     }
 
@@ -70,7 +70,7 @@ public sealed class MainWindowViewModelTests
 
         await viewModel.UpdateSettingsAsync(viewModel.Settings with { StartWithSystem = true });
 
-        Assert.Equal([true], startup.SetCalls);
+        Assert.Equal(new[] { true }, startup.SetCalls);
         Assert.True(viewModel.Settings.StartWithSystem);
         Assert.NotNull(store.LastSaved);
         Assert.True(store.LastSaved!.StartWithSystem);
