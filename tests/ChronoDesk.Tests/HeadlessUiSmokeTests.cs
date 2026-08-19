@@ -19,6 +19,8 @@ public sealed class HeadlessUiSmokeTests
         Assert.NotNull(window.FindControl<TextBlock>("ClockText"));
         Assert.NotNull(window.FindControl<TextBox>("TimeZoneSearchBox"));
         Assert.NotNull(window.FindControl<ListBox>("TimeZoneResults"));
+        Assert.NotNull(window.FindControl<TextBlock>("TimeZoneSearchStatusText"));
+        Assert.NotNull(window.FindControl<Button>("UndoWorldClockButton"));
     }
 
     [AvaloniaFact]
