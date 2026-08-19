@@ -17,11 +17,11 @@ public sealed class SafeFileLoggerTests
                 "Email person@example.com token=super-secret-value api_key=another-secret");
 
             var content = File.ReadAllText(Path.Combine(root, "chronodesk.log.jsonl"));
-            Assert.DoesNotContain("person@example.com", content, StringComparison.OrdinalIgnoreCase);
-            Assert.DoesNotContain("super-secret-value", content, StringComparison.Ordinal);
-            Assert.DoesNotContain("another-secret", content, StringComparison.Ordinal);
-            Assert.Contains("[redacted-email]", content, StringComparison.Ordinal);
-            Assert.Contains("[redacted]", content, StringComparison.Ordinal);
+            Assert.DoesNotContain("person@example.com", content);
+            Assert.DoesNotContain("super-secret-value", content);
+            Assert.DoesNotContain("another-secret", content);
+            Assert.Contains("[redacted-email]", content);
+            Assert.Contains("[redacted]", content);
         }
         finally
         {
