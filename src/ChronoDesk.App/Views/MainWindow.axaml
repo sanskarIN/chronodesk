@@ -64,7 +64,15 @@
               <TextBlock Text="{x:Static loc:Strings.WorldClocksTitle}" Classes="sectionTitle" />
               <TextBlock Text="{x:Static loc:Strings.WorldClocksDescription}" Classes="muted" />
             </StackPanel>
-            <TextBlock Grid.Column="1" Text="{Binding WorldClockCountText}" Classes="muted" VerticalAlignment="Center" />
+            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+              <TextBlock Text="{Binding WorldClockCountText}" Classes="muted" VerticalAlignment="Center" />
+              <Button
+                  x:Name="UndoWorldClockButton"
+                  Content="{x:Static loc:Strings.ActionUndo}"
+                  Classes="compact"
+                  IsVisible="{Binding CanUndoWorldClockRemoval}"
+                  Click="UndoWorldClock_OnClick" />
+            </StackPanel>
           </Grid>
 
           <ItemsControl ItemsSource="{Binding WorldClocks}">
@@ -102,6 +110,7 @@
                   Watermark="{x:Static loc:Strings.TimezoneSearchPlaceholder}"
                   TextChanged="TimeZoneSearchBox_OnTextChanged"
                   AutomationProperties.Name="{x:Static loc:Strings.AutomationSearchTimezones}" />
+              <TextBlock x:Name="TimeZoneSearchStatusText" Text="{Binding TimeZoneSearchStatus}" Classes="muted" />
               <TextBlock Text="{x:Static loc:Strings.TimezoneOfflineNote}" Classes="muted" TextWrapping="Wrap" />
             </StackPanel>
 
