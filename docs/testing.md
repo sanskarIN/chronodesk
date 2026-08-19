@@ -78,7 +78,7 @@ New cadence behavior must remain independent of actual sound playback.
 - default font fallback;
 - invalid/duplicate clock removal;
 - at least one clock invariant;
-- 24-card limit.
+- the world-clock list is bounded by `AppSettings.MaximumWorldClockCount`.
 
 ### Persistence and schema migration
 
@@ -131,8 +131,23 @@ Real platform startup enable/disable remains a manual release gate because regis
 - startup integration rollback when persistence fails;
 - imported settings preserving the current device startup preference;
 - explicit startup preference changes being applied once;
+- world-clock additions being rejected before persistence when the dashboard is at capacity;
 - world-clock removal and restoration at the original dashboard position;
 - timezone-search empty and populated feedback states.
+
+### Tray visibility safety
+
+`TrayVisibilityPolicyTests` verifies that ChronoDesk hides its main window only when all required conditions are true.
+
+Close-to-tray requires:
+
+- the close was not an explicit application quit;
+- minimize-to-tray is enabled;
+- reliable tray menu restoration is available for the current desktop session.
+
+Background startup hiding similarly requires the `--background` request, the preference, and reliable tray restoration. If tray integration is unavailable, the app remains visible/closeable rather than becoming an unreachable hidden process.
+
+Actual tray availability is still a native-desktop release check because a headless test runner cannot prove the operating-system tray/menu implementation exists.
 
 ### External links
 
@@ -159,6 +174,7 @@ Fuzz inputs are generated locally inside the test and never contain production/u
 - main-window XAML/resource loading;
 - key clock, timezone search, search-feedback, and undo controls exist;
 - mini mode can enter and restore normal dimensions;
+- leaving mini mode follows the current saved always-on-top preference rather than stale pre-mini state;
 - focus mode hides/restores application chrome;
 - Settings loads primary preference controls;
 - onboarding and About windows load localized resources.
@@ -189,6 +205,7 @@ Automated Core/headless tests are not a substitute for desktop validation. Befor
 - [ ] Search result count changes with the query and an empty search state is visible when there are no matches.
 - [ ] A selected timezone can be added.
 - [ ] Duplicate timezone add is rejected with status text.
+- [ ] The capacity limit rejects an additional clock with explicit feedback rather than reporting a false success.
 - [ ] A card can be removed.
 - [ ] Undo restores the most recently removed card at the expected position.
 - [ ] The last remaining card cannot be removed.
@@ -207,17 +224,19 @@ Automated Core/headless tests are not a substitute for desktop validation. Befor
 - [ ] Mini mode is always on top.
 - [ ] `Esc` exits mini mode.
 - [ ] Previous window dimensions/position are restored reasonably.
-- [ ] Normal always-on-top preference remains correct after leaving mini mode.
+- [ ] Normal always-on-top preference remains correct after leaving mini mode, including if the preference changed while mini mode was active.
 
 ### Tray
 
-- [ ] Tray icon appears where the OS/desktop supports tray icons.
+- [ ] Tray icon/menu appears where the OS/desktop supports reliable tray restoration.
 - [ ] Show restores and activates the window.
 - [ ] Focus toggles focus mode.
 - [ ] Mini toggles mini mode.
 - [ ] Quit exits the process.
-- [ ] Closing the main window hides it when minimize-to-tray is enabled.
+- [ ] Closing the main window hides it only when minimize-to-tray is enabled and reliable tray restoration is available.
 - [ ] Closing exits normally when minimize-to-tray is disabled.
+- [ ] On a desktop without reliable tray integration, closing never leaves an unreachable hidden ChronoDesk process.
+- [ ] `--background` startup remains visible when tray restoration is unavailable.
 
 ### Settings
 
@@ -253,7 +272,7 @@ When fixing a bug:
 
 ## Coverage philosophy
 
-Coverage percentage is not a release target by itself. Prefer tests that protect invariants and failure paths. A high line percentage that does not exercise timezone boundaries, persistence corruption, schema migration, chime suppression, malformed import handling, startup document generation, URI policy, or window-mode transitions is less useful than focused behavioral coverage.
+Coverage percentage is not a release target by itself. Prefer tests that protect invariants and failure paths. A high line percentage that does not exercise timezone boundaries, persistence corruption, schema migration, chime suppression, malformed import handling, startup document generation, tray visibility safety, URI policy, or window-mode transitions is less useful than focused behavioral coverage.
 
 ## Performance testing
 
