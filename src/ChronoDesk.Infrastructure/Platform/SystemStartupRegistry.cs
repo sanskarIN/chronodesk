@@ -3,15 +3,16 @@ using Microsoft.Win32;
 
 namespace ChronoDesk.Infrastructure.Platform;
 
-[SupportedOSPlatform("windows")]
 internal sealed class SystemStartupRegistry : IStartupRegistry
 {
+    [SupportedOSPlatform("windows")]
     public string? GetCurrentUserString(string subKeyPath, string valueName)
     {
         using var key = Registry.CurrentUser.OpenSubKey(subKeyPath, writable: false);
         return key?.GetValue(valueName) as string;
     }
 
+    [SupportedOSPlatform("windows")]
     public void SetCurrentUserString(string subKeyPath, string valueName, string value)
     {
         using var key = Registry.CurrentUser.CreateSubKey(subKeyPath, writable: true)
@@ -19,6 +20,7 @@ internal sealed class SystemStartupRegistry : IStartupRegistry
         key.SetValue(valueName, value, RegistryValueKind.String);
     }
 
+    [SupportedOSPlatform("windows")]
     public void DeleteCurrentUserValue(string subKeyPath, string valueName)
     {
         using var key = Registry.CurrentUser.CreateSubKey(subKeyPath, writable: true)
