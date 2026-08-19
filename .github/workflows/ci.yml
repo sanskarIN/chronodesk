@@ -41,6 +41,10 @@ jobs:
       - name: Verify formatting
         run: dotnet format ChronoDesk.sln --verify-no-changes --no-restore
 
+      - name: Verify local documentation links
+        shell: pwsh
+        run: ./scripts/check-markdown-links.ps1
+
       - name: Build
         run: dotnet build ChronoDesk.sln --configuration Release --no-restore
 
