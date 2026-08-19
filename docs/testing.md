@@ -76,6 +76,23 @@ Tests must not read or write the developer's real ChronoDesk data folder.
 - invalid-ID fallback;
 - bounded case-insensitive search.
 
+### Startup registration documents
+
+`StartupRegistrationDocumentsTests` validates the pure platform-registration builders without modifying a real user startup location. It verifies:
+
+- Windows Run-key command quoting and the `--background` argument;
+- rejection of unsafe embedded Windows quote characters;
+- valid macOS LaunchAgent XML generation;
+- XML escaping for macOS executable paths;
+- Linux XDG desktop-entry generation;
+- Linux executable escaping for spaces, backslashes, dollar signs, and backticks;
+- rejection of control characters in executable paths;
+- normalization of harmless outer whitespace.
+
+`PlatformStartupManager` uses these same builders when it reads/writes OS startup registration. This keeps generated content deterministic and allows most string/escaping logic to be tested without touching the registry, `~/Library/LaunchAgents`, or the XDG autostart directory.
+
+Real platform startup enable/disable remains a manual release gate because registry permissions, LaunchServices/session behavior, Linux desktop-environment behavior, and filesystem permissions cannot be faithfully reproduced by pure unit tests.
+
 ### Property-style robustness tests
 
 `DomainPropertyTests` runs deterministic seeded randomized cases against reference invariants. It verifies thousands of quiet-hour combinations and checks that settings normalization is idempotent, bounded, and produces unique clock IDs.
@@ -187,7 +204,7 @@ When fixing a bug:
 
 ## Coverage philosophy
 
-Coverage percentage is not a release target by itself. Prefer tests that protect invariants and failure paths. A high line percentage that does not exercise timezone boundaries, persistence corruption, chime suppression, malformed import handling, or window-mode transitions is less useful than focused behavioral coverage.
+Coverage percentage is not a release target by itself. Prefer tests that protect invariants and failure paths. A high line percentage that does not exercise timezone boundaries, persistence corruption, chime suppression, malformed import handling, startup document generation, or window-mode transitions is less useful than focused behavioral coverage.
 
 ## Performance testing
 
