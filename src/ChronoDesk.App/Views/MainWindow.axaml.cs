@@ -21,7 +21,6 @@ public sealed partial class MainWindow : Window
     private double restoredHeight = 760;
     private PixelPoint restoredPosition;
     private bool hasRestoredPosition;
-    private bool restoredTopmost;
 
     public MainWindow(MainWindowViewModel viewModel)
     {
@@ -84,7 +83,6 @@ public sealed partial class MainWindow : Window
         restoredHeight = Height;
         restoredPosition = Position;
         hasRestoredPosition = true;
-        restoredTopmost = Topmost;
 
         MinWidth = 360;
         MinHeight = 180;
@@ -213,7 +211,7 @@ public sealed partial class MainWindow : Window
             Position = restoredPosition;
         }
 
-        Topmost = viewModel.Settings.AlwaysOnTop || restoredTopmost;
+        Topmost = viewModel.Settings.AlwaysOnTop;
         SystemDecorations = SystemDecorations.Full;
         SetChromeVisibility(true);
         ApplyLayout(viewModel.Settings.Layout);
