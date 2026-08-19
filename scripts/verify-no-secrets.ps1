@@ -38,12 +38,12 @@ $rules = @(
     }
 )
 
-$gitOutput = & git -C $rootPath ls-files -z
+$gitOutput = & git -C $rootPath ls-files
 if ($LASTEXITCODE -ne 0) {
     throw 'Unable to enumerate tracked files with git ls-files.'
 }
 
-$trackedFiles = ($gitOutput -join "`n") -split "`0" |
+$trackedFiles = @($gitOutput) |
     Where-Object { -not [string]::IsNullOrWhiteSpace($_) } |
     Sort-Object -Unique
 
