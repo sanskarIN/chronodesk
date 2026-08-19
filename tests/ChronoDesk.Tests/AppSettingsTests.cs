@@ -52,4 +52,54 @@ public sealed class AppSettingsTests
 
         Assert.Equal(24, normalized.WorldClocks.Count);
     }
+
+    [Fact]
+    public void Normalize_RepairsRuntimeNullNestedValuesAndInvalidEnums()
+    {
+        var settings = new AppSettings
+        {
+            ClockFormat = (ClockFormat)999,
+            Theme = (ThemeMode)999,
+            Layout = (ClockLayout)999,
+            Chime = null!,
+            WorldClocks = null!,
+        };
+
+        var normalized = settings.Normalize();
+
+        Assert.Equal(ClockFormat.TwentyFourHour, normalized.ClockFormat);
+        Assert.Equal(ThemeMode.System, normalized.Theme);
+        Assert.Equal(ClockLayout.Centered, normalized.Layout);
+        Assert.NotNull(normalized.Chime);
+        Assert.NotNull(normalized.Chime.QuietHours);
+        Assert.Single(normalized.WorldClocks);
+    }
+
+    [Fact]
+    public void Normalize_BoundsAndFlattensImportedText()
+    {
+        var longLabel = new string('L', 220) + "\nInjected line";
+        var longZone = new string('Z', 300);
+        var longFont = new string('F', 160);
+        var settings = new AppSettings
+        {
+            FontFamilyName = longFont,
+            WorldClocks =
+            [
+                new WorldClock("clock\r\nid", longLabel, longZone),
+            ],
+        };
+
+        var normalized = settings.Normalize();
+        var clock = Assert.Single(normalized.WorldClocks);
+
+        Assert.InRange(normalized.FontFamilyName.Length, 1, 120);
+        Assert.InRange(clock.Id.Length, 1, 128);
+        Assert.InRange(clock.DisplayName.Length, 1, 160);
+        Assert.InRange(clock.TimeZoneId.Length, 1, 256);
+        Assert.DoesNotContain('\r', clock.Id);
+        Assert.DoesNotContain('\n', clock.Id);
+        Assert.DoesNotContain('\r', clock.DisplayName);
+        Assert.DoesNotContain('\n', clock.DisplayName);
+    }
 }
