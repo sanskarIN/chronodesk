@@ -2,6 +2,7 @@ using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
 using ChronoDesk.App;
 using ChronoDesk.App.Localization;
+using ChronoDesk.App.Services;
 using ChronoDesk.App.ViewModels;
 using ChronoDesk.App.Views;
 
@@ -92,6 +93,20 @@ public sealed class HeadlessUiSmokeTests
         Assert.NotNull(window.FindControl<CheckBox>("ReducedMotionCheck"));
         Assert.NotNull(window.FindControl<CheckBox>("StartWithSystemCheck"));
         Assert.NotNull(window.FindControl<CheckBox>("ChimeEnabledCheck"));
+    }
+
+    [AvaloniaFact]
+    public void SettingsWindow_LoadsOfflineSafeUpdateControls()
+    {
+        var viewModel = new MainWindowViewModel(new AppServices());
+        var window = new SettingsWindow(viewModel);
+        var version = window.FindControl<TextBlock>("UpdateVersionText");
+        var releases = window.FindControl<Button>("OpenReleasesButton");
+
+        Assert.NotNull(version);
+        Assert.Equal(AppVersionInfo.GetDisplayVersion(), version.Text);
+        Assert.NotNull(releases);
+        Assert.Equal(UpdateStrings.OpenReleases, releases.Content);
     }
 
     [AvaloniaFact]
