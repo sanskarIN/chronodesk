@@ -68,13 +68,16 @@ public sealed partial class SettingsWindow : Window
         SetStatus(string.Empty);
     }
 
-    private async void SaveButton_OnClick(object? sender, RoutedEventArgs e)
+    private async void SaveButton_OnClick(object? sender, RoutedEventArgs e) =>
+        await SaveChangesAsync();
+
+    internal async Task<bool> SaveChangesAsync()
     {
         if (!TryReadQuietTime("QuietStartText", out var quietStart)
             || !TryReadQuietTime("QuietEndText", out var quietEnd))
         {
             SetStatus(Strings.InvalidQuietHours);
-            return;
+            return false;
         }
 
         var current = viewModel.Settings;
@@ -135,10 +138,12 @@ public sealed partial class SettingsWindow : Window
         {
             await viewModel.UpdateSettingsAsync(updated);
             Close();
+            return true;
         }
         catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or InvalidOperationException)
         {
             SetStatus(Strings.SettingsSaveError);
+            return false;
         }
     }
 
@@ -207,17 +212,22 @@ public sealed partial class SettingsWindow : Window
         }
     }
 
-    private async void ResetButton_OnClick(object? sender, RoutedEventArgs e)
+    private async void ResetButton_OnClick(object? sender, RoutedEventArgs e) =>
+        await ResetDefaultsAsync();
+
+    internal async Task<bool> ResetDefaultsAsync()
     {
         try
         {
             await viewModel.ResetSettingsAsync();
             LoadControls(viewModel.Settings);
             SetStatus(Strings.DefaultsRestored);
+            return true;
         }
         catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or InvalidOperationException)
         {
             SetStatus(Strings.DefaultsSaveError);
+            return false;
         }
     }
 
