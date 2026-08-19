@@ -71,7 +71,30 @@ public sealed class ClockFormatterTests
             CultureInfo.InvariantCulture);
 
         Assert.Equal("Week 01", snapshot.WeekNumberText);
-        Assert.Contains("ISO week 01", snapshot.CalendarDetailsText, StringComparison.Ordinal);
-        Assert.Contains("UTC+00:00", snapshot.CalendarDetailsText, StringComparison.Ordinal);
+        Assert.Contains("ISO week 01", snapshot.CalendarDetailsText);
+        Assert.Contains("UTC+00:00", snapshot.CalendarDetailsText);
+    }
+
+    [Fact]
+    public void CreateSnapshot_UsesInjectedDisplayLabels()
+    {
+        var localizedFormatter = new ClockFormatter(() =>
+            new ClockDisplayLabels("Semana", "Día", "Semana ISO", "UTC"));
+        var instant = new DateTimeOffset(2026, 1, 1, 12, 0, 0, TimeSpan.Zero);
+        var settings = new AppSettings
+        {
+            ShowWeekNumber = true,
+            ShowCalendarDetails = true,
+        };
+
+        var snapshot = localizedFormatter.CreateSnapshot(
+            instant,
+            TimeZoneInfo.Utc,
+            settings,
+            CultureInfo.InvariantCulture);
+
+        Assert.Equal("Semana 01", snapshot.WeekNumberText);
+        Assert.Contains("Día 1", snapshot.CalendarDetailsText);
+        Assert.Contains("Semana ISO 01", snapshot.CalendarDetailsText);
     }
 }
