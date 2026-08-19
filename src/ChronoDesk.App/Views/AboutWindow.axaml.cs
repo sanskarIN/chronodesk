@@ -4,6 +4,7 @@ using System.Reflection;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Markup.Xaml;
+using ChronoDesk.App.Localization;
 
 namespace ChronoDesk.App.Views;
 
@@ -16,7 +17,7 @@ public sealed partial class AboutWindow : Window
         var versionText = this.FindControl<TextBlock>("VersionText");
         if (versionText is not null)
         {
-            versionText.Text = $"Version {version} · MIT License";
+            versionText.Text = Strings.Format(nameof(Strings.VersionFormat), version);
         }
     }
 
