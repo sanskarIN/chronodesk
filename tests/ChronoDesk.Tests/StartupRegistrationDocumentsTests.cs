@@ -42,11 +42,21 @@ public sealed class StartupRegistrationDocumentsTests
     public void BuildLinuxDesktopEntry_QuotesAndEscapesReservedPathCharacters()
     {
         var document = StartupRegistrationDocuments.BuildLinuxDesktopEntry(
-            "/home/user/Chrono Desk/$clock`test\\app");
+            "/home/user/Chrono Desk/$clock`test\\app%name");
 
         Assert.Contains("[Desktop Entry]", document);
-        Assert.Contains("Exec=\"/home/user/Chrono Desk/\\$clock\\`test\\\\app\" --background", document);
+        Assert.Contains(
+            "Exec=\"/home/user/Chrono Desk/\\$clock\\`test\\\\app%%name\" --background",
+            document);
         Assert.Contains("Terminal=false", document);
+    }
+
+    [Fact]
+    public void BuildLinuxDesktopEntry_RejectsEqualsSignInExecutablePath()
+    {
+        Assert.Throws<ArgumentException>(() =>
+            StartupRegistrationDocuments.BuildLinuxDesktopEntry(
+                "/opt/chrono=desk/ChronoDesk"));
     }
 
     [Theory]
