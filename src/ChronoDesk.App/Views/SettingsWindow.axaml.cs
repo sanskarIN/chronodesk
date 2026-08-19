@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Markup.Xaml;
 using Avalonia.Platform.Storage;
+using ChronoDesk.App.Localization;
 using ChronoDesk.App.ViewModels;
 using ChronoDesk.Core.Models;
 
@@ -72,7 +73,7 @@ public sealed partial class SettingsWindow : Window
         if (!TryReadQuietTime("QuietStartText", out var quietStart)
             || !TryReadQuietTime("QuietEndText", out var quietEnd))
         {
-            SetStatus("Quiet-hour times must use a valid 24-hour value such as 22:00 or 07:30.");
+            SetStatus(Strings.InvalidQuietHours);
             return;
         }
 
@@ -137,7 +138,7 @@ public sealed partial class SettingsWindow : Window
         }
         catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or InvalidOperationException)
         {
-            SetStatus("The settings could not be saved. Check local file and startup permissions.");
+            SetStatus(Strings.SettingsSaveError);
         }
     }
 
@@ -145,14 +146,14 @@ public sealed partial class SettingsWindow : Window
 
     private async void ExportButton_OnClick(object? sender, RoutedEventArgs e)
     {
-        var jsonType = new FilePickerFileType("ChronoDesk settings")
+        var jsonType = new FilePickerFileType(Strings.SettingsFileType)
         {
             Patterns = ["*.json"],
             MimeTypes = ["application/json"],
         };
         var file = await StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
         {
-            Title = "Export ChronoDesk settings",
+            Title = Strings.ExportDialogTitle,
             SuggestedFileName = "chronodesk-settings.json",
             DefaultExtension = "json",
             FileTypeChoices = [jsonType],
@@ -166,24 +167,24 @@ public sealed partial class SettingsWindow : Window
         try
         {
             await viewModel.ExportSettingsAsync(file.Path.LocalPath);
-            SetStatus("Settings exported successfully.");
+            SetStatus(Strings.ExportSuccess);
         }
         catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
         {
-            SetStatus("Settings could not be exported to that location.");
+            SetStatus(Strings.ExportError);
         }
     }
 
     private async void ImportButton_OnClick(object? sender, RoutedEventArgs e)
     {
-        var jsonType = new FilePickerFileType("ChronoDesk settings")
+        var jsonType = new FilePickerFileType(Strings.SettingsFileType)
         {
             Patterns = ["*.json"],
             MimeTypes = ["application/json"],
         };
         var files = await StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
         {
-            Title = "Import ChronoDesk settings",
+            Title = Strings.ImportDialogTitle,
             AllowMultiple = false,
             FileTypeFilter = [jsonType],
         });
@@ -198,11 +199,11 @@ public sealed partial class SettingsWindow : Window
         {
             await viewModel.ImportSettingsAsync(file.Path.LocalPath);
             LoadControls(viewModel.Settings);
-            SetStatus("Settings imported successfully. Review them before closing.");
+            SetStatus(Strings.ImportSuccess);
         }
         catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or InvalidDataException or System.Text.Json.JsonException)
         {
-            SetStatus("That file is not a valid supported ChronoDesk settings export.");
+            SetStatus(Strings.ImportError);
         }
     }
 
@@ -212,11 +213,11 @@ public sealed partial class SettingsWindow : Window
         {
             await viewModel.ResetSettingsAsync();
             LoadControls(viewModel.Settings);
-            SetStatus("Defaults restored.");
+            SetStatus(Strings.DefaultsRestored);
         }
         catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or InvalidOperationException)
         {
-            SetStatus("Defaults could not be saved.");
+            SetStatus(Strings.DefaultsSaveError);
         }
     }
 
