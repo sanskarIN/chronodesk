@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="720" viewBox="0 0 1200 720" role="img" aria-labelledby="title desc">
+  <title id="title">ChronoDesk screenshot placeholder</title>
+  <desc id="desc">A placeholder to be replaced by a verified release screenshot.</desc>
+  <rect width="1200" height="720" rx="32" fill="#10131A"/>
+  <rect x="64" y="56" width="1072" height="608" rx="24" fill="#1F2430" stroke="#354052" stroke-width="2"/>
+  <circle cx="122" cy="108" r="16" fill="#6D5DFB"/>
+  <text x="156" y="118" font-family="Arial, sans-serif" font-size="34" font-weight="700" fill="#F7F8FC">ChronoDesk</text>
+  <text x="600" y="340" text-anchor="middle" font-family="Arial, sans-serif" font-size="92" font-weight="700" fill="#F7F8FC">12:34:56</text>
+  <text x="600" y="392" text-anchor="middle" font-family="Arial, sans-serif" font-size="26" fill="#AEB7C7">Verified screenshot will replace this placeholder</text>
+  <rect x="356" y="450" width="488" height="92" rx="18" fill="#161B24" stroke="#354052" stroke-width="2"/>
+  <text x="600" y="505" text-anchor="middle" font-family="Arial, sans-serif" font-size="24" fill="#AEB7C7">Windows · macOS · Linux</text>
+</svg>
