@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using ChronoDesk.App.Localization;
 using ChronoDesk.Core.Models;
 
 namespace ChronoDesk.App.ViewModels;
@@ -15,13 +16,14 @@ public sealed class MainWindowViewModel : ObservableObject
     private string currentWeekNumber = string.Empty;
     private string calendarDetails = string.Empty;
     private string zoneName = string.Empty;
-    private string statusMessage = "Ready";
+    private string statusMessage = Strings.Ready;
     private bool isInitialized;
 
     public MainWindowViewModel(AppServices services, TimeProvider? timeProvider = null)
     {
         this.services = services ?? throw new ArgumentNullException(nameof(services));
         this.timeProvider = timeProvider ?? TimeProvider.System;
+        WorldClocks.CollectionChanged += (_, _) => OnPropertyChanged(nameof(WorldClockCountText));
     }
 
     public event EventHandler<AppSettings>? SettingsChanged;
@@ -42,6 +44,8 @@ public sealed class MainWindowViewModel : ObservableObject
     public ObservableCollection<WorldClockCardViewModel> WorldClocks { get; } = [];
 
     public ObservableCollection<TimeZoneDescriptor> SearchResults { get; } = [];
+
+    public string WorldClockCountText => $"{WorldClocks.Count} {Strings.WorldClocksTitle.ToLowerInvariant()}";
 
     public string CurrentTime
     {
@@ -103,14 +107,14 @@ public sealed class MainWindowViewModel : ObservableObject
             RebuildWorldClocks();
             SearchTimeZones(string.Empty);
             await TickAsync(cancellationToken);
-            StatusMessage = "ChronoDesk is ready";
+            StatusMessage = Strings.AppReady;
             IsInitialized = true;
             SettingsChanged?.Invoke(this, Settings);
         }
         catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
         {
             services.Logger.Error("app.initialize_failed", exception, "ChronoDesk could not initialize all local data.");
-            StatusMessage = "Some local data could not be loaded";
+            StatusMessage = Strings.LocalDataLoadWarning;
             IsInitialized = true;
         }
     }
@@ -139,7 +143,7 @@ public sealed class MainWindowViewModel : ObservableObject
             try
             {
                 await services.ChimePlayer.PlayAsync(cancellationToken);
-                StatusMessage = "Chime";
+                StatusMessage = Strings.ChimeStatus;
             }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
             {
@@ -148,7 +152,7 @@ public sealed class MainWindowViewModel : ObservableObject
             catch (Exception exception)
             {
                 services.Logger.Error("chime.play_failed", exception, "The configured chime could not be played.");
-                StatusMessage = "Chime unavailable on this system";
+                StatusMessage = Strings.ChimeUnavailable;
             }
         }
     }
@@ -173,7 +177,7 @@ public sealed class MainWindowViewModel : ObservableObject
         if (Settings.WorldClocks.Any(clock =>
             string.Equals(clock.TimeZoneId, descriptor.Id, StringComparison.OrdinalIgnoreCase)))
         {
-            StatusMessage = "That timezone is already on the dashboard";
+            StatusMessage = Strings.TimezoneAlreadyAdded;
             return;
         }
 
@@ -184,7 +188,7 @@ public sealed class MainWindowViewModel : ObservableObject
         clocks.Add(WorldClock.Create(label, descriptor.Id));
 
         await UpdateSettingsAsync(Settings with { WorldClocks = clocks }, cancellationToken);
-        StatusMessage = $"Added {label}";
+        StatusMessage = $"{Strings.AddedPrefix} {label}";
     }
 
     public async Task RemoveWorldClockAsync(
@@ -194,7 +198,7 @@ public sealed class MainWindowViewModel : ObservableObject
         ArgumentException.ThrowIfNullOrWhiteSpace(id);
         if (Settings.WorldClocks.Count <= 1)
         {
-            StatusMessage = "Keep at least one world clock";
+            StatusMessage = Strings.KeepOneWorldClock;
             return;
         }
 
@@ -205,7 +209,7 @@ public sealed class MainWindowViewModel : ObservableObject
         }
 
         await UpdateSettingsAsync(Settings with { WorldClocks = clocks }, cancellationToken);
-        StatusMessage = "World clock removed";
+        StatusMessage = Strings.WorldClockRemoved;
     }
 
     public Task ToggleClockFormatAsync(CancellationToken cancellationToken = default)
@@ -254,7 +258,7 @@ public sealed class MainWindowViewModel : ObservableObject
         CancellationToken cancellationToken = default)
     {
         await services.SettingsStore.ExportAsync(Settings, destinationPath, cancellationToken);
-        StatusMessage = "Settings exported";
+        StatusMessage = Strings.SettingsExported;
     }
 
     public async Task ImportSettingsAsync(
@@ -263,14 +267,14 @@ public sealed class MainWindowViewModel : ObservableObject
     {
         var imported = await services.SettingsStore.ImportAsync(sourcePath, cancellationToken);
         await UpdateSettingsAsync(imported with { IsFirstRun = false }, cancellationToken);
-        StatusMessage = "Settings imported";
+        StatusMessage = Strings.SettingsImported;
     }
 
     public async Task ResetSettingsAsync(CancellationToken cancellationToken = default)
     {
         var defaults = new AppSettings { IsFirstRun = false };
         await UpdateSettingsAsync(defaults, cancellationToken);
-        StatusMessage = "Settings reset to defaults";
+        StatusMessage = Strings.SettingsReset;
     }
 
     private void RebuildWorldClocks()
