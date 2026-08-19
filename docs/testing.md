@@ -5,13 +5,37 @@
 The intended release gate is:
 
 ```bash
+pwsh ./scripts/verify-doc-links.ps1
+pwsh ./scripts/verify-no-secrets.ps1
 dotnet restore ChronoDesk.sln
 dotnet format ChronoDesk.sln --verify-no-changes --no-restore
 dotnet build ChronoDesk.sln -c Release --no-restore
 dotnet test ChronoDesk.sln -c Release --no-build --collect:"XPlat Code Coverage"
 ```
 
-CI executes equivalent formatting/build/test work on Ubuntu, Windows, and macOS and also inspects NuGet dependencies for reported vulnerabilities.
+CI executes equivalent documentation, tracked-secret, formatting, build, test, and NuGet vulnerability work on Ubuntu, Windows, and macOS.
+
+## Repository verification scripts
+
+### Local documentation links
+
+`scripts/verify-doc-links.ps1` scans tracked project Markdown locations for relative links and image targets. It ignores external schemes and same-document anchors, resolves repository-relative and file-relative paths, and fails when a referenced local target does not exist.
+
+This is intentionally a local-target verifier rather than a crawler. Network URLs can fail transiently or require authentication and should be reviewed separately when preparing a release.
+
+### High-signal tracked-file secret scan
+
+`scripts/verify-no-secrets.ps1` enumerates Git-tracked files and scans text-sized content for a deliberately small set of high-signal credential patterns including private-key headers and common token families.
+
+The scanner:
+
+- skips known binary/archive extensions and files larger than its inspection limit;
+- scans tracked files rather than unrelated developer files;
+- excludes its own pattern-definition source so the detector does not report itself;
+- reports only the file and rule name;
+- intentionally never echoes the matched value.
+
+This supplements CodeQL, dependency review, GitHub security features, and human review. It is not a universal secret detector.
 
 ## Automated test areas
 
@@ -93,6 +117,22 @@ Tests must not read or write the developer's real ChronoDesk data folder.
 
 Real platform startup enable/disable remains a manual release gate because registry permissions, LaunchServices/session behavior, Linux desktop-environment behavior, and filesystem permissions cannot be faithfully reproduced by pure unit tests.
 
+### Main-window orchestration
+
+`MainWindowViewModelTests` verifies behavior below the native-window boundary, including:
+
+- startup integration rollback when persistence fails;
+- imported settings preserving the current device startup preference;
+- explicit startup preference changes being applied once;
+- world-clock removal and restoration at the original dashboard position;
+- timezone-search empty and populated feedback states.
+
+### External links
+
+`ExternalUriLauncherTests` verifies that the application-level launcher policy accepts HTTPS and mail destinations used by ChronoDesk while rejecting insecure HTTP, local-file, script, relative, and credential-bearing HTTPS destinations.
+
+The tests do not launch a real browser or mail client.
+
 ### Property-style robustness tests
 
 `DomainPropertyTests` runs deterministic seeded randomized cases against reference invariants. It verifies thousands of quiet-hour combinations and checks that settings normalization is idempotent, bounded, and produces unique clock IDs.
@@ -110,7 +150,7 @@ Fuzz inputs are generated locally inside the test and never contain production/u
 `AvaloniaTestSetup` and `HeadlessUiSmokeTests` use `Avalonia.Headless.XUnit` with the same Avalonia 11.3 maintenance baseline as the application. Current smoke coverage verifies:
 
 - main-window XAML/resource loading;
-- key named controls exist;
+- key clock, timezone search, search-feedback, and undo controls exist;
 - mini mode can enter and restore normal dimensions;
 - focus mode hides/restores application chrome;
 - Settings loads primary preference controls;
@@ -139,9 +179,11 @@ Automated Core/headless tests are not a substitute for desktop validation. Befor
 ### World clocks
 
 - [ ] Search accepts city/region/timezone-ID fragments.
+- [ ] Search result count changes with the query and an empty search state is visible when there are no matches.
 - [ ] A selected timezone can be added.
 - [ ] Duplicate timezone add is rejected with status text.
 - [ ] A card can be removed.
+- [ ] Undo restores the most recently removed card at the expected position.
 - [ ] The last remaining card cannot be removed.
 - [ ] Restart preserves the list.
 
@@ -204,7 +246,7 @@ When fixing a bug:
 
 ## Coverage philosophy
 
-Coverage percentage is not a release target by itself. Prefer tests that protect invariants and failure paths. A high line percentage that does not exercise timezone boundaries, persistence corruption, chime suppression, malformed import handling, startup document generation, or window-mode transitions is less useful than focused behavioral coverage.
+Coverage percentage is not a release target by itself. Prefer tests that protect invariants and failure paths. A high line percentage that does not exercise timezone boundaries, persistence corruption, chime suppression, malformed import handling, startup document generation, URI policy, or window-mode transitions is less useful than focused behavioral coverage.
 
 ## Performance testing
 
