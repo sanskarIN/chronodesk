@@ -17,4 +17,5 @@ public static class StateStrings
     public static string LoadingLocalData => Get(nameof(LoadingLocalData));
     public static string WorldClockCountOne => Get(nameof(WorldClockCountOne));
     public static string WorldClockCountManyFormat => Get(nameof(WorldClockCountManyFormat));
+    public static string WorldClockAddedFormat => Get(nameof(WorldClockAddedFormat));
 }
