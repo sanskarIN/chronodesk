@@ -12,6 +12,10 @@ from typing import Iterable
 ROOT = Path(__file__).resolve().parents[1]
 REFERENCE_PATH = ROOT / "docs" / "repository-reference.md"
 INVENTORY_PATTERN = re.compile(r"^- `([^`]+)` — ", re.MULTILINE)
+FENCED_BLOCK_PATTERN = re.compile(
+    r"^(```|~~~)[^\n]*\n.*?^\1\s*$",
+    re.MULTILINE | re.DOTALL,
+)
 
 
 def read_tracked_files(root: Path = ROOT) -> set[str]:
@@ -31,8 +35,9 @@ def read_tracked_files(root: Path = ROOT) -> set[str]:
 
 
 def parse_documented_files(text: str) -> set[str]:
-    """Parse canonical inventory entries from repository-reference.md."""
-    return set(INVENTORY_PATTERN.findall(text))
+    """Parse canonical inventory entries outside fenced example blocks."""
+    without_fenced_examples = FENCED_BLOCK_PATTERN.sub("", text)
+    return set(INVENTORY_PATTERN.findall(without_fenced_examples))
 
 
 def compare_inventory(
