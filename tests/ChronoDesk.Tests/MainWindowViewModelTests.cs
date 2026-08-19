@@ -78,6 +78,31 @@ public sealed class MainWindowViewModelTests
     }
 
     [Fact]
+    public async Task AddWorldClockAsync_RejectsAdditionAtMaximumCapacity()
+    {
+        var clocks = Enumerable.Range(0, AppSettings.MaximumWorldClockCount)
+            .Select(index => new WorldClock(
+                $"clock-{index}",
+                $"Clock {index}",
+                $"Test/Zone-{index}"))
+            .ToList();
+        var store = new MemorySettingsStore(new AppSettings
+        {
+            IsFirstRun = false,
+            WorldClocks = clocks,
+        });
+        var viewModel = CreateViewModel(store, new RecordingStartupManager());
+        await viewModel.InitializeAsync();
+
+        await viewModel.AddWorldClockAsync(
+            new TimeZoneDescriptor("Test/New", "New timezone", TimeSpan.Zero));
+
+        Assert.Equal(AppSettings.MaximumWorldClockCount, viewModel.Settings.WorldClocks.Count);
+        Assert.Equal(Strings.WorldClockLimitReached, viewModel.StatusMessage);
+        Assert.Null(store.LastSaved);
+    }
+
+    [Fact]
     public async Task RemoveAndUndoWorldClock_RestoresOriginalPosition()
     {
         var store = new MemorySettingsStore(new AppSettings
