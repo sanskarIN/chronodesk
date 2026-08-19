@@ -11,7 +11,13 @@ dotnet build ChronoDesk.sln -c Release --no-restore
 dotnet test ChronoDesk.sln -c Release --no-build --collect:"XPlat Code Coverage"
 ```
 
-CI executes equivalent formatting/build/test work on Ubuntu, Windows, and macOS and also inspects NuGet dependencies for reported vulnerabilities.
+Also verify repository-local Markdown links with PowerShell:
+
+```powershell
+./scripts/check-markdown-links.ps1
+```
+
+CI executes equivalent documentation/formatting/build/test work on Ubuntu, Windows, and macOS and also inspects NuGet dependencies for reported vulnerabilities.
 
 ## Automated test areas
 
@@ -52,7 +58,8 @@ New cadence behavior must remain independent of actual sound playback.
 
 - visual range normalization;
 - default font fallback;
-- invalid/duplicate clock removal;
+- invalid clock removal;
+- case-insensitive duplicate clock/timezone removal;
 - at least one clock invariant;
 - 24-card limit.
 
@@ -66,6 +73,15 @@ New cadence behavior must remain independent of actual sound playback.
 - corrupt-file preservation.
 
 Tests must not read or write the developer's real ChronoDesk data folder.
+
+### View-model reliability
+
+`MainWindowViewModelTests` verifies:
+
+- explicit startup changes are applied once;
+- startup integration is rolled back when persistence fails;
+- portable imports cannot silently change the machine startup preference;
+- unreadable settings fall back to defaults while the clock, world clocks, and timezone search still initialize.
 
 ### Timezone catalog
 
@@ -96,10 +112,17 @@ Fuzz inputs are generated locally inside the test and never contain production/u
 - key named controls exist;
 - mini mode can enter and restore normal dimensions;
 - focus mode hides/restores application chrome;
+- focus mode restores the prior normal/maximized window state;
 - Settings loads primary preference controls;
 - onboarding and About windows load localized resources.
 
 Headless UI tests strengthen cross-platform CI but do **not** replace real desktop testing for system tray, startup registration, sound playback, accessibility APIs, display scaling, or native file pickers.
+
+## Documentation-link verification
+
+`scripts/check-markdown-links.ps1` recursively inspects Markdown documents and validates repository-local file and directory targets. It ignores external URLs and same-document anchors so transient network failures do not make offline verification nondeterministic.
+
+The check rejects missing local targets and relative links that escape the repository root. Repository paths containing spaces should be percent-encoded or use Markdown's angle-bracket destination form.
 
 ## Manual UI checklist
 
@@ -110,6 +133,7 @@ Automated Core/headless tests are not a substitute for desktop validation. Befor
 - [ ] Fresh data directory opens onboarding.
 - [ ] Onboarding explains offline/private behavior accurately.
 - [ ] Completing onboarding persists and it does not reappear next launch.
+- [ ] An unreadable settings location produces a warning while the clock remains usable.
 
 ### Main clock
 
@@ -127,6 +151,7 @@ Automated Core/headless tests are not a substitute for desktop validation. Befor
 - [ ] A card can be removed.
 - [ ] The last remaining card cannot be removed.
 - [ ] Restart preserves the list.
+- [ ] Imported duplicate IDs/timezone IDs normalize to one card per unique value.
 
 ### Focus mode
 
@@ -134,6 +159,7 @@ Automated Core/headless tests are not a substitute for desktop validation. Befor
 - [ ] `F11` exits full screen.
 - [ ] `Esc` exits focus mode.
 - [ ] Header, world clocks, add section, and footer hide during focus mode.
+- [ ] A maximized window returns to maximized after leaving focus mode.
 
 ### Mini mode
 
