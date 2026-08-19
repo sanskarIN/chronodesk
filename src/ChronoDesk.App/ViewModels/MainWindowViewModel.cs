@@ -10,6 +10,8 @@ public sealed class MainWindowViewModel : ObservableObject
     private readonly TimeProvider timeProvider;
     private AppSettings settings = new();
     private DateTimeOffset? lastChimeInstant;
+    private WorldClock? lastRemovedWorldClock;
+    private int lastRemovedWorldClockIndex;
     private string currentTime = string.Empty;
     private string currentDate = string.Empty;
     private string currentWeekday = string.Empty;
@@ -17,6 +19,7 @@ public sealed class MainWindowViewModel : ObservableObject
     private string calendarDetails = string.Empty;
     private string zoneName = string.Empty;
     private string statusMessage = Strings.Ready;
+    private string timeZoneSearchStatus = string.Empty;
     private bool isInitialized;
 
     public MainWindowViewModel(AppServices services, TimeProvider? timeProvider = null)
@@ -46,6 +49,8 @@ public sealed class MainWindowViewModel : ObservableObject
     public ObservableCollection<TimeZoneDescriptor> SearchResults { get; } = [];
 
     public string WorldClockCountText => $"{WorldClocks.Count} {Strings.WorldClocksTitle.ToLowerInvariant()}";
+
+    public bool CanUndoWorldClockRemoval => lastRemovedWorldClock is not null;
 
     public string CurrentTime
     {
@@ -87,6 +92,12 @@ public sealed class MainWindowViewModel : ObservableObject
     {
         get => statusMessage;
         private set => SetProperty(ref statusMessage, value);
+    }
+
+    public string TimeZoneSearchStatus
+    {
+        get => timeZoneSearchStatus;
+        private set => SetProperty(ref timeZoneSearchStatus, value);
     }
 
     public bool IsInitialized
@@ -165,6 +176,10 @@ public sealed class MainWindowViewModel : ObservableObject
         {
             SearchResults.Add(result);
         }
+
+        TimeZoneSearchStatus = results.Count == 0
+            ? Strings.TimezoneSearchEmpty
+            : Strings.Format(nameof(Strings.TimezoneSearchCountFormat), results.Count);
     }
 
     public async Task AddWorldClockAsync(
@@ -202,14 +217,47 @@ public sealed class MainWindowViewModel : ObservableObject
             return;
         }
 
-        var clocks = Settings.WorldClocks.Where(clock => clock.Id != id).ToList();
-        if (clocks.Count == Settings.WorldClocks.Count)
+        var clocks = Settings.WorldClocks.ToList();
+        var index = clocks.FindIndex(clock =>
+            string.Equals(clock.Id, id, StringComparison.Ordinal));
+        if (index < 0)
         {
             return;
         }
 
+        var removedClock = clocks[index];
+        clocks.RemoveAt(index);
         await UpdateSettingsAsync(Settings with { WorldClocks = clocks }, cancellationToken);
+
+        lastRemovedWorldClock = removedClock;
+        lastRemovedWorldClockIndex = index;
+        OnPropertyChanged(nameof(CanUndoWorldClockRemoval));
         StatusMessage = Strings.WorldClockRemoved;
+    }
+
+    public async Task UndoWorldClockRemovalAsync(CancellationToken cancellationToken = default)
+    {
+        var removedClock = lastRemovedWorldClock;
+        if (removedClock is null)
+        {
+            return;
+        }
+
+        if (Settings.WorldClocks.Any(clock =>
+            string.Equals(clock.TimeZoneId, removedClock.TimeZoneId, StringComparison.OrdinalIgnoreCase)))
+        {
+            ClearUndoCandidate();
+            StatusMessage = Strings.TimezoneAlreadyAdded;
+            return;
+        }
+
+        var clocks = Settings.WorldClocks.ToList();
+        var insertionIndex = Math.Clamp(lastRemovedWorldClockIndex, 0, clocks.Count);
+        clocks.Insert(insertionIndex, removedClock);
+
+        await UpdateSettingsAsync(Settings with { WorldClocks = clocks }, cancellationToken);
+        ClearUndoCandidate();
+        StatusMessage = Strings.WorldClockRestored;
     }
 
     public Task ToggleClockFormatAsync(CancellationToken cancellationToken = default)
@@ -288,6 +336,7 @@ public sealed class MainWindowViewModel : ObservableObject
             StartWithSystem = Settings.StartWithSystem,
         };
         await UpdateSettingsAsync(safeImportedSettings, cancellationToken);
+        ClearUndoCandidate();
         StatusMessage = Strings.SettingsImported;
     }
 
@@ -295,6 +344,7 @@ public sealed class MainWindowViewModel : ObservableObject
     {
         var defaults = new AppSettings { IsFirstRun = false };
         await UpdateSettingsAsync(defaults, cancellationToken);
+        ClearUndoCandidate();
         StatusMessage = Strings.SettingsReset;
     }
 
@@ -319,6 +369,18 @@ public sealed class MainWindowViewModel : ObservableObject
                 exception,
                 "Startup integration could not be restored after settings persistence failed.");
         }
+    }
+
+    private void ClearUndoCandidate()
+    {
+        if (lastRemovedWorldClock is null)
+        {
+            return;
+        }
+
+        lastRemovedWorldClock = null;
+        lastRemovedWorldClockIndex = 0;
+        OnPropertyChanged(nameof(CanUndoWorldClockRemoval));
     }
 
     private void RebuildWorldClocks()
