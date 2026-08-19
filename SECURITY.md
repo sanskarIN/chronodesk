@@ -42,6 +42,9 @@ ChronoDesk intentionally:
 - does not embed API credentials;
 - does not run a local privileged service;
 - uses user-scoped startup registration;
+- validates and escapes generated startup registration content;
+- rejects control characters in startup executable paths and embedded quote characters in Windows Run commands;
+- writes macOS/Linux startup registration through a temporary file before atomic replacement;
 - limits imported settings files to a small maximum size;
 - validates settings schema and normalizes values;
 - rejects numeric enum representations in imported JSON;
@@ -50,10 +53,11 @@ ChronoDesk intentionally:
 - best-effort rolls startup integration back if the matching settings write fails;
 - writes settings through a temporary file before replacement;
 - preserves corrupt settings rather than executing/interpreting arbitrary content;
-- allows only fixed `https` and `mailto` support destinations from the About window;
+- centralizes product/support external links and permits only `https` and `mailto` URI schemes;
+- rejects credential-bearing HTTPS destinations in the external-link launcher;
 - uses argument lists rather than a shell command string for optional Unix chime helpers;
 - redacts common email/secret patterns from structured logs;
-- uses GitHub CodeQL, dependency review, Dependabot, and NuGet vulnerability inspection in repository automation.
+- uses GitHub CodeQL, dependency review, Dependabot, NuGet vulnerability inspection, and a high-signal tracked-file secret scan in repository automation.
 
 ## Import threat model
 
@@ -71,6 +75,24 @@ Current controls include:
 - no imported executable path, URI, shell command, token, or credential field.
 
 Import hardening has deterministic malformed-input/fuzz regression coverage in the test project.
+
+## Startup registration threat model
+
+Startup registration is a user-controlled preference but the registration content itself is generated only from the current ChronoDesk executable path and a fixed `--background` argument.
+
+Current controls include:
+
+- no user-supplied startup command field;
+- executable-path control-character rejection;
+- embedded quote rejection for the Windows Run command;
+- XML escaping for the macOS LaunchAgent document;
+- desktop-entry escaping for the Linux `Exec` value;
+- exact expected-registration comparison when checking whether startup is enabled;
+- current-user scope only;
+- atomic replacement for file-based macOS/Linux registration;
+- deterministic pure registration builders covered by unit tests without modifying real user startup locations.
+
+Real desktop startup behavior remains a manual release check because session managers, registry permissions, and desktop environments cannot be fully represented by pure unit tests.
 
 ## Platform integration notes
 
@@ -111,6 +133,8 @@ ChronoDesk requires no production secrets. Never commit:
 - credentials in screenshots or logs.
 
 `.env.example` contains placeholders/configuration names only.
+
+CI additionally scans tracked text files for a small set of high-signal private-key/token formats. To reduce accidental exposure in logs, the scanner reports the file and rule name but intentionally does **not** print the matched value. This check supplements GitHub security features and human review; it is not a guarantee that every possible secret format can be detected.
 
 ## Hardening contributions
 
