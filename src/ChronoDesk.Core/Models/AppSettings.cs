@@ -92,6 +92,7 @@ public sealed record AppSettings
                 && clock.DisplayName.Length > 0
                 && clock.TimeZoneId.Length > 0)
             .DistinctBy(clock => clock.Id, StringComparer.Ordinal)
+            .DistinctBy(clock => clock.TimeZoneId, StringComparer.OrdinalIgnoreCase)
             .Take(MaximumWorldClockCount)
             .ToList();
 
