@@ -1,5 +1,4 @@
 using System.Runtime.Versioning;
-using System.Security;
 using ChronoDesk.Core.Abstractions;
 using Microsoft.Win32;
 
@@ -14,34 +13,41 @@ public sealed class PlatformStartupManager : IStartupManager
 
     public PlatformStartupManager(string? executablePath = null)
     {
-        this.executablePath = executablePath
-            ?? Environment.ProcessPath
-            ?? throw new InvalidOperationException("ChronoDesk executable path could not be determined.");
+        this.executablePath = StartupRegistrationDocuments.NormalizeExecutablePath(
+            executablePath
+                ?? Environment.ProcessPath
+                ?? throw new InvalidOperationException("ChronoDesk executable path could not be determined."));
     }
 
     public bool IsSupported =>
         OperatingSystem.IsWindows() || OperatingSystem.IsMacOS() || OperatingSystem.IsLinux();
 
-    public Task<bool> IsEnabledAsync(CancellationToken cancellationToken = default)
+    public async Task<bool> IsEnabledAsync(CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
 
         if (OperatingSystem.IsWindows())
         {
-            return Task.FromResult(IsWindowsStartupEnabled());
+            return IsWindowsStartupEnabled();
         }
 
         if (OperatingSystem.IsMacOS())
         {
-            return Task.FromResult(File.Exists(GetMacLaunchAgentPath()));
+            return await HasExpectedFileContentAsync(
+                GetMacLaunchAgentPath(),
+                StartupRegistrationDocuments.BuildMacLaunchAgent(executablePath),
+                cancellationToken);
         }
 
         if (OperatingSystem.IsLinux())
         {
-            return Task.FromResult(File.Exists(GetLinuxAutostartPath()));
+            return await HasExpectedFileContentAsync(
+                GetLinuxAutostartPath(),
+                StartupRegistrationDocuments.BuildLinuxDesktopEntry(executablePath),
+                cancellationToken);
         }
 
-        return Task.FromResult(false);
+        return false;
     }
 
     public async Task SetEnabledAsync(bool enabled, CancellationToken cancellationToken = default)
@@ -74,7 +80,10 @@ public sealed class PlatformStartupManager : IStartupManager
     {
         using var key = Registry.CurrentUser.OpenSubKey(WindowsRunKey, writable: false);
         return key?.GetValue(AppName) is string value
-            && value.Contains(executablePath, StringComparison.OrdinalIgnoreCase);
+            && string.Equals(
+                value,
+                StartupRegistrationDocuments.BuildWindowsCommand(executablePath),
+                StringComparison.OrdinalIgnoreCase);
     }
 
     [SupportedOSPlatform("windows")]
@@ -85,7 +94,10 @@ public sealed class PlatformStartupManager : IStartupManager
 
         if (enabled)
         {
-            key.SetValue(AppName, $"\"{executablePath}\" --background", RegistryValueKind.String);
+            key.SetValue(
+                AppName,
+                StartupRegistrationDocuments.BuildWindowsCommand(executablePath),
+                RegistryValueKind.String);
         }
         else
         {
@@ -98,34 +110,14 @@ public sealed class PlatformStartupManager : IStartupManager
         var path = GetMacLaunchAgentPath();
         if (!enabled)
         {
-            if (File.Exists(path))
-            {
-                File.Delete(path);
-            }
-
+            DeleteIfExists(path);
             return;
         }
 
-        Directory.CreateDirectory(Path.GetDirectoryName(path)!);
-        var escapedExecutable = SecurityElement.Escape(executablePath) ?? executablePath;
-        var content = $"""
-            <?xml version="1.0" encoding="UTF-8"?>
-            <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-            <plist version="1.0">
-              <dict>
-                <key>Label</key>
-                <string>com.sanskar.chronodesk</string>
-                <key>ProgramArguments</key>
-                <array>
-                  <string>{escapedExecutable}</string>
-                  <string>--background</string>
-                </array>
-                <key>RunAtLoad</key>
-                <true/>
-              </dict>
-            </plist>
-            """;
-        await File.WriteAllTextAsync(path, content, cancellationToken);
+        await WriteTextAtomicallyAsync(
+            path,
+            StartupRegistrationDocuments.BuildMacLaunchAgent(executablePath),
+            cancellationToken);
     }
 
     private async Task SetLinuxStartupAsync(bool enabled, CancellationToken cancellationToken)
@@ -133,27 +125,14 @@ public sealed class PlatformStartupManager : IStartupManager
         var path = GetLinuxAutostartPath();
         if (!enabled)
         {
-            if (File.Exists(path))
-            {
-                File.Delete(path);
-            }
-
+            DeleteIfExists(path);
             return;
         }
 
-        Directory.CreateDirectory(Path.GetDirectoryName(path)!);
-        var quotedExecutable = QuoteDesktopExec(executablePath);
-        var content = $"""
-            [Desktop Entry]
-            Type=Application
-            Version=1.0
-            Name=ChronoDesk
-            Comment=Start ChronoDesk with the desktop session
-            Exec={quotedExecutable} --background
-            Terminal=false
-            X-GNOME-Autostart-enabled=true
-            """;
-        await File.WriteAllTextAsync(path, content, cancellationToken);
+        await WriteTextAtomicallyAsync(
+            path,
+            StartupRegistrationDocuments.BuildLinuxDesktopEntry(executablePath),
+            cancellationToken);
     }
 
     private static string GetMacLaunchAgentPath()
@@ -175,6 +154,55 @@ public sealed class PlatformStartupManager : IStartupManager
         return Path.Combine(configHome, "autostart", "chronodesk.desktop");
     }
 
-    private static string QuoteDesktopExec(string value) =>
-        $"\"{value.Replace("\\", "\\\\", StringComparison.Ordinal).Replace("\"", "\\\"", StringComparison.Ordinal)}\"";
+    private static async Task<bool> HasExpectedFileContentAsync(
+        string path,
+        string expectedContent,
+        CancellationToken cancellationToken)
+    {
+        if (!File.Exists(path))
+        {
+            return false;
+        }
+
+        var actualContent = await File.ReadAllTextAsync(path, cancellationToken);
+        return string.Equals(
+            NormalizeDocument(actualContent),
+            NormalizeDocument(expectedContent),
+            StringComparison.Ordinal);
+    }
+
+    private static string NormalizeDocument(string value) =>
+        value.Replace("\r\n", "\n", StringComparison.Ordinal).Trim();
+
+    private static void DeleteIfExists(string path)
+    {
+        if (File.Exists(path))
+        {
+            File.Delete(path);
+        }
+    }
+
+    private static async Task WriteTextAtomicallyAsync(
+        string path,
+        string content,
+        CancellationToken cancellationToken)
+    {
+        var directory = Path.GetDirectoryName(path)
+            ?? throw new InvalidOperationException("Startup registration directory could not be resolved.");
+        Directory.CreateDirectory(directory);
+
+        var temporaryPath = path + $".{Guid.NewGuid():N}.tmp";
+        try
+        {
+            await File.WriteAllTextAsync(temporaryPath, content, cancellationToken);
+            File.Move(temporaryPath, path, overwrite: true);
+        }
+        finally
+        {
+            if (File.Exists(temporaryPath))
+            {
+                File.Delete(temporaryPath);
+            }
+        }
+    }
 }
