@@ -19,7 +19,10 @@ public sealed partial class SettingsWindow : Window
         this.viewModel = viewModel ?? throw new ArgumentNullException(nameof(viewModel));
         InitializeComponent();
         LoadControls(viewModel.Settings);
-        Control<TextBlock>("UpdateVersionText").Text = AppVersionInfo.GetDisplayVersion();
+        var displayVersion = AppVersionInfo.GetDisplayVersion();
+        Control<TextBlock>("UpdateVersionText").Text = displayVersion;
+        Control<TextBlock>("SettingsAboutVersionText").Text =
+            Strings.Format(nameof(Strings.VersionFormat), displayVersion);
     }
 
     private void InitializeComponent() => AvaloniaXamlLoader.Load(this);
@@ -149,6 +152,29 @@ public sealed partial class SettingsWindow : Window
     private void OpenReleasesButton_OnClick(object? sender, RoutedEventArgs e)
     {
         if (!ExternalUriLauncher.TryOpen(AppLinks.Releases))
+        {
+            SetStatus(UpdateStrings.ReleaseOpenError);
+        }
+    }
+
+    private void SettingsGitHubButton_OnClick(object? sender, RoutedEventArgs e) =>
+        TryOpenApprovedLink(AppLinks.Repository);
+
+    private void SettingsBmcButton_OnClick(object? sender, RoutedEventArgs e) =>
+        TryOpenApprovedLink(AppLinks.Funding);
+
+    private void SettingsBusinessPrimaryButton_OnClick(object? sender, RoutedEventArgs e) =>
+        TryOpenApprovedLink(AppLinks.BusinessPrimary);
+
+    private void SettingsBusinessSecondaryButton_OnClick(object? sender, RoutedEventArgs e) =>
+        TryOpenApprovedLink(AppLinks.BusinessSecondary);
+
+    private void SettingsSupportButton_OnClick(object? sender, RoutedEventArgs e) =>
+        TryOpenApprovedLink(AppLinks.Support);
+
+    private void TryOpenApprovedLink(string destination)
+    {
+        if (!ExternalUriLauncher.TryOpen(destination))
         {
             SetStatus(UpdateStrings.ReleaseOpenError);
         }
