@@ -110,6 +110,20 @@ public sealed class HeadlessUiSmokeTests
     }
 
     [AvaloniaFact]
+    public void SettingsWindow_LoadsAboutVersionAndRequiredCredit()
+    {
+        var viewModel = new MainWindowViewModel(new AppServices());
+        var window = new SettingsWindow(viewModel);
+        var version = window.FindControl<TextBlock>("SettingsAboutVersionText");
+
+        Assert.NotNull(version);
+        Assert.Equal(
+            Strings.Format(nameof(Strings.VersionFormat), AppVersionInfo.GetDisplayVersion()),
+            version.Text);
+        Assert.Contains(Strings.Credit, GetAllText(window));
+    }
+
+    [AvaloniaFact]
     public void OnboardingAndAboutWindowsLoadLocalizedResources()
     {
         var viewModel = new MainWindowViewModel(new AppServices());
@@ -119,5 +133,25 @@ public sealed class HeadlessUiSmokeTests
         Assert.Equal(Strings.OnboardingTitle, onboarding.Title);
         Assert.Equal(Strings.AboutTitle, about.Title);
         Assert.NotNull(about.FindControl<TextBlock>("VersionText"));
+    }
+
+    private static IReadOnlyList<string> GetAllText(Control root)
+    {
+        var values = new List<string>();
+        Collect(root, values);
+        return values;
+
+        static void Collect(Control control, List<string> values)
+        {
+            if (control is TextBlock { Text: { } text })
+            {
+                values.Add(text);
+            }
+
+            foreach (var child in control.GetVisualChildren().OfType<Control>())
+            {
+                Collect(child, values);
+            }
+        }
     }
 }
