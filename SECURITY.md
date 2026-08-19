@@ -1,6 +1,6 @@
 # Security Policy
 
-ChronoDesk is an offline-first desktop clock, but it still reads local configuration, opens user-selected import files, integrates with user-session startup mechanisms, can launch fixed support links, and executes limited OS facilities for optional chimes. Security reports are taken seriously.
+ChronoDesk is an offline-first desktop clock, but it still reads local configuration, opens user-selected import files, integrates with user-session startup mechanisms, can launch fixed support/release links, and executes limited OS facilities for optional chimes. Security reports are taken seriously.
 
 ## Supported versions
 
@@ -45,17 +45,22 @@ ChronoDesk intentionally:
 - validates and escapes generated startup registration content;
 - rejects control characters in startup executable paths and embedded quote characters in Windows Run commands;
 - writes macOS/Linux startup registration through a temporary file before atomic replacement;
-- limits imported settings files to a small maximum size;
-- validates settings schema and normalizes values;
-- rejects numeric enum representations in imported JSON;
+- limits imported settings files to a small maximum size using the opened file stream before parsing;
+- requires a JSON object root for settings;
+- validates/migrates settings schema and normalizes values;
+- rejects negative/future schema versions and numeric enum representations;
 - bounds imported font/world-clock/timezone text and converts it to single-line values;
+- removes duplicate clock IDs and duplicate timezone IDs during normalization;
 - preserves the current device startup preference when settings are imported;
-- best-effort rolls startup integration back if the matching settings write fails;
+- best-effort rolls startup integration back if the matching settings write fails, using a non-cancelled rollback operation;
 - writes settings through a temporary file before replacement;
-- preserves corrupt settings rather than executing/interpreting arbitrary content;
-- centralizes product/support external links and permits only `https` and `mailto` URI schemes;
+- preserves corrupt settings with collision-resistant recovery names rather than executing/interpreting arbitrary content;
+- centralizes product/support/funding/release links and permits only `https` and `mailto` URI schemes;
 - rejects credential-bearing HTTPS destinations in the external-link launcher;
+- performs no background update polling; the official Releases page opens only after explicit user action;
 - uses argument lists rather than a shell command string for optional Unix chime helpers;
+- does not redirect unused helper-process output streams;
+- avoids hiding the main window when reliable tray restoration is unavailable;
 - redacts common email/secret patterns from structured logs;
 - uses GitHub CodeQL, dependency review, Dependabot, NuGet vulnerability inspection, and a high-signal tracked-file secret scan in repository automation.
 
@@ -65,11 +70,14 @@ A settings export is user-controlled input when it is imported, even if its exte
 
 Current controls include:
 
-- maximum 2 MiB file size;
+- maximum 2 MiB file size checked from the opened stream;
+- JSON object-root requirement;
 - JSON parsing only; no script/template execution;
-- supported schema-version check;
+- supported schema-version migration/check;
+- negative/future schema rejection;
 - string-enum parsing with numeric values disabled;
 - settings normalization and bounded world-clock count;
+- duplicate timezone normalization;
 - bounded/single-line user-display text;
 - no imported OS startup side effect;
 - no imported executable path, URI, shell command, token, or credential field.
@@ -90,7 +98,9 @@ Current controls include:
 - exact expected-registration comparison when checking whether startup is enabled;
 - current-user scope only;
 - atomic replacement for file-based macOS/Linux registration;
-- deterministic pure registration builders covered by unit tests without modifying real user startup locations.
+- deterministic pure registration builders covered by unit tests without modifying real user startup locations;
+- rollback of an already-applied startup change if matching settings persistence fails;
+- rollback does not reuse a caller token that may have been cancelled by the failed save.
 
 Real desktop startup behavior remains a manual release check because session managers, registry permissions, and desktop environments cannot be fully represented by pure unit tests.
 
@@ -108,9 +118,17 @@ The app writes a per-user LaunchAgent file under the user's `Library/LaunchAgent
 
 The app writes a per-user XDG autostart desktop file only when startup is enabled.
 
+### Tray
+
+ChronoDesk hides on close/background start only when the current Avalonia tray implementation exposes a native menu exporter that provides a reliable restoration route. If that capability is unavailable, the app remains visible/closeable rather than intentionally creating an unreachable hidden process.
+
 ### Chimes
 
-Windows uses a system beep path. macOS/Linux playback uses fixed OS executable paths and fixed system-sound arguments when those tools/files exist. User-provided text is not interpolated into a shell command.
+Windows uses a local system beep path. macOS/Linux playback uses fixed OS executable paths and fixed system-sound arguments when those tools/files exist. User-provided text is not interpolated into a shell command. Standard output/error is not captured because ChronoDesk does not consume it.
+
+### Updates
+
+The current version is read from local assembly informational metadata. ChronoDesk does not automatically query GitHub or another update service. The Settings Updates control opens one fixed HTTPS GitHub Releases destination only after explicit user activation and through the same URI allow-list as other external product links.
 
 ## Dependency policy
 
