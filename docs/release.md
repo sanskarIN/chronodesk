@@ -8,18 +8,22 @@ Use semantic version tags:
 
 ```text
 vMAJOR.MINOR.PATCH
+vMAJOR.MINOR.PATCH-PRERELEASE
 ```
 
 Examples:
 
 ```text
 v0.1.0
+v0.1.0-rc.1
 v0.2.0
 v1.0.0
 v1.0.1
 ```
 
-Before `v1.0.0`, minor versions may contain breaking preview changes, but those changes must still be documented clearly.
+The Release workflow validates the pushed tag, removes the leading `v`, and uses the resulting semantic version to stamp `Version`, assembly/file version, and informational version for the published application. This prevents a tagged binary from retaining the repository's normal `0.1.0-preview` development metadata.
+
+Tags containing a prerelease suffix such as `-rc.1` are published as GitHub prereleases. Before `v1.0.0`, minor versions may contain breaking preview changes, but those changes must still be documented clearly.
 
 ## Release prerequisites
 
@@ -44,7 +48,7 @@ Update:
 - `README.md` — update screenshots or compatibility notes when needed;
 - `PRIVACY.md` / `SECURITY.md` if release behavior changed their scope.
 
-Verify version-dependent About text still derives from assembly/package metadata rather than a stale hard-coded version.
+Verify version-dependent About text still derives from assembly/package metadata rather than a stale hard-coded version. Normal development builds should show the preview semantic version; tagged publish builds receive their version from the release tag.
 
 ## 2. Clean-checkout verification
 
@@ -80,6 +84,8 @@ For the exact release commit, confirm the repository checks that actually exist 
 - dependency review where applicable to the release pull request.
 
 Do not add a README badge for a workflow that does not exist. If branch protection requires named checks, use the exact check names shown on the release-candidate pull request rather than guessing them from workflow filenames.
+
+The tag-triggered Release workflow repeats critical repository integrity, formatting, Release build, tests, and NuGet vulnerability checks in a `Release preflight` job before any platform package is created. This is a second gate, not a replacement for pull-request/main validation.
 
 ## 4. Manual desktop verification
 
@@ -155,6 +161,8 @@ Equivalent release-workflow RIDs:
 - `osx-x64`
 - `osx-arm64`
 
+The workflow publishes Windows as ZIP and Unix targets as `tar.gz`. Unix tarballs are used so executable permission bits are retained for the self-contained executable.
+
 Launch the produced executable on the matching platform before tagging whenever possible.
 
 ## 7. Create the tag
@@ -166,20 +174,49 @@ git tag -a vX.Y.Z -m "ChronoDesk vX.Y.Z"
 git push origin vX.Y.Z
 ```
 
-The `Release` GitHub Actions workflow is configured to build self-contained ZIP packages and create the GitHub Release for tags matching `v*.*.*`.
+For a release candidate:
 
-## 8. Inspect generated artifacts
+```bash
+git tag -a vX.Y.Z-rc.1 -m "ChronoDesk vX.Y.Z-rc.1"
+git push origin vX.Y.Z-rc.1
+```
 
-For each release ZIP:
+The `Release` GitHub Actions workflow accepts the supported semantic tag form, runs release preflight, stamps package metadata from the tag, builds self-contained platform artifacts, generates checksums, verifies the downloaded artifacts, and creates the GitHub Release only after those steps succeed.
 
-- download it from the GitHub release/artifact output;
+## 8. Inspect and verify generated artifacts
+
+Expected archive formats are:
+
+- `chronodesk-vX.Y.Z-win-x64.zip`
+- `chronodesk-vX.Y.Z-linux-x64.tar.gz`
+- `chronodesk-vX.Y.Z-osx-x64.tar.gz`
+- `chronodesk-vX.Y.Z-osx-arm64.tar.gz`
+
+Each archive is accompanied by `<archive>.sha256`. The workflow verifies all four checksum/archive pairs after downloading the package artifacts and before creating the GitHub release.
+
+For each published archive:
+
+- download the archive and its `.sha256` file from the GitHub release;
+- verify the SHA-256 digest locally;
 - inspect the archive contents;
 - extract to a fresh folder;
 - verify the application launches;
 - repeat a clock/settings smoke test;
 - check that no settings/log/test result files were packaged accidentally.
 
-Record SHA-256 checksums in release notes if checksums are introduced as a formal release artifact.
+Example Linux/macOS checksum verification when `sha256sum` is available:
+
+```bash
+sha256sum -c chronodesk-vX.Y.Z-linux-x64.tar.gz.sha256
+```
+
+PowerShell example:
+
+```powershell
+Get-FileHash .\chronodesk-vX.Y.Z-win-x64.zip -Algorithm SHA256
+```
+
+Compare the displayed hash with the matching `.sha256` file.
 
 ## 9. Signing and notarization
 
@@ -202,7 +239,7 @@ Every release note should cover:
 - security/privacy changes when applicable;
 - platform-specific known limitations;
 - upgrade/settings migration notes;
-- artifact list;
+- artifact list and checksum availability;
 - support/security reporting links;
 - license/funding credit without making funding intrusive.
 
@@ -212,7 +249,7 @@ Use `docs/release-notes-template.md` as the starting point.
 
 After publication:
 
-1. verify the release page is public and artifacts are downloadable;
+1. verify the release page is public and all four archives plus four checksum files are downloadable;
 2. install/extract at least one artifact from the release page rather than the local build directory;
 3. confirm README download/release references remain valid;
 4. update `what_changed.md` with the tag, release URL, verified platforms, and any follow-up task;
@@ -242,3 +279,5 @@ A release candidate is not ready to tag until:
 - documentation matches the exact source tree;
 - `CHANGELOG.md`, `ROADMAP.md`, and `what_changed.md` are current;
 - no critical/blocker defect remains known.
+
+A successful tag workflow still requires post-publication artifact launch checks before the release should be considered fully verified.
