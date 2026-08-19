@@ -24,7 +24,7 @@ CI executes equivalent formatting/build/test work on Ubuntu, Windows, and macOS 
 - ISO week number;
 - UTC offset/calendar detail rendering.
 
-Use explicit `DateTimeOffset`, timezone, and culture inputs so the tests do not depend on the machine's current date/time.
+Use explicit `DateTimeOffset`, timezone, and culture inputs so tests do not depend on the machine's current wall clock.
 
 ### Quiet hours
 
@@ -76,9 +76,34 @@ Tests must not read or write the developer's real ChronoDesk data folder.
 - invalid-ID fallback;
 - bounded case-insensitive search.
 
+### Property-style robustness tests
+
+`DomainPropertyTests` runs deterministic seeded randomized cases against reference invariants. It verifies thousands of quiet-hour combinations and checks that settings normalization is idempotent, bounded, and produces unique clock IDs.
+
+This test style gives broad edge coverage while staying deterministic in CI. A failure can always be reproduced from the committed seed.
+
+### Import fuzz tests
+
+`SettingsImportFuzzTests` feeds a deterministic corpus of malformed binary/JSON inputs into the settings importer and verifies that the primary settings document is not changed. It also verifies rejection of files above the configured size limit.
+
+Fuzz inputs are generated locally inside the test and never contain production/user data.
+
+### Headless Avalonia UI smoke tests
+
+`AvaloniaTestSetup` and `HeadlessUiSmokeTests` use `Avalonia.Headless.XUnit` with the same Avalonia 11.3 maintenance baseline as the application. Current smoke coverage verifies:
+
+- main-window XAML/resource loading;
+- key named controls exist;
+- mini mode can enter and restore normal dimensions;
+- focus mode hides/restores application chrome;
+- Settings loads primary preference controls;
+- onboarding and About windows load localized resources.
+
+Headless UI tests strengthen cross-platform CI but do **not** replace real desktop testing for system tray, startup registration, sound playback, accessibility APIs, display scaling, or native file pickers.
+
 ## Manual UI checklist
 
-Automated Core tests are not a substitute for desktop validation. Before a release, test each supported primary platform.
+Automated Core/headless tests are not a substitute for desktop validation. Before a tagged release, test each supported primary platform.
 
 ### Launch/onboarding
 
@@ -162,11 +187,7 @@ When fixing a bug:
 
 ## Coverage philosophy
 
-Coverage percentage is not a release target by itself. Prefer tests that protect invariants and failure paths. A high line percentage that does not exercise timezone boundaries, persistence corruption, or chime suppression is less useful than focused behavioral coverage.
-
-## Future UI automation
-
-Headless Avalonia smoke tests are a roadmap item. They should be introduced only with a package/tool version that is confirmed compatible with the repository's pinned Avalonia baseline and must not replace real platform checks for tray/startup/chime behavior.
+Coverage percentage is not a release target by itself. Prefer tests that protect invariants and failure paths. A high line percentage that does not exercise timezone boundaries, persistence corruption, chime suppression, malformed import handling, or window-mode transitions is less useful than focused behavioral coverage.
 
 ## Performance testing
 
