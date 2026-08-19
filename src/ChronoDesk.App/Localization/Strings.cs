@@ -26,7 +26,7 @@ public static class Strings
     public static string TimezoneSearchEmpty => Get(nameof(TimezoneSearchEmpty));
     public static string TimezoneSearchCountFormat => Get(nameof(TimezoneSearchCountFormat));
     public static string KeepOneWorldClock => Get(nameof(KeepOneWorldClock));
-    public static string WorldClockLimitReached => Get(nameof(WorldClockLimitReached));
+    public static string WorldClockLimitReachedFormat => Get(nameof(WorldClockLimitReachedFormat));
     public static string WorldClockRemoved => Get(nameof(WorldClockRemoved));
     public static string WorldClockRestored => Get(nameof(WorldClockRestored));
     public static string SettingsExported => Get(nameof(SettingsExported));
