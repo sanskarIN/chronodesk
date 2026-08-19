@@ -120,13 +120,24 @@ jobs:
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force -Path dist | Out-Null
-          Compress-Archive -Path "publish/${{ matrix.rid }}/*" -DestinationPath "dist/chronodesk-${{ github.ref_name }}-${{ matrix.rid }}.zip"
+          $zip = "dist/chronodesk-${{ github.ref_name }}-${{ matrix.rid }}.zip"
+          Compress-Archive -Path "publish/${{ matrix.rid }}/*" -DestinationPath $zip
+
+      - name: Create SHA-256 checksum
+        shell: pwsh
+        run: |
+          $zip = "dist/chronodesk-${{ github.ref_name }}-${{ matrix.rid }}.zip"
+          $fileName = Split-Path $zip -Leaf
+          $hash = (Get-FileHash -Path $zip -Algorithm SHA256).Hash.ToLowerInvariant()
+          "$hash  $fileName" | Set-Content -Path "$zip.sha256" -NoNewline
 
       - name: Upload package
         uses: actions/upload-artifact@v7
         with:
           name: chronodesk-${{ matrix.rid }}
-          path: dist/*.zip
+          path: |
+            dist/*.zip
+            dist/*.sha256
           if-no-files-found: error
           retention-days: 14
 
@@ -148,4 +159,11 @@ jobs:
       - name: Create release
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release create "${GITHUB_REF_NAME}" artifacts/*.zip --repo "${GITHUB_REPOSITORY}" --verify-tag --generate-notes --title "ChronoDesk ${GITHUB_REF_NAME}"
+        run: >-
+          gh release create "${GITHUB_REF_NAME}"
+          artifacts/*.zip
+          artifacts/*.sha256
+          --repo "${GITHUB_REPOSITORY}"
+          --verify-tag
+          --generate-notes
+          --title "ChronoDesk ${GITHUB_REF_NAME}"
