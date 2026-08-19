@@ -29,6 +29,20 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
 
+      - name: Resolve release version
+        id: version
+        shell: pwsh
+        run: |
+          $tag = "${{ github.ref_name }}"
+          if ($tag -notmatch '^v(?<major>[0-9]+)\.(?<minor>[0-9]+)\.(?<patch>[0-9]+)(?<suffix>-[0-9A-Za-z.-]+)?$') {
+            throw "Release tag '$tag' is not a supported semantic version tag."
+          }
+
+          $version = "$($Matches.major).$($Matches.minor).$($Matches.patch)$($Matches.suffix)"
+          $assemblyVersion = "$($Matches.major).$($Matches.minor).$($Matches.patch).0"
+          "version=$version" >> $env:GITHUB_OUTPUT
+          "assembly_version=$assemblyVersion" >> $env:GITHUB_OUTPUT
+
       - name: Setup .NET 9
         uses: actions/setup-dotnet@v6
         with:
@@ -41,7 +55,19 @@ jobs:
         run: dotnet test ChronoDesk.sln --configuration Release --no-restore
 
       - name: Publish self-contained app
-        run: dotnet publish src/ChronoDesk.App/ChronoDesk.App.csproj --configuration Release --runtime ${{ matrix.rid }} --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:DebugType=None --output publish/${{ matrix.rid }}
+        run: >-
+          dotnet publish src/ChronoDesk.App/ChronoDesk.App.csproj
+          --configuration Release
+          --runtime ${{ matrix.rid }}
+          --self-contained true
+          -p:PublishSingleFile=true
+          -p:IncludeNativeLibrariesForSelfExtract=true
+          -p:DebugType=None
+          -p:Version=${{ steps.version.outputs.version }}
+          -p:AssemblyVersion=${{ steps.version.outputs.assembly_version }}
+          -p:FileVersion=${{ steps.version.outputs.assembly_version }}
+          -p:InformationalVersion=${{ steps.version.outputs.version }}
+          --output publish/${{ matrix.rid }}
 
       - name: Package ZIP
         shell: pwsh
