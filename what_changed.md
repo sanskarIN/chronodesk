@@ -11,8 +11,9 @@ The product/source baseline is now explicitly versioned as `2.6.0.2`. This pass 
 - Repository: `https://github.com/sanskarIN/chronodesk`
 - Default branch: `main`
 - Version-hardening branch: `release-version-2.6.0.2`
+- Pull request: `#18` — `release: finalize ChronoDesk version 2.6.0.2 hardening`
 - `main` baseline before this pass: `acadb0e3861721bf72d90bdbb2c0282ef96b847d`
-- Version-hardening branch head before this handoff update: `7dafcf527fd5efa02e79608a4a29913030e0bfd3`
+- PR head before this final review-state handoff update: `b6d35c103235b57f187d79523e0554128ab565e2`
 - Canonical product version source: `src/ChronoDesk.App/ChronoDesk.App.csproj`
 - Required version: `2.6.0.2`
 - Product requirements: `10_chronodesk_master_prompt.md` supplied for the project plus the checked-in repository documentation.
@@ -34,7 +35,7 @@ The About window now renders all four assembly-version components. A headless Av
 
 ### Full four-part About version
 
-`AboutWindow` previously used `Version.ToString(3)`, which would display `2.6.0` even when assembly metadata was `2.6.0.2`. It now uses all four components and the UI smoke test verifies the exact value.
+`AboutWindow` previously used `Version.ToString(3)`, which would display `2.6.0` even when assembly metadata was `2.6.0.2`. It now uses all four components and the UI smoke test verifies the exact value. The final assertion uses the basic xUnit string-containment overload to minimize test-framework compatibility risk.
 
 ### Non-destructive transient settings fallback
 
@@ -97,6 +98,8 @@ Updated documentation now consistently describes `2.6.0.2`, four-component relea
 
 ## Files changed in this pass
 
+PR #18 reports exactly 21 changed files:
+
 - `.github/pull_request_template.md`
 - `.github/workflows/ci.yml`
 - `.github/workflows/release.yml`
@@ -134,7 +137,20 @@ Updated documentation now consistently describes `2.6.0.2`, four-component relea
 - Release ZIP policy/support docs bundling added: **completed**.
 - SHA-256 checksum generation/publishing added: **completed**.
 - Release/testing/security/privacy/contributor/maintenance documentation synchronized: **completed**.
+- Complete PR #18 changed-file list reviewed: **completed**.
+- Complete PR #18 unified diff reviewed for version drift, workflow/script issues, test compile risk, persistence behavior, and documentation contradictions: **completed**.
+- GitHub currently reports PR #18 as **mergeable**.
 - Commit author/committer metadata observed on this branch: **Sanskar `<sanskarin@outlook.in>`**.
+
+### Automated workflow state observed for the reviewed PR head
+
+For PR head `b6d35c103235b57f187d79523e0554128ab565e2`, GitHub created these pull-request workflow runs:
+
+- CI run `332` / run id `32252847982` — **queued** when observed;
+- CodeQL run `331` / run id `32252847871` — **queued** when observed;
+- Dependency Review run `269` / run id `32252848578` — **queued** when observed.
+
+Queued is not passing evidence. These conclusions must not be rewritten as successful unless GitHub later reports success.
 
 ### Repository settings observed
 
@@ -180,7 +196,7 @@ For the actual tag, additionally:
 
 These are deliberately left open until evidence exists.
 
-## Commits created in the `2.6.0.2` pass before this handoff
+## Commits created in the `2.6.0.2` pass before this final review-state handoff
 
 - `b117e95` — `build: set ChronoDesk version to 2.6.0.2`
 - `7e068de` — `fix: display full four-part application version`
@@ -203,13 +219,13 @@ These are deliberately left open until evidence exists.
 - `aed97cc` — `docs: add version verification to contributor workflow`
 - `8e121ec` — `docs: add version checks to pull request template`
 - `7dafcf5` — `docs: align security policy with 2.6.0.2 hardening`
-- handoff update: this commit.
+- `2b2b2cc` — `docs: record 2.6.0.2 final release hardening handoff`
+- `b6d35c1` — `test: simplify About version assertion`
+- final PR review-state handoff: this commit.
 
-## Next exact tasks for this branch
+## Next exact tasks
 
-1. Open a pull request from `release-version-2.6.0.2` to `main`.
-2. Review the complete changed-file list and unified diff.
-3. Observe GitHub CI/CodeQL/Dependency Review state without inventing a successful conclusion.
-4. Merge with normal merge history if the PR remains coherent/mergeable.
-5. Re-check `main` and update this handoff with the final PR/merge commit.
-6. Do **not** create `v2.6.0.2` until the remaining release-evidence gates above are actually satisfied.
+1. Merge PR #18 with normal merge history if its head remains unchanged and mergeable.
+2. Re-check `main` after merge and record the merge commit in this handoff.
+3. Observe any available workflow state without inventing a successful conclusion.
+4. Do **not** create `v2.6.0.2` until the remaining release-evidence gates above are actually satisfied.
