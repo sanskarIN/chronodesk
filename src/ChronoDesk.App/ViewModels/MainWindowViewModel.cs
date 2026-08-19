@@ -18,7 +18,7 @@ public sealed class MainWindowViewModel : ObservableObject
     private string currentWeekNumber = string.Empty;
     private string calendarDetails = string.Empty;
     private string zoneName = string.Empty;
-    private string statusMessage = Strings.Ready;
+    private string statusMessage = StateStrings.LoadingLocalData;
     private string timeZoneSearchStatus = string.Empty;
     private bool isInitialized;
 
@@ -48,7 +48,9 @@ public sealed class MainWindowViewModel : ObservableObject
 
     public ObservableCollection<TimeZoneDescriptor> SearchResults { get; } = [];
 
-    public string WorldClockCountText => $"{WorldClocks.Count} {Strings.WorldClocksTitle.ToLowerInvariant()}";
+    public string WorldClockCountText => WorldClocks.Count == 1
+        ? StateStrings.WorldClockCountOne
+        : StateStrings.Format(nameof(StateStrings.WorldClockCountManyFormat), WorldClocks.Count);
 
     public bool CanUndoWorldClockRemoval => lastRemovedWorldClock is not null;
 
@@ -103,8 +105,16 @@ public sealed class MainWindowViewModel : ObservableObject
     public bool IsInitialized
     {
         get => isInitialized;
-        private set => SetProperty(ref isInitialized, value);
+        private set
+        {
+            if (SetProperty(ref isInitialized, value))
+            {
+                OnPropertyChanged(nameof(IsLoading));
+            }
+        }
     }
+
+    public bool IsLoading => !IsInitialized;
 
     public bool IsTwelveHour => Settings.ClockFormat == ClockFormat.TwelveHour;
 
