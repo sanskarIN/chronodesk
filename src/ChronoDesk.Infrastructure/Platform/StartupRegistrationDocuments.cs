@@ -48,6 +48,13 @@ public static class StartupRegistrationDocuments
     public static string BuildLinuxDesktopEntry(string executablePath)
     {
         var path = NormalizeExecutablePath(executablePath);
+        if (path.Contains('='))
+        {
+            throw new ArgumentException(
+                "Linux desktop-entry executable paths cannot contain an equals-sign character.",
+                nameof(executablePath));
+        }
+
         var quotedExecutable = QuoteDesktopExec(path);
 
         return $"""
@@ -80,6 +87,7 @@ public static class StartupRegistrationDocuments
     private static string QuoteDesktopExec(string value)
     {
         var escaped = value
+            .Replace("%", "%%", StringComparison.Ordinal)
             .Replace("\\", "\\\\", StringComparison.Ordinal)
             .Replace("\"", "\\\"", StringComparison.Ordinal)
             .Replace("`", "\\`", StringComparison.Ordinal)
