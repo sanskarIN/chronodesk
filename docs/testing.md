@@ -80,14 +80,21 @@ New cadence behavior must remain independent of actual sound playback.
 - at least one clock invariant;
 - 24-card limit.
 
-### Persistence
+### Persistence and schema migration
 
 `JsonSettingsStoreTests` uses isolated temporary directories and verifies:
 
 - settings save/load round-trip;
 - portable export/import;
 - malformed JSON fallback;
-- corrupt-file preservation.
+- corrupt-file preservation;
+- legacy documents without `schemaVersion` are explicitly treated as schema `0` and migrated to the current schema;
+- explicit schema `0` documents migrate to the current schema while preserving compatible preferences;
+- negative schema versions are rejected;
+- future/unsupported schema versions are rejected;
+- numeric enum representations are rejected.
+
+`SettingsMigrationPipeline` advances supported documents one schema version at a time before normal settings normalization. The current `0 -> 1` migration is data-preserving because pre-versioned development files used the same field semantics. Future schema changes must add an explicit step and regression coverage rather than silently reinterpreting old JSON.
 
 Tests must not read or write the developer's real ChronoDesk data folder.
 
@@ -246,7 +253,7 @@ When fixing a bug:
 
 ## Coverage philosophy
 
-Coverage percentage is not a release target by itself. Prefer tests that protect invariants and failure paths. A high line percentage that does not exercise timezone boundaries, persistence corruption, chime suppression, malformed import handling, startup document generation, URI policy, or window-mode transitions is less useful than focused behavioral coverage.
+Coverage percentage is not a release target by itself. Prefer tests that protect invariants and failure paths. A high line percentage that does not exercise timezone boundaries, persistence corruption, schema migration, chime suppression, malformed import handling, startup document generation, URI policy, or window-mode transitions is less useful than focused behavioral coverage.
 
 ## Performance testing
 
