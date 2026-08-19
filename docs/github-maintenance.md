@@ -10,7 +10,7 @@ Do not force-push or rewrite published release history on `main` except for an e
 
 ## Recommended branch protection / ruleset
 
-Apply a GitHub ruleset to `main` after the first successful workflow run has established the exact check names.
+Apply a GitHub ruleset to `main` after successful workflow runs have established the exact check names.
 
 Recommended controls:
 
@@ -32,8 +32,11 @@ Expected workflow families currently committed:
 - `CI`
 - `CodeQL`
 - `Dependency Review` on pull requests
+- `Release` on verified four-part version tags
 
 The matrix CI job produces separate OS check runs; configure protection from the exact contexts visible in GitHub.
+
+The repository source cannot prove that branch protection/rulesets are enabled. Treat actual repository-settings verification as a release gate and record it in `what_changed.md`/release evidence.
 
 ## Merge strategy
 
@@ -43,7 +46,7 @@ The repository currently permits merge, squash, and rebase. For a clean public h
 - prefer rebase/merge when a contributor intentionally prepared multiple atomic meaningful commits worth retaining;
 - never squash merely to hide security-sensitive review context that should remain documented elsewhere.
 
-Maintainer direct commits may be appropriate during repository bootstrap, but normal post-bootstrap feature work should increasingly use reviewable branches/PRs.
+Maintainer direct commits may be appropriate during repository bootstrap or a documented emergency, but normal post-bootstrap feature work should increasingly use reviewable branches/PRs.
 
 ## Labels
 
@@ -66,6 +69,7 @@ Suggested label set:
 | `dependencies` | Dependency automation |
 | `dotnet` | .NET/NuGet updates |
 | `github-actions` | Workflow action updates |
+| `release` | Release/versioning/artifact work |
 | `good first issue` | Narrow contributor-friendly task |
 | `help wanted` | Maintainer explicitly welcomes assistance |
 | `blocked` | Waiting on an external prerequisite |
@@ -74,11 +78,11 @@ Issue forms already request `bug`, `enhancement`, and `needs-triage`; Dependabot
 
 ## Milestones
 
-Use milestones for real release coordination rather than every small task. Suggested milestones:
+Use milestones for real release coordination rather than every small task. Suggested milestones from the current source baseline:
 
-- `v0.1.0 Preview`
-- `v0.2.0 Platform Validation`
-- `v1.0.0 Stable`
+- `v2.6.0.2 Release Candidate`
+- `v2.6.0.3 Maintenance` when a revision-only follow-up is needed
+- `v2.7.0.0` for a future feature-oriented milestone when appropriate
 
 A milestone should contain only work necessary or intentionally targeted for that release. Move non-blocking scope rather than keeping a release permanently open.
 
@@ -118,7 +122,10 @@ The PR template requires formatting/build/test/security/privacy/accessibility re
 - UI changes have keyboard/high-contrast review;
 - platform-specific changes have safe fallbacks;
 - new dependencies are justified;
+- version-bearing changes keep `Version`, `PackageVersion`, `AssemblyVersion`, and `FileVersion` synchronized;
 - documentation and changelog are synchronized.
+
+Run `scripts/check-version.ps1` and `scripts/check-markdown-links.ps1` locally when PowerShell is available; CI also enforces both checks.
 
 ## Dependabot
 
@@ -147,9 +154,13 @@ Funding must remain optional and non-intrusive. Do not gate issues, releases, fe
 
 ## Releases
 
-Tags matching `v*.*.*` trigger `.github/workflows/release.yml`. Follow `docs/release.md` before pushing a release tag.
+ChronoDesk uses four-component versions: `MAJOR.MINOR.PATCH.REVISION`. The current source version is `2.6.0.2`.
 
-Do not tag merely to test whether the workflow compiles. Use a branch/PR or workflow-safe development method first; a public semantic version tag should represent an intentional release candidate/release.
+Tags matching `v*.*.*.*` trigger `.github/workflows/release.yml`. The release workflow invokes `scripts/check-version.ps1 -Tag <tag>` and fails if the tag does not exactly match the application project version.
+
+Follow `docs/release.md` before pushing a release tag. Do not tag merely to test whether the workflow compiles. Use a branch/PR for workflow changes; a public version tag should represent an intentional, verified release candidate/release.
+
+Release packaging creates self-contained ZIPs for the supported runtime identifiers, bundles the project license/readme/changelog/privacy/security/support documents, and publishes `SHA256SUMS.txt`. Verify downloaded ZIP hashes before declaring the release complete.
 
 ## Repository About section
 
@@ -197,10 +208,12 @@ Do not assume a feature is enabled solely because a workflow/configuration file 
 
 At each release candidate:
 
+- run the version/tag consistency verifier;
 - review branch/ruleset check contexts;
 - review stale labels/milestones;
 - review dependency/security alerts;
 - inspect Actions permissions;
 - ensure old artifacts/workflow runs do not contain sensitive data;
+- verify release checksum generation and artifact contents;
 - confirm About description/topics still match the product;
 - confirm README badges point at current workflow filenames.
