@@ -96,6 +96,27 @@ public sealed class HeadlessUiSmokeTests
     }
 
     [AvaloniaFact]
+    public void SettingsWindow_LoadsLocalDiagnosticsControls()
+    {
+        var viewModel = new MainWindowViewModel(new AppServices());
+        var window = new SettingsWindow(viewModel);
+        var diagnostics = AppDiagnosticsInfo.Capture();
+
+        Assert.Equal(
+            diagnostics.AppVersion,
+            window.FindControl<TextBox>("DiagnosticsVersionText")?.Text);
+        Assert.Equal(
+            diagnostics.OperatingSystem,
+            window.FindControl<TextBox>("DiagnosticsOsText")?.Text);
+        Assert.Equal(
+            diagnostics.SettingsPath,
+            window.FindControl<TextBox>("DiagnosticsSettingsPathText")?.Text);
+        Assert.Equal(
+            diagnostics.LogPath,
+            window.FindControl<TextBox>("DiagnosticsLogPathText")?.Text);
+    }
+
+    [AvaloniaFact]
     public void SettingsWindow_LoadsOfflineSafeUpdateControls()
     {
         var viewModel = new MainWindowViewModel(new AppServices());
