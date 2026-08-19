@@ -10,8 +10,11 @@ The application feature baseline is implemented. This pass closes source-level d
 
 - Repository: `https://github.com/sanskarIN/chronodesk`
 - Default branch: `main`
-- Final-audit branch for this pass: `final-audit-20260819`
-- Baseline `main` commit before this pass: `8695efc3ba81b3e408630691a3da7b8093954ad9` (`merge: complete ChronoDesk phase 6 audit hardening`)
+- Final-audit branch used for this pass: `final-audit-20260819`
+- Pull request: `#17` — `fix: complete ChronoDesk final source audit hardening`
+- Baseline `main` commit before this pass: `8695efc3ba81b3e408630691a3da7b8093954ad9`
+- Audit branch head merged: `3364337c42c91ba0924565f05a5e6319ec892672`
+- Merge commit: `d6b140c2594a910b1463ded8ba31a2fdfdbcfe7c`
 - Product requirements: `10_chronodesk_master_prompt.md` supplied for the project plus the checked-in repository documentation.
 
 ## Implemented product baseline
@@ -97,13 +100,26 @@ ChronoDesk currently includes:
 - TODO/FIXME/HACK/`NotImplementedException` repository search: **no matches returned** during the audit.
 - Required documentation/GitHub workflow structure inspection: **PASS**.
 - Source-level review of the changed clock/settings/window/chime paths: **completed**.
-- Git metadata check for the audit branch: recent connector-created commits are authored/committed as **Sanskar `<sanskarin@outlook.in>`**.
+- Complete PR #17 diff review: **completed**.
+- GitHub mergeability check before merge: **PASS**.
+- PR #17 merge into `main`: **PASS**, merge commit `d6b140c2594a910b1463ded8ba31a2fdfdbcfe7c`.
+- Git metadata check: recent connector-created commits are authored/committed as **Sanskar `<sanskarin@outlook.in>`**.
+
+### Automated workflow state observed during this pass
+
+For audit branch head `3364337c42c91ba0924565f05a5e6319ec892672`, GitHub created these pull-request workflow runs:
+
+- CI run `328` / run id `32245568678` — **queued** when last observed;
+- CodeQL run `327` / run id `32245568645` — **queued** when last observed;
+- Dependency Review run `267` / run id `32245568650` — **queued** when last observed.
+
+Queued is not passing evidence. Do not rewrite these as successful unless GitHub later reports successful conclusions.
 
 ### Not executable in this environment
 
 The execution environment available to this chat does not contain `dotnet` or `pwsh`, and an attempted network clone through the local container could not resolve `github.com`. Therefore this chat did **not** claim a local build/test/link-check result.
 
-The authoritative automated verification remains the configured GitHub Actions checks for the exact PR/release commit:
+The authoritative automated verification remains the configured GitHub Actions checks for the exact release commit:
 
 ```text
 dotnet restore ChronoDesk.sln
@@ -160,12 +176,17 @@ ChronoDesk's final source-audit hardening improves startup resilience when local
 - `3acc860` — `fix: harden markdown link verifier path parsing`
 - `6f7c050` — `docs: document final audit regression coverage`
 - `f473961` — `docs: align roadmap with final audit hardening`
-- handoff refresh commit: this commit.
+- `3364337` — `docs: refresh ChronoDesk final handoff`
+- `d6b140c` — merge commit preserving the final-audit history.
+- final post-merge handoff commit: this commit on `main`.
 
 ## Next exact tasks
 
-1. Review the complete final-audit pull-request diff.
-2. Observe any available pull-request-triggered workflow results without claiming results that are not returned by GitHub.
-3. Merge the audited branch to `main` while preserving the atomic commit history.
-4. Re-check `main` and record the merge commit in this handoff if a final post-merge documentation update is needed.
-5. For release work, perform the remaining native/manual gates above; do not invent evidence for them.
+No additional source feature is required by this final source-audit pass. The remaining work is release evidence:
+
+1. require green CI/CodeQL/dependency-security results for the exact release candidate;
+2. perform the real Windows/macOS/Linux checks listed above and in `docs/release.md`;
+3. capture real release screenshots after those checks;
+4. verify branch protection/status checks and the exact tagged tree;
+5. publish a preview/release candidate before stable `v1.0.0` and create a real prior-version migration fixture;
+6. publish stable `v1.0.0` only when every declared release gate is satisfied.
