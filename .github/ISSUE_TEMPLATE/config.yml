@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security vulnerability
+    url: https://github.com/sanskarIN/chronodesk/security/policy
+    about: Please use the private security process described in SECURITY.md.
+  - name: Support
+    url: https://github.com/sanskarIN/chronodesk/blob/main/SUPPORT.md
+    about: Read support options before opening an issue.
