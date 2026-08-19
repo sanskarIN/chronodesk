@@ -41,34 +41,11 @@ This supplements CodeQL, dependency review, GitHub security features, and human 
 
 ### Clock formatting
 
-`ClockFormatterTests` verifies:
+`ClockFormatterTests` verifies 24-hour/12-hour output, seconds behavior, ISO week number, and UTC offset/calendar detail rendering using explicit deterministic time/culture inputs.
 
-- 24-hour time with seconds;
-- 12-hour time without seconds;
-- ISO week number;
-- UTC offset/calendar detail rendering.
+### Quiet hours and chime policy
 
-Use explicit `DateTimeOffset`, timezone, and culture inputs so tests do not depend on the machine's current wall clock.
-
-### Quiet hours
-
-`QuietHoursTests` verifies:
-
-- overnight intervals such as 22:00 → 07:00;
-- inclusive start/exclusive end behavior;
-- disabled quiet hours;
-- equal start/end meaning no quiet interval.
-
-### Chime policy
-
-`ChimePolicyTests` verifies:
-
-- hourly cadence;
-- quarter-hour cadence boundaries;
-- duplicate suppression within the same minute;
-- quiet-hour suppression.
-
-New cadence behavior must remain independent of actual sound playback.
+`QuietHoursTests` and `ChimePolicyTests` verify overnight intervals, inclusive start/exclusive end behavior, disabled/equal ranges, hourly/quarter-hour cadence, duplicate suppression, and quiet-hour suppression independently of actual sound playback.
 
 ### Settings model
 
@@ -76,9 +53,13 @@ New cadence behavior must remain independent of actual sound playback.
 
 - visual range normalization;
 - default font fallback;
-- invalid/duplicate clock removal;
+- invalid clock removal;
+- duplicate clock-ID removal;
+- duplicate timezone-ID removal case-insensitively;
 - at least one clock invariant;
-- the world-clock list is bounded by `AppSettings.MaximumWorldClockCount`.
+- the world-clock list is bounded by `AppSettings.MaximumWorldClockCount`;
+- runtime-null/invalid enum repair;
+- bounded single-line imported text.
 
 ### Persistence and schema migration
 
@@ -88,177 +69,174 @@ New cadence behavior must remain independent of actual sound playback.
 - portable export/import;
 - malformed JSON fallback;
 - corrupt-file preservation;
-- legacy documents without `schemaVersion` are explicitly treated as schema `0` and migrated to the current schema;
-- explicit schema `0` documents migrate to the current schema while preserving compatible preferences;
-- negative schema versions are rejected;
-- future/unsupported schema versions are rejected;
-- numeric enum representations are rejected.
+- repeated corruption creates distinct recovery files;
+- JSON root must be an object;
+- legacy documents without `schemaVersion` are treated as schema `0` and migrated;
+- explicit schema `0` migration;
+- negative/future schema rejection;
+- numeric enum rejection.
 
-`SettingsMigrationPipeline` advances supported documents one schema version at a time before normal settings normalization. The current `0 -> 1` migration is data-preserving because pre-versioned development files used the same field semantics. Future schema changes must add an explicit step and regression coverage rather than silently reinterpreting old JSON.
+The store checks the 2 MiB maximum using the opened stream before parsing, avoiding dependence on an earlier metadata-only size observation. Corrupt recovery names include timestamp precision plus a random suffix so rapid repeated failures do not collide.
 
-Tests must not read or write the developer's real ChronoDesk data folder.
+`SettingsMigrationPipeline` advances supported documents one schema version at a time before normal settings normalization. The current `0 -> 1` migration is data-preserving because pre-versioned development files used the same field semantics.
 
 ### Timezone catalog
 
-`SystemTimeZoneCatalogTests` verifies:
-
-- system timezone discovery;
-- UTC availability;
-- invalid-ID fallback;
-- bounded case-insensitive search.
+`SystemTimeZoneCatalogTests` verifies system timezone discovery, UTC availability, invalid-ID fallback, and bounded case-insensitive search.
 
 ### Startup registration documents
 
-`StartupRegistrationDocumentsTests` validates the pure platform-registration builders without modifying a real user startup location. It verifies:
+`StartupRegistrationDocumentsTests` validates pure platform-registration builders without modifying real user startup state. It covers Windows Run-command quoting/background arguments, Windows embedded-quote rejection, macOS LaunchAgent XML and escaping, Linux desktop-entry escaping, control-character rejection, and harmless outer-whitespace normalization.
 
-- Windows Run-key command quoting and the `--background` argument;
-- rejection of unsafe embedded Windows quote characters;
-- valid macOS LaunchAgent XML generation;
-- XML escaping for macOS executable paths;
-- Linux XDG desktop-entry generation;
-- Linux executable escaping for spaces, backslashes, dollar signs, and backticks;
-- rejection of control characters in executable paths;
-- normalization of harmless outer whitespace.
+### Main-window orchestration and startup consistency
 
-`PlatformStartupManager` uses these same builders when it reads/writes OS startup registration. This keeps generated content deterministic and allows most string/escaping logic to be tested without touching the registry, `~/Library/LaunchAgents`, or the XDG autostart directory.
+`MainWindowViewModelTests` verifies:
 
-Real platform startup enable/disable remains a manual release gate because registry permissions, LaunchServices/session behavior, Linux desktop-environment behavior, and filesystem permissions cannot be faithfully reproduced by pure unit tests.
+- startup rollback when persistence fails;
+- imported settings preserve the current device startup preference;
+- explicit startup preference changes apply once;
+- world-clock additions are rejected before persistence at capacity;
+- world-clock remove/undo restores original order;
+- timezone-search empty/populated feedback.
 
-### Main-window orchestration
+`StartupRollbackCancellationTests` verifies a more specific failure path: when a settings save cancels its caller token after startup integration was already changed, rollback still restores the previous startup state using a separate non-cancelled operation.
 
-`MainWindowViewModelTests` verifies behavior below the native-window boundary, including:
+### Loading and localized count state
 
-- startup integration rollback when persistence fails;
-- imported settings preserving the current device startup preference;
-- explicit startup preference changes being applied once;
-- world-clock additions being rejected before persistence when the dashboard is at capacity;
-- world-clock removal and restoration at the original dashboard position;
-- timezone-search empty and populated feedback states.
+`MainWindowStateTests` verifies:
+
+- the view model begins in an explicit localized local-loading state;
+- `IsLoading`/`IsInitialized` transition correctly;
+- successful initialization changes status to ready;
+- singular/plural world-clock count text comes from dedicated localization resources rather than modifying an English heading.
 
 ### Tray visibility safety
 
-`TrayVisibilityPolicyTests` verifies that ChronoDesk hides its main window only when all required conditions are true.
+`TrayVisibilityPolicyTests` verifies close/background hiding occurs only when the relevant preference/request is active **and** reliable tray restoration exists. If tray integration is unavailable, the app remains visible/closeable rather than becoming an unreachable hidden process.
 
-Close-to-tray requires:
-
-- the close was not an explicit application quit;
-- minimize-to-tray is enabled;
-- reliable tray menu restoration is available for the current desktop session.
-
-Background startup hiding similarly requires the `--background` request, the preference, and reliable tray restoration. If tray integration is unavailable, the app remains visible/closeable rather than becoming an unreachable hidden process.
-
-Actual tray availability is still a native-desktop release check because a headless test runner cannot prove the operating-system tray/menu implementation exists.
+Actual tray availability remains a native-desktop release check.
 
 ### External links
 
-`ExternalUriLauncherTests` verifies that the application-level launcher policy accepts HTTPS and mail destinations used by ChronoDesk while rejecting insecure HTTP, local-file, script, relative, and credential-bearing HTTPS destinations.
+`ExternalUriLauncherTests` verifies the application-level launcher accepts the approved HTTPS/mail destinations while rejecting insecure HTTP, local-file, script, relative, empty, and credential-bearing HTTPS destinations. Tests do not launch a real browser/mail client.
 
-The tests do not launch a real browser or mail client.
+### Version and update metadata
+
+`AppVersionInfoTests` verifies application display-version generation uses informational version metadata when available, preserves prerelease labels, and strips build metadata after `+`.
+
+`HeadlessUiSmokeTests` verifies Settings exposes the offline-safe Updates controls, displays the same application version, and loads the Settings About version field.
+
+The update UI itself does not perform background network requests; opening the official Releases page requires explicit user activation and native browser handling, which is a manual desktop check.
+
+### Theme palette selection
+
+`ThemePaletteSelectorTests` verifies:
+
+- System mode follows Avalonia's actual dark variant;
+- System mode follows the actual light variant;
+- explicit Light overrides a dark actual system variant;
+- high-contrast preference overrides normal theme selection.
+
+The `App` subscribes to `ActualThemeVariantChanged`, so real desktop release validation must also toggle the OS theme while ChronoDesk is running and confirm the custom palette follows it.
 
 ### Property-style robustness tests
 
-`DomainPropertyTests` runs deterministic seeded randomized cases against reference invariants. It verifies thousands of quiet-hour combinations and checks that settings normalization is idempotent, bounded, and produces unique clock IDs.
-
-This test style gives broad edge coverage while staying deterministic in CI. A failure can always be reproduced from the committed seed.
+`DomainPropertyTests` runs deterministic seeded randomized cases against reference invariants for quiet hours and settings normalization. Failures remain reproducible from the committed seed.
 
 ### Import fuzz tests
 
-`SettingsImportFuzzTests` feeds a deterministic corpus of malformed binary/JSON inputs into the settings importer and verifies that the primary settings document is not changed. It also verifies rejection of files above the configured size limit.
-
-Fuzz inputs are generated locally inside the test and never contain production/user data.
+`SettingsImportFuzzTests` feeds a deterministic malformed binary/JSON corpus into the importer, verifies the primary settings document is not changed, and checks oversized input rejection.
 
 ### Headless Avalonia UI smoke tests
 
-`AvaloniaTestSetup` and `HeadlessUiSmokeTests` use `Avalonia.Headless.XUnit` with the same Avalonia 11.3 maintenance baseline as the application. Current smoke coverage verifies:
+`AvaloniaTestSetup` and `HeadlessUiSmokeTests` use `Avalonia.Headless.XUnit` with the same Avalonia maintenance baseline as the app. Current smoke coverage verifies:
 
 - main-window XAML/resource loading;
-- key clock, timezone search, search-feedback, and undo controls exist;
-- mini mode can enter and restore normal dimensions;
-- leaving mini mode follows the current saved always-on-top preference rather than stale pre-mini state;
+- clock/search/search-feedback/undo controls;
+- mini-mode dimension round trip;
+- current always-on-top preference after mini exit;
 - focus mode hides/restores application chrome;
-- Settings loads primary preference controls;
-- onboarding and About windows load localized resources.
+- primary Settings controls;
+- Settings Updates controls/version;
+- Settings About version;
+- onboarding and standalone About windows load localized resources.
 
-Headless UI tests strengthen cross-platform CI but do **not** replace real desktop testing for system tray, startup registration, sound playback, accessibility APIs, display scaling, or native file pickers.
+Headless UI tests do **not** replace real desktop testing for tray, startup registration, sound playback, external URI handlers, system-theme switching, accessibility APIs, display scaling, or native file pickers.
 
 ## Manual UI checklist
 
-Automated Core/headless tests are not a substitute for desktop validation. Before a tagged release, test each supported primary platform.
+Before a tagged release, test each supported primary platform.
 
 ### Launch/onboarding
 
 - [ ] Fresh data directory opens onboarding.
+- [ ] A visible local-loading state appears naturally without fake delay when initialization is observable.
 - [ ] Onboarding explains offline/private behavior accurately.
 - [ ] Completing onboarding persists and it does not reappear next launch.
 
 ### Main clock
 
-- [ ] Time updates smoothly without visible duplicate/reordered text.
-- [ ] 12/24-hour toggle is immediate.
-- [ ] Seconds toggle is immediate.
-- [ ] Date/weekday/week/calendar settings match visible output.
-- [ ] Large font sizes remain usable at the documented minimum window size.
+- [ ] Time updates smoothly without duplicate/reordered text.
+- [ ] 12/24-hour and seconds toggles are immediate.
+- [ ] Date/weekday/week/calendar output matches settings.
+- [ ] Large clock sizes remain usable at documented minimum window size.
 
 ### World clocks
 
 - [ ] Search accepts city/region/timezone-ID fragments.
-- [ ] Search result count changes with the query and an empty search state is visible when there are no matches.
+- [ ] Result count changes and no-results state is visible.
 - [ ] A selected timezone can be added.
-- [ ] Duplicate timezone add is rejected with status text.
-- [ ] The capacity limit rejects an additional clock with explicit feedback rather than reporting a false success.
-- [ ] A card can be removed.
-- [ ] Undo restores the most recently removed card at the expected position.
+- [ ] Duplicate timezone add is rejected.
+- [ ] Capacity rejects another clock with explicit feedback.
+- [ ] Remove + Undo restores the expected card position.
 - [ ] The last remaining card cannot be removed.
-- [ ] Restart preserves the list.
+- [ ] Restart preserves the normalized list.
 
-### Focus mode
+### Themes and appearance
 
-- [ ] `F11` enters full screen.
-- [ ] `F11` exits full screen.
-- [ ] `Esc` exits focus mode.
-- [ ] Header, world clocks, add section, and footer hide during focus mode.
+- [ ] Light, Dark, System, and High Contrast are readable.
+- [ ] In System mode, switch the OS between light/dark while ChronoDesk is running and verify the custom palette updates.
+- [ ] Explicit Light/Dark does not unexpectedly follow later OS theme changes.
+- [ ] Layout, font, size, spacing persist.
 
-### Mini mode
+### Focus and mini
 
-- [ ] `Ctrl+M` enters a compact window.
-- [ ] Mini mode is always on top.
-- [ ] `Esc` exits mini mode.
-- [ ] Previous window dimensions/position are restored reasonably.
-- [ ] Normal always-on-top preference remains correct after leaving mini mode, including if the preference changed while mini mode was active.
+- [ ] `F11` enters/exits focus and `Esc` exits focus.
+- [ ] `Ctrl+M` enters/exits mini mode.
+- [ ] Mini mode is always topmost.
+- [ ] Normal dimensions/position restore reasonably.
+- [ ] Current normal always-on-top preference is correct after mini mode.
 
 ### Tray
 
-- [ ] Tray icon/menu appears where the OS/desktop supports reliable tray restoration.
-- [ ] Show restores and activates the window.
-- [ ] Focus toggles focus mode.
-- [ ] Mini toggles mini mode.
-- [ ] Quit exits the process.
-- [ ] Closing the main window hides it only when minimize-to-tray is enabled and reliable tray restoration is available.
-- [ ] Closing exits normally when minimize-to-tray is disabled.
-- [ ] On a desktop without reliable tray integration, closing never leaves an unreachable hidden ChronoDesk process.
-- [ ] `--background` startup remains visible when tray restoration is unavailable.
+- [ ] Tray icon/menu appears where reliable tray restoration is supported.
+- [ ] Show/Focus/Mini/Quit work.
+- [ ] Close hides only when minimize-to-tray and reliable tray restoration are both active.
+- [ ] Tray-unavailable desktop does not leave an unreachable hidden process.
+- [ ] `--background` remains visible when reliable tray restoration is unavailable.
 
-### Settings
+### Settings / data
 
-- [ ] Theme changes apply.
-- [ ] High contrast applies without unreadable controls.
-- [ ] Layout changes visibly affect the hero clock.
-- [ ] Font/size/spacing values persist.
 - [ ] Startup setting writes/removes the correct current-user integration.
 - [ ] Import/export round-trips a settings file.
 - [ ] Invalid import displays a safe error and does not replace good settings.
 - [ ] Reset returns to defaults.
+- [ ] Updates tab displays the same prerelease version as About when applicable.
+- [ ] Opening official releases happens only after clicking the button.
+- [ ] Updates tab does not trigger observable background network activity while idle.
+- [ ] Settings About shows project/license/version/credit/support/funding content.
+- [ ] External-link failure leaves Settings usable and shows safe status text.
 
 ### Chime
 
 - [ ] Disabled chime is silent.
 - [ ] Enabled cadence fires once on a boundary.
 - [ ] Quiet hours suppress playback.
-- [ ] Clock continues normally when OS sound helpers are missing.
+- [ ] Clock continues normally when optional sound helpers are absent/fail.
 
 ### Accessibility
 
-Use the detailed checklist in `docs/accessibility.md`.
+Use `docs/accessibility.md`.
 
 ## Regression test rule
 
@@ -272,8 +250,8 @@ When fixing a bug:
 
 ## Coverage philosophy
 
-Coverage percentage is not a release target by itself. Prefer tests that protect invariants and failure paths. A high line percentage that does not exercise timezone boundaries, persistence corruption, schema migration, chime suppression, malformed import handling, startup document generation, tray visibility safety, URI policy, or window-mode transitions is less useful than focused behavioral coverage.
+Coverage percentage is not a release target by itself. Prefer tests that protect invariants and failure paths. Focused coverage of timezone boundaries, persistence corruption, migration, cancellation rollback, chime suppression, malformed imports, startup generation, tray safety, update/privacy behavior, theme selection, URI policy, and window modes matters more than a cosmetic line percentage.
 
 ## Performance testing
 
-Clock ticks should not perform settings I/O or network I/O. If a future change adds heavy work to the tick path, capture CPU/allocation measurements and update `docs/performance.md`.
+Clock ticks must not perform settings I/O or network I/O. The Updates section must not add background polling. If a future change adds heavy tick/startup work, capture measurements and update `docs/performance.md`.
