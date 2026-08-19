@@ -101,6 +101,6 @@ public sealed class HeadlessUiSmokeTests
         Assert.Equal(Strings.OnboardingTitle, onboarding.Title);
         Assert.Equal(Strings.AboutTitle, about.Title);
         Assert.NotNull(versionText);
-        Assert.Contains("2.6.0.2", versionText.Text ?? string.Empty, StringComparison.Ordinal);
+        Assert.Contains("2.6.0.2", versionText.Text ?? string.Empty);
     }
 }
