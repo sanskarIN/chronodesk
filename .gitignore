@@ -1,0 +1,58 @@
+# Build outputs
+**/bin/
+**/obj/
+artifacts/
+TestResults/
+coverage/
+
+# IDEs
+.vs/
+.vscode/*.log
+.idea/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# OS
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Local configuration and secrets
+.env
+.env.*
+!.env.example
+*.secrets.json
+secrets.json
+appsettings.Local.json
+
+# Avalonia / packaging output
+*.app
+*.dmg
+*.msix
+*.msixbundle
+*.AppImage
+*.deb
+*.rpm
+*.nupkg
+*.snupkg
+publish/
+
+# Logs and runtime data
+*.log
+logs/
+*.tmp
+*.bak
+ChronoDeskData/
+
+# Coverage / test tooling
+*.coverage
+*.coveragexml
+coverage.cobertura.xml
+
+# Generated local certificates/signing material
+*.pfx
+*.p12
+*.key
+*.cer
