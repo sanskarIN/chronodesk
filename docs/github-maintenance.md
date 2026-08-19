@@ -10,7 +10,7 @@ Do not force-push or rewrite published release history on `main` except for an e
 
 ## Recommended branch protection / ruleset
 
-Apply a GitHub ruleset to `main` after the first successful workflow run has established the exact check names.
+Apply a GitHub ruleset to `main` after a successful workflow run has established the exact check names.
 
 Recommended controls:
 
@@ -29,9 +29,16 @@ Do not invent required status-check names from badge labels. Select the exact ch
 
 Expected workflow families currently committed:
 
-- `CI`
-- `CodeQL`
-- `Dependency Review` on pull requests
+- `CI`;
+- `CodeQL`;
+- `Dependency Review` on pull requests.
+
+The `CI` workflow includes a `Repository integrity` job and separate .NET matrix jobs. Repository integrity currently validates:
+
+- repository-local Markdown links/images;
+- complete `git ls-files` coverage in `docs/repository-reference.md`;
+- high-confidence committed credential patterns;
+- Python repository-validator unit tests.
 
 The matrix CI job produces separate OS check runs; configure protection from the exact contexts visible in GitHub.
 
@@ -41,6 +48,7 @@ The repository currently permits merge, squash, and rebase. For a clean public h
 
 - prefer squash for noisy external PR iteration when preserving individual commits adds little value;
 - prefer rebase/merge when a contributor intentionally prepared multiple atomic meaningful commits worth retaining;
+- preserve deliberately granular maintainer phase histories when they are useful for regression isolation/auditability;
 - never squash merely to hide security-sensitive review context that should remain documented elsewhere.
 
 Maintainer direct commits may be appropriate during repository bootstrap, but normal post-bootstrap feature work should increasingly use reviewable branches/PRs.
@@ -76,9 +84,9 @@ Issue forms already request `bug`, `enhancement`, and `needs-triage`; Dependabot
 
 Use milestones for real release coordination rather than every small task. Suggested milestones:
 
-- `v0.1.0 Preview`
-- `v0.2.0 Platform Validation`
-- `v1.0.0 Stable`
+- `v0.1.0 Preview`;
+- `v0.2.0 Platform Validation`;
+- `v1.0.0 Stable`.
 
 A milestone should contain only work necessary or intentionally targeted for that release. Move non-blocking scope rather than keeping a release permanently open.
 
@@ -111,14 +119,26 @@ Do not ask users to publish full settings/log files when a minimal sanitized exc
 
 ## Pull requests
 
-The PR template requires formatting/build/test/security/privacy/accessibility review. Maintainers should additionally verify:
+The PR template requires repository validators plus formatting/build/test/security/privacy/accessibility review. Maintainers should additionally verify:
 
 - the change respects the Core/Infrastructure/App dependency rule;
 - persistent data changes include compatibility/migration thought;
 - UI changes have keyboard/high-contrast review;
 - platform-specific changes have safe fallbacks;
 - new dependencies are justified;
-- documentation and changelog are synchronized.
+- documentation and changelog are synchronized;
+- every added/renamed/moved/deleted tracked file has the matching `docs/repository-reference.md` update;
+- test-file responsibility changes are reflected in `docs/test-catalog.md`.
+
+If the documentation-inventory job fails, treat the reported missing/stale path as a normal PR defect rather than bypassing/removing the gate.
+
+## Documentation governance
+
+`docs/README.md` is the technical documentation hub and `docs/repository-reference.md` is the exhaustive tracked-file responsibility inventory.
+
+The canonical inventory is intentionally machine enforced so small files are not exempt. GitHub templates/workflows, assets, XAML, resource catalogs, manifests, scripts, fakes, and policy docs are all part of the maintained repository and must remain represented.
+
+When GitHub-only settings change materially (rulesets, required checks, security settings, release permissions), update this file even though the setting itself cannot be captured as a normal repository file.
 
 ## Dependabot
 
@@ -148,6 +168,8 @@ Funding must remain optional and non-intrusive. Do not gate issues, releases, fe
 ## Releases
 
 Tags matching `v*.*.*` trigger `.github/workflows/release.yml`. Follow `docs/release.md` before pushing a release tag.
+
+Release preflight repeats repository documentation integrity before packaging. A tag with an undocumented tracked file should fail before any platform package is created.
 
 Do not tag merely to test whether the workflow compiles. Use a branch/PR or workflow-safe development method first; a public semantic version tag should represent an intentional release candidate/release.
 
@@ -198,9 +220,11 @@ Do not assume a feature is enabled solely because a workflow/configuration file 
 At each release candidate:
 
 - review branch/ruleset check contexts;
+- confirm Repository integrity includes documentation inventory and passes on the exact release commit;
 - review stale labels/milestones;
 - review dependency/security alerts;
 - inspect Actions permissions;
 - ensure old artifacts/workflow runs do not contain sensitive data;
 - confirm About description/topics still match the product;
-- confirm README badges point at current workflow filenames.
+- confirm README badges point at current workflow filenames;
+- confirm `docs/repository-reference.md` has no missing/stale tracked-file entries.
