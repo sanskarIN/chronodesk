@@ -43,6 +43,24 @@ public sealed class HeadlessUiSmokeTests
 
         Assert.Equal(1000, window.Width);
         Assert.Equal(700, window.Height);
+        Assert.False(window.Topmost);
+    }
+
+    [AvaloniaFact]
+    public void MainWindow_MiniModeExitUsesCurrentAlwaysOnTopPreference()
+    {
+        var viewModel = new MainWindowViewModel(new AppServices());
+        var window = new MainWindow(viewModel)
+        {
+            Topmost = true,
+        };
+
+        window.ToggleMiniMode();
+        Assert.True(window.Topmost);
+
+        window.ToggleMiniMode();
+
+        Assert.False(window.Topmost);
     }
 
     [AvaloniaFact]
