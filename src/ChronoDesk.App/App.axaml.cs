@@ -6,6 +6,7 @@ using Avalonia.Media;
 using Avalonia.Platform;
 using Avalonia.Styling;
 using ChronoDesk.App.Localization;
+using ChronoDesk.App.Services;
 using ChronoDesk.App.ViewModels;
 using ChronoDesk.App.Views;
 using ChronoDesk.Core.Models;
@@ -15,12 +16,17 @@ namespace ChronoDesk.App;
 public sealed partial class App : Application
 {
     private TrayIcon? trayIcon;
+    private AppSettings activeSettings = new();
 
     public AppServices Services { get; } = new();
 
     public bool IsTrayIntegrationAvailable { get; private set; }
 
-    public override void Initialize() => AvaloniaXamlLoader.Load(this);
+    public override void Initialize()
+    {
+        AvaloniaXamlLoader.Load(this);
+        ActualThemeVariantChanged += (_, _) => ApplyCurrentPalette();
+    }
 
     public override void OnFrameworkInitializationCompleted()
     {
@@ -38,6 +44,7 @@ public sealed partial class App : Application
 
     private void ApplyTheme(AppSettings settings)
     {
+        activeSettings = settings;
         var highContrast = settings.HighContrast || settings.Theme == ThemeMode.HighContrast;
         RequestedThemeVariant = highContrast
             ? ThemeVariant.Dark
@@ -48,24 +55,18 @@ public sealed partial class App : Application
                 _ => ThemeVariant.Default,
             };
 
-        if (highContrast)
-        {
-            SetPalette("#000000", "#101010", "#FFFFFF", "#FFD400", "#FFFFFF");
-            return;
-        }
+        ApplyCurrentPalette();
+    }
 
-        var dark = RequestedThemeVariant == ThemeVariant.Dark
-            || (RequestedThemeVariant == ThemeVariant.Default
-                && ActualThemeVariant == ThemeVariant.Dark);
-
-        if (dark)
-        {
-            SetPalette("#10131A", "#1F2430", "#AEB7C7", "#6D5DFB", "#354052");
-        }
-        else
-        {
-            SetPalette("#F5F7FB", "#FFFFFF", "#5F6878", "#5B4AF0", "#DCE2EC");
-        }
+    private void ApplyCurrentPalette()
+    {
+        var palette = ThemePaletteSelector.Select(activeSettings, ActualThemeVariant);
+        SetPalette(
+            palette.Surface,
+            palette.Card,
+            palette.Muted,
+            palette.Accent,
+            palette.Border);
     }
 
     private void SetPalette(
