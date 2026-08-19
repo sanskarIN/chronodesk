@@ -100,13 +100,16 @@ public sealed class JsonSettingsStore : ISettingsStore
 
         EnsureNoDuplicatePropertyNames(document.RootElement);
         var sourceSchemaVersion = ReadSourceSchemaVersion(document.RootElement);
-        var settings = document.RootElement.Deserialize<AppSettings>(serializerOptions);
+        var migratedDocument = migrationPipeline.Migrate(
+            document.RootElement,
+            sourceSchemaVersion);
+        var settings = migratedDocument.Deserialize<AppSettings>(serializerOptions);
         if (settings is null)
         {
             throw new InvalidDataException("Settings document is empty.");
         }
 
-        return migrationPipeline.Migrate(settings, sourceSchemaVersion);
+        return settings.Normalize();
     }
 
     private static void EnsureNoDuplicatePropertyNames(JsonElement element)
