@@ -18,4 +18,5 @@ public static class UpdateStrings
     public static string OpenReleases => Get(nameof(OpenReleases));
     public static string UpdatePrivacyNote => Get(nameof(UpdatePrivacyNote));
     public static string ReleaseOpenError => Get(nameof(ReleaseOpenError));
+    public static string ExternalOpenError => Get(nameof(ExternalOpenError));
 }
