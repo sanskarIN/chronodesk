@@ -10,7 +10,7 @@ public static class StartupRegistrationDocuments
     public static string BuildWindowsCommand(string executablePath)
     {
         var path = NormalizeExecutablePath(executablePath);
-        if (path.Contains('"', StringComparison.Ordinal))
+        if (path.Contains('"'))
         {
             throw new ArgumentException(
                 "Windows startup executable paths cannot contain a double-quote character.",
