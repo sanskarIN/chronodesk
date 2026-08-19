@@ -13,7 +13,7 @@ public sealed partial class AboutWindow : Window
     public AboutWindow()
     {
         InitializeComponent();
-        var version = Assembly.GetExecutingAssembly().GetName().Version?.ToString(3) ?? "development";
+        var version = AppVersionProvider.GetDisplayVersion(Assembly.GetExecutingAssembly());
         var versionText = this.FindControl<TextBlock>("VersionText");
         if (versionText is not null)
         {
