@@ -1,0 +1,50 @@
+<Window
+    x:Class="ChronoDesk.App.Views.OnboardingWindow"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    Title="Welcome to ChronoDesk"
+    Width="720"
+    Height="560"
+    CanResize="False"
+    WindowStartupLocation="CenterOwner"
+    ShowInTaskbar="False"
+    Icon="/Assets/chronodesk.ico">
+  <Grid RowDefinitions="*,Auto" Margin="28">
+    <ScrollViewer>
+      <StackPanel Spacing="20">
+        <StackPanel Spacing="6">
+          <TextBlock Text="Welcome to ChronoDesk" FontSize="34" FontWeight="Bold" />
+          <TextBlock Text="A focused, private-by-default desktop clock for Windows, macOS, and Linux." FontSize="17" Classes="muted" TextWrapping="Wrap" />
+        </StackPanel>
+
+        <Border Classes="card">
+          <StackPanel Spacing="8">
+            <TextBlock Text="Time that fits your desk" FontSize="20" FontWeight="SemiBold" />
+            <TextBlock Text="Switch 12/24-hour formats, show or hide seconds, tune typography and spacing, and choose a layout that works for your workspace." TextWrapping="Wrap" Classes="muted" />
+          </StackPanel>
+        </Border>
+
+        <Border Classes="card">
+          <StackPanel Spacing="8">
+            <TextBlock Text="World clocks, fully offline" FontSize="20" FontWeight="SemiBold" />
+            <TextBlock Text="Add timezone cards using the timezone database installed by your operating system. Your clock list and settings remain local to your device." TextWrapping="Wrap" Classes="muted" />
+          </StackPanel>
+        </Border>
+
+        <Border Classes="card">
+          <StackPanel Spacing="8">
+            <TextBlock Text="Focus and accessibility built in" FontSize="20" FontWeight="SemiBold" />
+            <TextBlock Text="Use F11 for a full-screen focus clock, Ctrl+M for mini mode, keyboard navigation, high contrast, reduced motion, and optional quiet-hours-aware chimes." TextWrapping="Wrap" Classes="muted" />
+          </StackPanel>
+        </Border>
+
+        <TextBlock Text="Nothing is uploaded and no account is required." FontWeight="SemiBold" />
+      </StackPanel>
+    </ScrollViewer>
+
+    <Grid Grid.Row="1" ColumnDefinitions="*,Auto" Margin="0,20,0,0">
+      <TextBlock Text="Made by the Sanskar" Classes="muted" VerticalAlignment="Center" />
+      <Button Grid.Column="1" Content="Start using ChronoDesk" Classes="primary" Click="ContinueButton_OnClick" />
+    </Grid>
+  </Grid>
+</Window>
