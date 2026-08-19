@@ -98,6 +98,7 @@ public sealed class JsonSettingsStore : ISettingsStore
             },
             cancellationToken);
 
+        EnsureNoDuplicatePropertyNames(document.RootElement);
         var sourceSchemaVersion = ReadSourceSchemaVersion(document.RootElement);
         var settings = document.RootElement.Deserialize<AppSettings>(serializerOptions);
         if (settings is null)
@@ -106,6 +107,34 @@ public sealed class JsonSettingsStore : ISettingsStore
         }
 
         return migrationPipeline.Migrate(settings, sourceSchemaVersion);
+    }
+
+    private static void EnsureNoDuplicatePropertyNames(JsonElement element)
+    {
+        if (element.ValueKind == JsonValueKind.Object)
+        {
+            var names = new HashSet<string>(StringComparer.Ordinal);
+            foreach (var property in element.EnumerateObject())
+            {
+                if (!names.Add(property.Name))
+                {
+                    throw new InvalidDataException(
+                        $"Settings document contains duplicate property '{property.Name}'.");
+                }
+
+                EnsureNoDuplicatePropertyNames(property.Value);
+            }
+
+            return;
+        }
+
+        if (element.ValueKind == JsonValueKind.Array)
+        {
+            foreach (var item in element.EnumerateArray())
+            {
+                EnsureNoDuplicatePropertyNames(item);
+            }
+        }
     }
 
     private static int ReadSourceSchemaVersion(JsonElement root)
