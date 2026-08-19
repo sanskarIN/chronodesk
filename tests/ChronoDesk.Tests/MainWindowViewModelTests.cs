@@ -1,4 +1,5 @@
 using ChronoDesk.App;
+using ChronoDesk.App.Localization;
 using ChronoDesk.App.ViewModels;
 using ChronoDesk.Core.Abstractions;
 using ChronoDesk.Core.Models;
@@ -7,6 +8,25 @@ namespace ChronoDesk.Tests;
 
 public sealed class MainWindowViewModelTests
 {
+    [Fact]
+    public async Task InitializeAsync_UsesDefaultsAndPopulatesClockWhenSettingsCannotBeRead()
+    {
+        var store = new MemorySettingsStore(new AppSettings { IsFirstRun = false })
+        {
+            ThrowOnLoad = true,
+        };
+        var startup = new RecordingStartupManager();
+        var viewModel = CreateViewModel(store, startup);
+
+        await viewModel.InitializeAsync();
+
+        Assert.True(viewModel.IsInitialized);
+        Assert.Equal(Strings.LocalDataLoadWarning, viewModel.StatusMessage);
+        Assert.False(string.IsNullOrWhiteSpace(viewModel.CurrentTime));
+        Assert.NotEmpty(viewModel.WorldClocks);
+        Assert.NotEmpty(viewModel.SearchResults);
+    }
+
     [Fact]
     public async Task UpdateSettingsAsync_RollsBackStartupWhenPersistenceFails()
     {
@@ -95,6 +115,8 @@ public sealed class MainWindowViewModelTests
 
         public string SettingsPath => "memory://settings";
 
+        public bool ThrowOnLoad { get; set; }
+
         public bool ThrowOnSave { get; set; }
 
         public AppSettings? LastSaved { get; private set; }
@@ -104,6 +126,11 @@ public sealed class MainWindowViewModelTests
         public Task<AppSettings> LoadAsync(CancellationToken cancellationToken = default)
         {
             cancellationToken.ThrowIfCancellationRequested();
+            if (ThrowOnLoad)
+            {
+                throw new IOException("Synthetic settings load failure.");
+            }
+
             return Task.FromResult(current);
         }
 
