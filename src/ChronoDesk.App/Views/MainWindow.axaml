@@ -1,0 +1,135 @@
+<Window
+    x:Class="ChronoDesk.App.Views.MainWindow"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:vm="using:ChronoDesk.App.ViewModels"
+    Title="ChronoDesk"
+    Width="1180"
+    Height="760"
+    MinWidth="780"
+    MinHeight="560"
+    WindowStartupLocation="CenterScreen"
+    Icon="/Assets/chronodesk.ico"
+    KeyDown="MainWindow_OnKeyDown"
+    AutomationProperties.Name="ChronoDesk digital clock">
+
+  <Grid RowDefinitions="Auto,*,Auto">
+    <Border x:Name="HeaderPanel" Padding="24,18" BorderBrush="{DynamicResource ChronoBorderBrush}" BorderThickness="0,0,0,1">
+      <Grid ColumnDefinitions="*,Auto">
+        <StackPanel Spacing="2">
+          <TextBlock Text="ChronoDesk" FontSize="24" FontWeight="SemiBold" />
+          <TextBlock Text="Your focused desktop time companion" Classes="muted" />
+        </StackPanel>
+        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+          <Button Content="Focus" Click="FocusButton_OnClick" ToolTip.Tip="Focus clock (F11)" />
+          <Button Content="Mini" Click="MiniButton_OnClick" ToolTip.Tip="Mini clock (Ctrl+M)" />
+          <Button Content="Settings" Click="SettingsButton_OnClick" ToolTip.Tip="Settings (Ctrl+,)" />
+          <Button Content="About" Click="AboutButton_OnClick" />
+        </StackPanel>
+      </Grid>
+    </Border>
+
+    <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Disabled">
+      <StackPanel x:Name="ContentStack" Margin="24" Spacing="{Binding Settings.ContentSpacing}">
+        <Border x:Name="HeroCard" Classes="card" MinHeight="300">
+          <Grid RowDefinitions="*,Auto">
+            <StackPanel VerticalAlignment="Center" HorizontalAlignment="Stretch" Spacing="10">
+              <TextBlock
+                  x:Name="ClockText"
+                  Text="{Binding CurrentTime}"
+                  Classes="heroClock"
+                  FontSize="{Binding Settings.ClockFontSize}"
+                  FontFamily="{Binding Settings.FontFamilyName}"
+                  AutomationProperties.Name="Current local time" />
+              <WrapPanel HorizontalAlignment="Center">
+                <TextBlock Text="{Binding CurrentWeekday}" Margin="8,2" FontSize="18" />
+                <TextBlock Text="{Binding CurrentDate}" Margin="8,2" FontSize="18" />
+                <TextBlock Text="{Binding CurrentWeekNumber}" Margin="8,2" FontSize="18" />
+              </WrapPanel>
+              <TextBlock Text="{Binding CalendarDetails}" HorizontalAlignment="Center" Classes="muted" />
+              <TextBlock Text="{Binding ZoneName}" HorizontalAlignment="Center" Classes="muted" />
+            </StackPanel>
+
+            <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Center" Spacing="8" Margin="0,16,0,0">
+              <Button Content="12 / 24 hour" Click="FormatButton_OnClick" />
+              <Button Content="Toggle seconds" Click="SecondsButton_OnClick" />
+            </StackPanel>
+          </Grid>
+        </Border>
+
+        <StackPanel x:Name="WorldClockSection" Spacing="10">
+          <Grid ColumnDefinitions="*,Auto">
+            <StackPanel>
+              <TextBlock Text="World clocks" Classes="sectionTitle" />
+              <TextBlock Text="Up to 24 saved timezone cards, stored locally." Classes="muted" />
+            </StackPanel>
+            <TextBlock Grid.Column="1" Text="{Binding WorldClocks.Count, StringFormat='{}{0} clocks'}" Classes="muted" VerticalAlignment="Center" />
+          </Grid>
+
+          <ItemsControl ItemsSource="{Binding WorldClocks}">
+            <ItemsControl.ItemsPanel>
+              <ItemsPanelTemplate>
+                <WrapPanel />
+              </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+              <DataTemplate DataType="vm:WorldClockCardViewModel">
+                <Border Classes="softCard" MinWidth="250" Margin="0,0,10,10">
+                  <Grid RowDefinitions="Auto,Auto,Auto" ColumnDefinitions="*,Auto">
+                    <TextBlock Text="{Binding DisplayName}" FontSize="17" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                    <Button Grid.Column="1" Content="Remove" Classes="compact" Tag="{Binding Id}" Click="RemoveWorldClock_OnClick" />
+                    <TextBlock Grid.Row="1" Grid.ColumnSpan="2" Text="{Binding TimeText}" FontSize="30" FontWeight="SemiBold" Margin="0,8,0,0" />
+                    <StackPanel Grid.Row="2" Grid.ColumnSpan="2" Spacing="2" Margin="0,4,0,0">
+                      <TextBlock Text="{Binding DateText}" Classes="muted" />
+                      <TextBlock Text="{Binding TimeZoneId}" Classes="muted" TextTrimming="CharacterEllipsis" />
+                    </StackPanel>
+                  </Grid>
+                </Border>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </StackPanel>
+
+        <Border x:Name="QuickAddSection" Classes="card">
+          <Grid ColumnDefinitions="2*,3*" ColumnSpacing="20">
+            <StackPanel Spacing="8">
+              <TextBlock Text="Add a timezone" Classes="sectionTitle" />
+              <TextBlock Text="Search the timezone database provided by your operating system." TextWrapping="Wrap" Classes="muted" />
+              <TextBox
+                  x:Name="TimeZoneSearchBox"
+                  Classes="searchBox"
+                  Watermark="Search city, region, or timezone ID"
+                  TextChanged="TimeZoneSearchBox_OnTextChanged"
+                  AutomationProperties.Name="Search timezones" />
+              <TextBlock Text="Timezone data stays offline; OS updates provide tzdata updates." Classes="muted" TextWrapping="Wrap" />
+            </StackPanel>
+
+            <Grid Grid.Column="1" RowDefinitions="*,Auto">
+              <ListBox x:Name="TimeZoneResults" ItemsSource="{Binding SearchResults}" MaxHeight="190">
+                <ListBox.ItemTemplate>
+                  <DataTemplate>
+                    <Grid ColumnDefinitions="*,Auto" Margin="4">
+                      <StackPanel>
+                        <TextBlock Text="{Binding DisplayName}" TextTrimming="CharacterEllipsis" />
+                        <TextBlock Text="{Binding Id}" Classes="muted" TextTrimming="CharacterEllipsis" />
+                      </StackPanel>
+                      <TextBlock Grid.Column="1" Text="{Binding BaseUtcOffset}" Classes="muted" VerticalAlignment="Center" Margin="12,0,0,0" />
+                    </Grid>
+                  </DataTemplate>
+                </ListBox.ItemTemplate>
+              </ListBox>
+              <Button Grid.Row="1" Content="Add selected timezone" Classes="primary" HorizontalAlignment="Right" Margin="0,10,0,0" Click="AddTimeZoneButton_OnClick" />
+            </Grid>
+          </Grid>
+        </Border>
+      </StackPanel>
+    </ScrollViewer>
+
+    <Border x:Name="FooterPanel" Grid.Row="2" Padding="24,12" BorderBrush="{DynamicResource ChronoBorderBrush}" BorderThickness="0,1,0,0">
+      <Grid ColumnDefinitions="*,Auto">
+        <TextBlock Text="{Binding StatusMessage}" Classes="muted" />
+        <TextBlock Grid.Column="1" Text="Made by the Sanskar" FontWeight="SemiBold" />
+      </Grid>
+    </Border>
+  </Grid>
+</Window>
