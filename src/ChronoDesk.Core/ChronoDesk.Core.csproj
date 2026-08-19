@@ -1,0 +1,7 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>ChronoDesk.Core</RootNamespace>
+    <AssemblyName>ChronoDesk.Core</AssemblyName>
+    <Description>Domain and application logic for ChronoDesk.</Description>
+  </PropertyGroup>
+</Project>
