@@ -3,6 +3,7 @@ namespace ChronoDesk.Core.Models;
 public sealed record AppSettings
 {
     public const int CurrentSchemaVersion = 1;
+    public const int MaximumWorldClockCount = 24;
     private const int MaximumFontFamilyLength = 120;
     private const int MaximumWorldClockIdLength = 128;
     private const int MaximumWorldClockLabelLength = 160;
@@ -91,7 +92,7 @@ public sealed record AppSettings
                 && clock.DisplayName.Length > 0
                 && clock.TimeZoneId.Length > 0)
             .DistinctBy(clock => clock.Id, StringComparer.Ordinal)
-            .Take(24)
+            .Take(MaximumWorldClockCount)
             .ToList();
 
         if (clocks.Count == 0)
