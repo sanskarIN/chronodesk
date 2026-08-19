@@ -4,508 +4,522 @@
 
 Phase 7 — automated platform, product-scope, accessibility, repository-integrity, release, and exhaustive documentation hardening — 2026-08-19.
 
-The current preview product scope is implemented in source. Phase 7 closes the remaining automatable gaps found in the roadmap and original ChronoDesk master prompt, adds enforceable repository documentation completeness, and keeps native desktop behavior/accessibility/screenshots/real release-candidate verification as explicit evidence-based release gates rather than claiming them from source inspection.
+The current preview product scope is implemented in source. Phase 7 closes the remaining automatable gaps found in the roadmap and original ChronoDesk master prompt, adds permanent tracked-file documentation enforcement, and keeps native desktop behavior/accessibility/screenshots/real release-candidate verification as evidence-based release gates rather than claiming success from source inspection alone.
 
-## Source of truth
+## Repository state
 
 Repository: `sanskarIN/chronodesk`
 
 Default branch: `main`
 
-Active phase branch: `phase-7-automation-hardening`
+Active branch: `phase-7-automation-hardening`
 
 Active pull request: `#16` — `Phase 7: automate startup adapter and release hardening`
 
-PR policy: keep draft until the final head receives completed green CI/CodeQL/Dependency Review validation. Preserve the granular history with a normal merge commit rather than squashing the phase.
+Merge policy: preserve the intentionally granular Phase 7 history with a normal merge commit. Do not squash/rebase the phase away.
 
-Immediately before this handoff update, GitHub compare reported:
+Immediately before this handoff commit, GitHub compare reported:
 
-- branch status: ahead of `main`;
-- ahead by: **95 commits**;
+- branch status: ahead;
+- ahead by: **100 commits**;
 - behind by: **0 commits**;
-- changed files against `main`: approximately 60 Phase 7 files at that point;
-- this `what_changed.md` refresh is the next intentional granular commit, so the branch should become **96 commits ahead** if no concurrent branch change occurs.
+- this handoff is the next meaningful commit, so the branch should become **101 commits ahead** if no concurrent external branch update occurs.
 
-## Exhaustive documentation audit completed
+The branch must remain draft/unmerged until the newest exact head receives completed green CI, CodeQL, and Dependency Review checks.
 
-The repository now has a canonical documentation architecture instead of relying only on root README plus scattered specialized documents.
+## Complete documentation system
 
-### Documentation hub
+ChronoDesk now has a layered documentation system instead of a README plus scattered notes.
 
-Added `docs/README.md` as the canonical technical documentation entry point.
+### Canonical documentation hub
 
-It maps users/maintainers to:
+`docs/README.md` is the technical documentation entry point and defines source-of-truth precedence, maintenance responsibilities, and validation commands.
 
+It links the complete documentation set:
+
+- user guide;
 - setup;
 - architecture;
+- production source-code reference;
 - runtime behavior;
-- complete settings schema;
-- build/configuration;
+- settings schema/reference;
+- build/configuration reference;
 - platform integration;
 - localization;
 - development;
-- testing/test catalog;
+- testing and test catalog;
 - CI/CD;
 - release procedure;
 - troubleshooting;
 - accessibility;
 - performance;
 - GitHub maintenance;
-- ADRs;
-- exhaustive repository file reference.
+- repository file reference;
+- architecture decision records.
 
-It also defines documentation source-of-truth precedence and maintenance rules so behavior does not become documented in only one transient handoff file.
+### End-user guide
+
+Added `docs/user-guide.md`.
+
+It documents normal product use in detail:
+
+- first launch/onboarding;
+- main-window structure;
+- 12/24-hour format and seconds;
+- date/weekday/week/calendar details;
+- timezone search;
+- adding/removing world clocks;
+- portable timezone IDs and UTC fallback;
+- Focus mode;
+- Mini mode;
+- always-on-top behavior;
+- themes/appearance;
+- accessibility preferences;
+- chime cadence and quiet hours;
+- platform sound behavior;
+- Start with system;
+- Minimize to tray;
+- tray menu;
+- all current keyboard shortcuts;
+- Settings Save/Cancel/Reset;
+- backup/export;
+- restore/import and import safety;
+- local data/log behavior;
+- Updates & About;
+- offline/network behavior;
+- troubleshooting pointers for links/timezones/startup/chimes/tray;
+- privacy before sharing diagnostics/screenshots;
+- release archive checksum verification;
+- support/security routes.
+
+### Production source-code reference
+
+Added `docs/source-code-reference.md`.
+
+It documents the production code at namespace/type/method-contract level:
+
+#### Core
+
+- all five abstractions (`IAppLogger`, `IChimePlayer`, `ISettingsStore`, `IStartupManager`, `ITimeZoneCatalog`);
+- `AppSettings` invariants/schema/normalization responsibility;
+- chime/settings/time/layout/theme/timezone/world-clock models;
+- `ClockFormatter` deterministic formatting contract;
+- `ChimePolicy` decision-only boundary.
+
+#### Infrastructure
+
+- `AppPaths`;
+- `SafeFileLogger`;
+- `JsonSettingsStore`;
+- startup platform detector;
+- startup filesystem and Registry testability seams;
+- production filesystem/Registry adapters;
+- `PlatformStartupManager` platform behavior;
+- `SystemChimePlayer` fixed-helper behavior;
+- `SystemTimeZoneCatalog` discovery/search/ID-conversion/fallback behavior.
+
+#### App
+
+- process `Program`;
+- `AppServices` composition root;
+- `AppVersionProvider`;
+- `ExternalLinkLauncher`;
+- application lifecycle/theme/tray `App`;
+- localization facades;
+- `ObservableObject`;
+- `WorldClockCardViewModel`;
+- `MainWindowViewModel` orchestration/transaction/import/tick contracts;
+- MainWindow XAML/code-behind responsibilities;
+- Settings XAML/code-behind responsibilities;
+- onboarding/about responsibilities;
+- shared design system;
+- logo/icon/manifest/test-visibility files.
+
+It also documents:
+
+- typical persistent-setting/platform/text/new-file change paths;
+- public API philosophy;
+- cancellation/concurrency principles;
+- optional-feature vs explicit-user-mutation failure handling;
+- security review hotspots;
+- testability review hotspots;
+- source documentation maintenance rules.
 
 ### Runtime behavior reference
 
-Added `docs/runtime-behavior.md`.
+`docs/runtime-behavior.md` documents:
 
-Documented in detail:
-
-- process entry and `--background` behavior;
-- explicit composition through `AppServices`;
-- application initialization and tray best-effort behavior;
-- main-window opening sequence;
-- 250 ms non-overlapping clock tick model;
-- ClockFormatter usage;
-- coherent world-clock refresh from one instant;
-- timezone unavailable → UTC fallback;
-- chime decision/playback behavior;
-- settings startup/persistence transaction ordering;
-- best-effort startup rollback on persistence failure;
-- Settings save/reset behavior;
-- import/export safety behavior;
-- imported settings preserving local startup preference;
-- focus/mini state transitions and keyboard shortcuts;
-- close-to-tray and explicit Quit semantics;
-- theme/high-contrast behavior;
+- process entry and `--background`;
+- explicit service composition;
+- app/main-window initialization;
+- tray best-effort behavior;
+- 250 ms non-overlapping clock ticks;
+- one-instant coherent local/world-clock updates;
+- chime evaluation/playback;
+- settings startup/persistence transaction order;
+- startup rollback on settings persistence failure;
+- Settings save/reset/import/export behavior;
+- imported startup preference protection;
+- Focus/Mini/keyboard behavior;
+- close-to-tray/Quit;
+- theme/high-contrast application;
 - optional facility error containment;
-- user-initiated-only external network/navigation behavior;
-- shutdown/disposal boundaries.
+- user-initiated-only external navigation;
+- shutdown/disposal.
 
 ### Complete settings reference
 
-Added `docs/settings-reference.md`.
+`docs/settings-reference.md` documents every persistent setting and rule:
 
-Documented every persistent field, default, enum, bound, normalization rule, and UI mapping, including:
-
-- schema version `1`;
-- first-run state;
-- 12/24-hour format;
-- seconds/date/weekday/week/calendar visibility;
+- schema version;
+- defaults;
+- clock format/display toggles;
 - theme/layout;
-- font name/size/content spacing;
+- font/clock size/spacing bounds;
 - reduced motion/high contrast;
-- always on top/start with system/minimize to tray;
-- chime enabled/cadence;
-- quiet-hours start/end semantics including overnight and equal-bound behavior;
-- world-clock ID/display/timezone fields;
-- at most 24 clocks and at least one valid clock;
-- string normalization/length constraints;
-- camel-case/string-enum JSON policy;
-- 2 MiB settings import bound;
-- current/newer schema handling;
-- atomic temp-file replacement;
+- always-on-top/startup/tray;
+- chime interval;
+- quiet-hours same-day/overnight/equal-bound semantics;
+- world-clock IDs/labels/timezone IDs;
+- at least one / max 24 clock rules;
+- string sanitization/bounds;
+- camel-case/string-enum JSON;
+- 2 MiB import bound;
+- schema validation;
+- atomic persistence;
 - corrupt settings preservation;
-- imported startup-preference protection;
-- export/privacy considerations.
+- import startup-preference protection;
+- Settings UI mapping.
 
 ### Build/configuration reference
 
-Added `docs/configuration-reference.md`.
+`docs/configuration-reference.md` documents:
 
-Documented:
-
-- `global.json` .NET 9 SDK selection/roll-forward;
-- `Directory.Build.props` shared target/analyzer/warnings-as-errors/deterministic policy;
-- `Directory.Packages.props` central package management and current package versions;
+- `global.json`;
+- `Directory.Build.props`;
+- central NuGet package management/current versions;
 - solution/project dependency direction;
-- Core/Infrastructure/App/Test `.csproj` responsibilities;
-- development version vs tag-stamped release version;
+- every project file's role;
+- development preview vs tag-stamped release versions;
 - `CHRONODESK_DATA_DIR`;
 - `.env.example`;
 - `.editorconfig`;
 - `.gitattributes`;
 - `.gitignore`;
-- Windows `app.manifest` role;
-- internal test-visibility AssemblyInfo files;
-- Debug vs Release behavior;
-- local verification commands.
+- Windows manifest;
+- internal test visibility;
+- Debug vs Release;
+- verification commands.
 
 ### Platform integration reference
 
-Added `docs/platform-integration.md`.
+`docs/platform-integration.md` documents:
 
-Documented:
-
-- startup platform detection;
-- Windows HKCU Run key/value behavior;
-- macOS LaunchAgent path/plist/escaping;
-- Linux XDG autostart path/desktop-entry quoting;
+- runtime startup platform detection;
+- Windows HKCU Run value;
+- macOS per-user LaunchAgent;
+- Linux XDG autostart desktop entry;
+- quoting/XML escaping/XDG fallback;
 - startup transaction consistency;
-- `--background` behavior;
-- tray lifecycle/close-to-hide semantics;
-- Windows beep and fixed macOS/Linux sound helper behavior;
-- OS timezone discovery and IANA/Windows conversion fallback;
-- local application data paths;
-- HTTPS/mailto external URI allowlist;
-- native file-picker boundary;
+- background startup;
+- tray behavior;
+- Windows/macOS/Linux sound behavior;
+- OS timezone database and IANA/Windows conversion;
+- local data paths;
+- HTTPS/mailto external-link policy;
+- native file picker boundary;
 - Windows manifest/icon behavior;
 - release RIDs/archive formats;
-- unsupported-platform policy;
-- exact real-platform validation still required before release claims.
+- exact native validation still required.
 
 ### Localization reference
 
-Added `docs/localization.md`.
+`docs/localization.md` documents:
 
-Documented:
-
-- `Strings.resx`/`Strings.cs` ResourceManager architecture;
-- `SettingsExtras.resx`/`SettingsExtras.cs` companion catalog;
-- `CurrentUICulture` vs `CurrentCulture` responsibilities;
-- XAML static resource usage;
+- `Strings.resx` / `Strings.cs`;
+- `SettingsExtras.resx` / `SettingsExtras.cs`;
+- `CurrentUICulture` vs `CurrentCulture`;
+- XAML `x:Static` usage;
 - primary resource categories;
 - dynamic/formatted strings;
-- date/time localization boundaries;
-- persisted enum identifiers vs translated labels;
-- quiet-hour input format contract;
-- accessibility localization requirements;
-- security/privacy wording requirements;
-- adding resource keys;
-- adding future translations;
-- layout/testing review for expanded translated strings.
+- date/time localization boundary;
+- stable serialized enum values vs translated labels;
+- quiet-hour input contract;
+- accessibility localization;
+- privacy/security wording requirements;
+- adding resource keys/translations;
+- long-string/layout validation.
 
 ### CI/CD reference
 
-Added `docs/ci-cd.md`.
+`docs/ci-cd.md` documents:
 
-Documented every automation layer:
-
-- CI triggers, permissions, concurrency, Repository integrity job;
-- three-OS .NET 9 matrix;
-- formatting/build/test/coverage/NuGet vulnerability behavior;
+- CI triggers/permissions/concurrency;
+- Repository integrity job;
+- three-OS .NET matrix;
+- formatting/build/test/coverage/NuGet vulnerability gates;
 - CodeQL schedule/permissions;
 - Dependency Review severity/license policy;
-- Dependabot NuGet/Actions schedules;
-- Markdown, documentation inventory, credential, and release metadata validators;
-- validator unit tests;
+- Dependabot NuGet/Actions cadence;
+- all repository validator scripts;
+- validator tests;
 - release preflight;
 - semantic tag/version outputs;
 - four-RID package matrix;
 - Windows ZIP vs Unix tar.gz;
-- tag-derived metadata stamping;
+- tag-derived version stamping;
 - SHA-256 sidecars;
 - downloaded artifact re-verification;
-- final release job permission escalation only;
-- prerelease publication behavior;
-- expected branch-protection check families;
-- workflow security rules;
-- CI diagnosis rules.
+- least-privilege final release permission;
+- prerelease publication;
+- branch protection/check-name guidance;
+- workflow security/diagnosis rules.
 
 ### Exhaustive test catalog
 
-Added `docs/test-catalog.md`.
+`docs/test-catalog.md` maps every current test/test-support file to its product contract:
 
-It maps every tracked .NET test/test-support file and Python validator test to the product contract it protects, including:
+- settings normalization;
+- deterministic property-style invariants;
+- quiet hours;
+- chime policy;
+- clock formatting;
+- real temp-filesystem settings persistence/recovery;
+- malformed import fuzz/oversized import;
+- timezone catalog;
+- view-model startup/persistence transaction behavior;
+- startup artifact generation across all supported platforms;
+- external URI allowlist;
+- semantic version display;
+- headless main/settings/onboarding/about UI;
+- every shared fake;
+- Python repository validator tests;
+- manual native boundaries that automated tests do not replace.
 
-- AppSettings normalization tests;
-- deterministic domain property tests;
-- QuietHours tests;
-- ChimePolicy tests;
-- ClockFormatter tests;
-- JsonSettingsStore real-temp-filesystem tests;
-- malformed-import fuzz tests;
-- SystemTimeZoneCatalog tests;
-- MainWindowViewModel startup/persistence transaction tests;
-- PlatformStartupManager fake-registry/filesystem tests;
-- ExternalLinkLauncher URI-policy tests;
-- AppVersionProvider SemVer display tests;
-- Avalonia headless smoke tests;
-- SettingsWindow headless interaction tests;
-- every shared fake under `tests/ChronoDesk.Tests/Fakes/`;
-- Avalonia headless bootstrap;
-- test project responsibilities;
-- Python release metadata validator tests;
-- Python documentation inventory validator tests;
-- manual native behavior not replaced by automated tests.
+## Every tracked file is documented
 
-### Exhaustive tracked-file reference
+`docs/repository-reference.md` is the canonical file-by-file repository inventory.
 
-Added `docs/repository-reference.md`.
+The previous full audit contained 140 tracked-file responsibility entries. Two additional permanent documentation files were then added:
 
-This is the canonical file-by-file inventory for the complete tracked repository. It includes a responsibility entry for every known tracked file across:
+- `docs/user-guide.md`;
+- `docs/source-code-reference.md`.
 
-- all root build/config/policy/product files;
-- all `.github` funding/templates/dependency/workflow files;
-- all documentation/ADRs/assets;
-- all repository/release scripts and script tests;
+The reference was updated in the same phase, so the canonical inventory now contains **142 tracked-file responsibility entries** at this checkpoint.
+
+It includes all known tracked files across:
+
+- repository root build/config/policy/product/handoff files;
+- `.github` funding/templates/Dependabot/workflows;
+- all documentation/ADRs/documentation assets;
+- all repository validation scripts and script tests;
 - every Core abstraction/model/service/project file;
 - every Infrastructure persistence/logging/platform/timezone/project/test-visibility file;
-- every App project/composition/version/link/resource/asset/style/view-model/view/XAML/code-behind/manifest file;
-- every .NET test file;
+- every App project/composition/version/link/localization/asset/style/view-model/view/XAML/code-behind/manifest file;
+- every .NET test;
 - every shared test fake.
 
-At this audit point, the canonical inventory contains **140 tracked-file responsibility entries**. This count includes the new documentation inventory script/test/reference files themselves.
+No tracked file category is intentionally exempt because it is “small.”
 
-## Documentation completeness is now machine enforced
+## Documentation completeness is permanently machine enforced
 
 Added `scripts/check_documentation_inventory.py`.
 
-Behavior:
+It:
 
-- obtains Git's authoritative file set with `git ls-files -z`;
-- parses canonical entries from `docs/repository-reference.md`;
-- ignores fenced code examples;
+- reads Git's authoritative tracked set with `git ls-files -z`;
+- parses canonical `- `path` — description` entries in `docs/repository-reference.md`;
+- removes fenced code blocks before parsing so syntax examples are not false tracked entries;
 - reports tracked files missing documentation;
-- reports stale inventory entries for files no longer tracked;
-- returns nonzero on any mismatch;
-- does not rely on a manually maintained count alone.
+- reports stale documentation entries for deleted/untracked files;
+- fails nonzero on mismatch.
 
-Added `scripts/tests/test_check_documentation_inventory.py` covering:
+Added `scripts/tests/test_check_documentation_inventory.py`.
 
-- canonical entry parsing;
+It verifies:
+
+- canonical inventory parsing;
+- ordinary inline/noncanonical examples ignored;
 - fenced backtick examples ignored;
 - fenced tilde examples ignored;
-- noncanonical inline/example text ignored;
 - missing path detection;
 - stale path detection;
-- exact-match success.
+- exact match success.
 
-### CI integration
+### CI enforcement
 
-Updated `.github/workflows/ci.yml` so `Repository integrity` now runs:
+`.github/workflows/ci.yml` Repository integrity now runs:
 
-1. local Markdown link validation;
-2. tracked-file documentation inventory validation;
-3. high-confidence committed credential scanning;
-4. Python repository validator unit tests.
+1. `check_markdown_links.py`;
+2. `check_documentation_inventory.py`;
+3. `check_repository_secrets.py`;
+4. Python validator unit tests.
 
-### Release integration
+### Release enforcement
 
-Updated `.github/workflows/release.yml` so tag-time `Release preflight` also rejects an incomplete/stale tracked-file documentation inventory before .NET restore/build/test/package work can proceed.
+`.github/workflows/release.yml` Release preflight runs the documentation inventory gate before build/package work.
 
-This makes “no skipped tracked files in documentation” an enforceable repository invariant for both pull requests and releases.
+Therefore a future tracked source/test/asset/resource/workflow/template/script/doc file cannot be added without a corresponding canonical responsibility entry and still pass the intended CI/release gates.
 
-## Documentation discovery/governance synchronized
+## Governance documentation synchronized
 
-Updated `README.md`:
+Updated:
 
-- exposes the documentation hub;
-- links runtime/settings/configuration/platform/localization/testing/test-catalog/CI-CD/release/accessibility/troubleshooting/repository-reference documents;
-- includes the documentation inventory validator in development commands;
-- documents repository-integrity coverage;
-- explains the release-preflight documentation gate;
-- directs contributors to the exhaustive file reference.
+- root `README.md` — complete documentation discovery and validator commands;
+- `CONTRIBUTING.md` — documentation as implementation, inventory/update rules, validator commands;
+- `.github/pull_request_template.md` — inventory/test-catalog/privacy-security/ADR checklist;
+- `docs/development.md` — settings schema, localization, platform/process/logging/testing/documentation workflows;
+- `docs/testing.md` — inventory gate and complete test strategy;
+- `docs/release.md` — inventory as clean-checkout/preflight/release-ready gate;
+- `docs/github-maintenance.md` — repository ruleset/review/release audit expectations;
+- `CHANGELOG.md` — documentation/inventory automation recorded;
+- `ROADMAP.md` — exhaustive documentation infrastructure recorded complete;
+- `docs/README.md` — user/source-code references linked and maintenance rules extended.
 
-Updated `CONTRIBUTING.md`:
+## Phase 7 engineering work retained under the documentation layer
 
-- adds Python/repository validation prerequisites/commands;
-- makes documentation part of implementation completion;
-- requires repository-reference updates for every added/renamed/moved/deleted tracked file;
-- points to settings/localization/platform/test documentation contracts;
-- requires privacy/security documentation changes when trust/data boundaries change.
-
-Updated `.github/pull_request_template.md`:
-
-- adds all repository validator commands to verification;
-- explicitly requires `docs/repository-reference.md` updates for tracked-file changes;
-- requires test-catalog updates when test responsibilities change;
-- expands privacy/security/ADR documentation checks.
-
-Updated `docs/development.md`:
-
-- adds repository validators to daily/pre-commit flow;
-- deepens project/test/script placement rules;
-- documents settings transaction/schema change workflow;
-- documents localization/platform/external-process/logging/test/documentation rules;
-- explicitly requires inventory updates for source/tests/assets/XAML/resources/workflows/templates/scripts/docs.
-
-Updated `docs/testing.md`:
-
-- adds the documentation inventory and Python tests to quality gates;
-- points to the exhaustive test catalog;
-- documents view-model transaction coverage;
-- documents tracked-file inventory behavior and fenced-example handling;
-- clarifies automated vs manual/native boundaries.
-
-Updated `docs/release.md`:
-
-- requires the documentation inventory in clean-checkout verification;
-- requires `docs/repository-reference.md` release metadata preparation;
-- documents the Repository integrity job contents;
-- records release preflight documentation enforcement;
-- includes exact documentation completeness in the definition of release-ready.
-
-Updated `docs/github-maintenance.md`:
-
-- documents Repository integrity subchecks;
-- requires file-reference synchronization during PR review;
-- adds documentation governance;
-- records release-preflight documentation enforcement;
-- adds inventory verification to release-candidate repository audit cadence.
-
-Updated `CHANGELOG.md` and `ROADMAP.md` to record the complete documentation/inventory infrastructure as implemented.
-
-## Phase 7 engineering work already present on this branch
-
-This documentation pass sits on top of the earlier Phase 7 implementation and does not remove/rewrite that work.
+The documentation audit does not replace or remove earlier Phase 7 engineering work.
 
 ### Startup integration testability
 
-- startup platform detector/model;
-- startup filesystem abstraction/system adapter;
-- startup registry abstraction/Windows adapter;
-- injectable `PlatformStartupManager` platform/filesystem/registry/profile/XDG inputs;
+- internal startup platform model/detector;
+- startup filesystem boundary/system adapter;
+- startup current-user Registry boundary/Windows adapter;
+- `PlatformStartupManager` injectable platform/filesystem/registry/profile/XDG inputs;
 - deterministic Windows/macOS/Linux/unsupported/cancellation tests;
-- no real CI runner startup configuration modified by those tests.
+- tests do not alter CI runner login startup state.
 
-### Settings deterministic interaction tests
+### Settings deterministic interaction
 
-- awaitable internal Settings save/reset operations preserving UI handlers;
-- shared settings/startup/timezone/chime/logger test doubles;
+- awaitable internal save/reset operations preserving UI handlers;
+- shared in-memory settings/startup/timezone/chime/logger test doubles;
 - headless save mapping/startup tests;
-- invalid quiet-hour no-persist/no-startup tests;
-- reset/default/startup disable/control reload tests.
+- invalid quiet-hour no-persist/no-startup test;
+- reset/default/startup-disable/control-reload test.
 
-### Settings Updates & About scope
+### Settings Updates & About
 
-- new Settings Updates & About tab;
-- semantic version displayed in Settings;
-- explicit Open GitHub Releases action;
-- explicit Open About action;
-- no background release polling/network update client;
-- companion resource catalog;
+- new Settings Updates & About surface;
+- semantic current version shown;
+- explicit Open GitHub Releases;
+- explicit Open About;
+- no background update polling/fetch/downloader;
+- companion localized resource catalog;
 - headless controls/version coverage.
 
 ### External navigation hardening
 
 - centralized `ExternalLinkLauncher`;
 - absolute HTTPS/mailto only;
-- HTTP/file/script/relative/empty rejection;
-- About/Settings reuse the same boundary;
-- URI regression tests do not open external programs.
+- HTTP/file/script/relative/empty rejected;
+- About/Settings share same policy;
+- tests exercise URI policy without launching handlers.
 
-### Accessibility hardening
+### Accessibility
 
-- explicit automation names on Settings controls whose visible labels are adjacent text;
-- accessibility checklist expanded for Settings/external handlers/scaling/screen reader behavior.
+- explicit automation names on Settings controls whose visual labels are adjacent text;
+- accessibility checklist expanded for Settings, external handlers, scaling, and screen readers.
 
 ### Repository integrity
 
 - offline local Markdown target validator;
-- high-confidence credential-pattern scanner that does not print matched values;
-- documentation inventory validator;
+- high-confidence committed credential scanner without printing matches;
+- tracked-file documentation inventory validator;
 - Python validator tests;
-- dedicated CI Repository integrity job.
+- dedicated Repository integrity CI job.
 
 ### Release identity and packaging
 
-- semantic display version provider;
-- user-visible `+build` metadata removal;
-- tag-derived publish Version/AssemblyVersion/FileVersion/InformationalVersion;
+- semantic display-version provider;
+- user-visible build metadata stripped;
+- semantic tag stamps Version/AssemblyVersion/FileVersion/InformationalVersion;
 - prerelease detection/publication;
-- release preflight gates;
-- least privilege workflow permissions;
-- Windows ZIP and Unix tar.gz packaging;
+- release preflight;
+- least-privilege workflow permissions;
+- Windows ZIP, Linux/macOS tar.gz;
 - SHA-256 sidecars;
-- post-download checksum verification before GitHub Release creation;
-- tag-time changelog/screenshot readiness validator/tests.
+- checksum re-verification after artifact download;
+- tag-time changelog/screenshot readiness validation and tests.
 
 ## Current release status
 
-The repository is **not** declared release-ready yet.
+ChronoDesk is **not** declared release-ready yet.
 
 Intentional release blockers remain:
 
 - README still uses the explicit screenshot placeholder;
-- changelog is still `[Unreleased]` rather than an exact intended tag heading;
+- changelog remains `[Unreleased]` instead of an exact intended release heading;
 - native/manual desktop validation has not been evidenced in this connected environment;
-- final branch-head CI/CodeQL/Dependency Review must complete successfully after the documentation handoff commit.
+- the final newest branch head must complete green CI/CodeQL/Dependency Review after the last documentation commit.
 
-The release workflow is intentionally expected to reject premature tags until release metadata/native readiness work is completed.
+The release workflow is intentionally expected to reject a premature semantic release tag until metadata/readiness gates are satisfied.
 
-## Remaining evidence-based release gates
+## Remaining evidence-based native release gates
 
-### Native desktop behavior
+### Windows 11
 
-Windows 11:
+- real tray Show/Focus/Mini/Quit and close-to-tray;
+- real HKCU startup enable/disable/login launch;
+- real chime;
+- native import/export file pickers;
+- default HTTPS/mailto handlers;
+- packaged win-x64 archive launch;
+- keyboard/screen-reader/high-contrast/scaling verification.
 
-- tray show/focus/mini/quit and close-to-tray behavior;
-- real HKCU startup enable/disable and login launch;
-- real chime behavior;
-- native import/export pickers;
-- default HTTPS/mailto handler behavior;
-- packaged win-x64 archive launch.
+### macOS
 
-macOS:
-
-- real tray/menu-bar behavior;
-- x64/arm64 release artifacts as available;
+- tray/menu behavior;
+- x64/arm64 package validation as available;
 - real LaunchAgent creation/removal/login launch;
-- real `afplay` behavior;
+- `afplay` behavior;
 - native pickers/default handlers;
-- Gatekeeper/signing state documented accurately;
-- executable permissions retained after tar extraction.
+- executable permissions after tar extraction;
+- accessibility/Gatekeeper/signing-state documentation verification.
 
-Linux:
+### Linux
 
-- representative GNOME and KDE sessions;
+- representative GNOME/KDE sessions;
 - tray/status-notifier behavior;
-- real XDG autostart behavior;
+- real XDG autostart;
 - optional sound helper success/fallback;
 - native pickers/default handlers;
-- executable permissions after tar extraction.
-
-### Accessibility
-
-Run `docs/accessibility.md` on primary platforms, including:
-
-- keyboard-only traversal;
-- visible focus;
-- screen-reader naming;
-- high contrast;
-- OS scaling/text-size behavior;
-- focus/mini mode transitions;
-- Settings label semantics;
-- external handler focus handoff.
+- executable permissions after tar extraction;
+- accessibility/scaling verification.
 
 ### Release candidate
 
-- replace README screenshot placeholder with verified release-build captures containing no private data;
-- move intended changelog content into the exact release tag heading;
-- run `scripts/check_release_metadata.py --tag <exact-tag>`;
-- run clean-checkout validation from `docs/release.md`;
-- confirm final CI/CodeQL/Dependency Review on the release commit;
-- confirm branch protection uses the actual current check contexts;
-- perform manual private-data/artifact review in addition to automated scanners;
-- tag first release candidate only after these gates pass;
-- validate settings migration after a real prior tagged preview fixture exists;
-- publish stable `v1.0.0` only after the stable-release gates pass.
+- replace screenshot placeholder with real sanitized release-build captures;
+- move changelog content into exact target version heading;
+- run `check_release_metadata.py --tag <exact-tag>`;
+- complete clean-checkout release procedure;
+- confirm final CI/CodeQL/Dependency Review;
+- confirm branch protection uses actual current check contexts;
+- manually review private data/artifacts in addition to scanners;
+- create first release-candidate tag only after those gates;
+- validate migration after a real prior tagged preview fixture exists;
+- publish stable `v1.0.0` only after stable gates pass.
 
-## Verification behavior in this connected environment
+## Connected-environment verification boundary
 
-Repository writes are made through the connected GitHub API. The available execution container previously could not resolve GitHub for a local clone and does not provide the repository's authoritative local .NET build environment, so GitHub Actions remains the authoritative compiler/analyzer/test runner for connected commits.
+Repository edits are made through the connected GitHub API. The available execution environment previously could not clone GitHub directly and is not the authoritative local .NET build environment for this repo, so GitHub Actions remains the authoritative compiler/analyzer/test runner for connected commits.
 
-Because CI uses `cancel-in-progress`, the deliberately granular Phase 7 commit sequence cancels older PR CI runs whenever a newer commit arrives. Only the newest frozen branch head should be used for the merge decision.
+CI uses `cancel-in-progress`. Because Phase 7 intentionally uses many granular commits, older runs are cancelled as newer commits arrive. Merge decisions must use the newest frozen head only.
 
-The final documentation head must specifically prove:
+The final documentation head must prove:
 
-- `scripts/check_markdown_links.py` passes;
-- `scripts/check_documentation_inventory.py` reports no missing/stale tracked files;
-- `scripts/check_repository_secrets.py` passes;
-- Python validator unit tests pass;
+- local Markdown validator passes;
+- documentation inventory validator reports zero missing/stale files;
+- credential scanner passes;
+- Python validator tests pass;
 - Ubuntu .NET 9 format/build/test/vulnerability checks pass;
 - Windows .NET 9 format/build/test/vulnerability checks pass;
 - macOS .NET 9 format/build/test/vulnerability checks pass;
-- CodeQL completes successfully;
-- Dependency Review completes successfully.
+- CodeQL passes;
+- Dependency Review passes.
 
-Do not merge solely because the PR is structurally mergeable while these checks are queued or incomplete.
+Queued or structurally mergeable is not equivalent to verified.
 
-## Commit identity note
-
-Connected GitHub writes are performed through the authenticated integration. Current commits on this phase show author identity `Sanskar <sanskarin@outlook.in>` where GitHub reports that metadata, but the connector API should not be treated as a generic local `git config` interface.
+## Commit identity
 
 For local maintainer work use:
 
@@ -514,31 +528,32 @@ git config user.name "Sanskar"
 git config user.email "sanskarin@outlook.in"
 ```
 
-Do not rewrite otherwise-valid connected history solely for attribution changes.
+Connected GitHub writes use the authenticated integration/GitHub commit behavior. Do not rewrite otherwise-valid history merely to change attribution.
 
 ## Next exact tasks
 
 1. Freeze the branch after this handoff commit.
-2. Confirm the branch is expected to be 96 commits ahead of `main` and 0 behind, unless a concurrent external change occurred.
-3. Inspect the newest PR #16 CI/CodeQL/Dependency Review runs for this exact handoff SHA.
-4. If Repository integrity fails, use its output to correct the exact missing/stale documentation path, Markdown target, credential finding, or Python validator test.
-5. If a .NET/analyzer/test job fails, inspect the exact job log and add only a focused fix/regression commit.
-6. Keep PR #16 draft until all available automated checks on the final head are green.
-7. When the final head is green, mark PR #16 ready and merge using a normal merge commit so the granular phase history is preserved.
-8. After merge, re-check `main` and do not mark native release gates complete without real platform evidence.
-9. Continue release-candidate preparation only when verified screenshots/native GUI sessions/artifacts are available.
+2. Verify the branch becomes **101 commits ahead of `main` and 0 behind** unless a concurrent external update occurred.
+3. Update PR #16 metadata to the newest head/count without creating source churn.
+4. Inspect final CI/CodeQL/Dependency Review runs for this exact head.
+5. Inspect Repository integrity first because it validates the 142-file documentation contract plus Markdown/secrets/Python tests.
+6. If a check fails, use the exact job log and add only a focused fix/regression commit.
+7. Keep PR #16 draft while any required final check is queued/incomplete/failing.
+8. When final checks are green, mark PR ready and merge normally to preserve granular history.
+9. Re-check `main` after merge.
+10. Do not mark native release gates complete or push a release tag without real desktop/build evidence.
 
-## Documentation maintenance rule for all future work
+## Permanent documentation rule
 
-No tracked file may be treated as “too small to document.”
-
-For every future file addition/move/rename/deletion:
+For every future tracked file addition/move/rename/deletion:
 
 - update `docs/repository-reference.md` in the same change;
-- update the closest specialized documentation when responsibility/behavior changes;
-- update `docs/test-catalog.md` for test-file responsibility changes;
-- run local Markdown + documentation inventory validators;
-- let CI enforce the same rule before merge;
-- let Release preflight enforce the same rule before packaging.
+- update `docs/source-code-reference.md` when a production type's responsibility/contract changes;
+- update `docs/user-guide.md` when user operation changes;
+- update `docs/test-catalog.md` when test responsibility changes;
+- update the closest specialized technical/operational document;
+- run Markdown and documentation inventory validators;
+- let PR CI enforce the same invariant;
+- let Release preflight enforce it again before packaging.
 
-This converts the user's “complete documentation without skipping any files” requirement into a permanent repository control rather than a one-time documentation pass.
+This turns “complete documentation without skipping files” into a permanent repository control rather than a one-time documentation pass.
