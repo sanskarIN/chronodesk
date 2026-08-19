@@ -19,13 +19,27 @@ public sealed partial class SettingsWindow : Window
         this.viewModel = viewModel ?? throw new ArgumentNullException(nameof(viewModel));
         InitializeComponent();
         LoadControls(viewModel.Settings);
+        PopulateStaticInformation();
+    }
+
+    private void InitializeComponent() => AvaloniaXamlLoader.Load(this);
+
+    private void PopulateStaticInformation()
+    {
         var displayVersion = AppVersionInfo.GetDisplayVersion();
         Control<TextBlock>("UpdateVersionText").Text = displayVersion;
         Control<TextBlock>("SettingsAboutVersionText").Text =
             Strings.Format(nameof(Strings.VersionFormat), displayVersion);
-    }
 
-    private void InitializeComponent() => AvaloniaXamlLoader.Load(this);
+        var diagnostics = AppDiagnosticsInfo.Capture();
+        Control<TextBox>("DiagnosticsVersionText").Text = diagnostics.AppVersion;
+        Control<TextBox>("DiagnosticsOsText").Text = diagnostics.OperatingSystem;
+        Control<TextBox>("DiagnosticsFrameworkText").Text = diagnostics.Framework;
+        Control<TextBox>("DiagnosticsArchitectureText").Text = diagnostics.ProcessArchitecture;
+        Control<TextBox>("DiagnosticsDataDirectoryText").Text = diagnostics.DataDirectory;
+        Control<TextBox>("DiagnosticsSettingsPathText").Text = diagnostics.SettingsPath;
+        Control<TextBox>("DiagnosticsLogPathText").Text = diagnostics.LogPath;
+    }
 
     private void LoadControls(AppSettings settings)
     {
