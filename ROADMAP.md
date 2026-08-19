@@ -72,51 +72,63 @@ Status: **Implemented for domain/persistence/headless UI; native-desktop validat
 - [x] Chime cadence tests.
 - [x] Settings normalization tests.
 - [x] JSON persistence/import/export/corruption tests.
+- [x] Transient settings-read failures preserve the original settings file and recover after the lock clears.
 - [x] Timezone catalog tests.
 - [x] Startup-persistence rollback and unreadable-settings initialization regression tests.
 - [x] Deterministic property-style tests for quiet hours/settings invariants.
 - [x] Deterministic malformed-import fuzz coverage and oversized-input rejection.
 - [x] Avalonia headless XUnit smoke tests for primary windows and focus/mini transitions.
 - [x] Headless regression coverage for restoring the pre-focus window state.
+- [x] Headless regression coverage for the complete four-part About version.
 - [x] Imported world-clock uniqueness tests.
 - [x] Multi-OS CI.
+- [x] Four-part version consistency verification in CI.
 - [ ] Add startup-adapter tests through isolated fake filesystem/registry abstractions if platform regressions justify the extra abstraction.
 - [ ] Add deeper headless interaction tests for file-picker-independent settings flows after the first full CI pass establishes stable baseline behavior.
 
 ## Phase 5 — Release readiness
 
-Status: **Infrastructure implemented; release candidate not declared**
+Status: **Version `2.6.0.2` metadata prepared; native release validation still required**
 
 - [x] Tagged release workflow.
 - [x] Self-contained artifact matrix.
 - [x] Release documentation baseline.
 - [x] README screenshot placeholder clearly identified as a placeholder.
-- [x] Preview assembly/package metadata established (`0.1.0-preview`).
+- [x] Application, package, assembly, and file metadata set to `2.6.0.2`.
+- [x] About UI preserves all four version components.
+- [x] Repository-local version verifier added and integrated into CI.
+- [x] Release tags are required to match the application version exactly.
+- [x] Release workflow expects four-component `v*.*.*.*` tags.
+- [x] Release ZIPs include license/readme/changelog/privacy/security/support documents.
+- [x] Release workflow generates `SHA256SUMS.txt` for packaged ZIPs.
 - [x] Repository-local Markdown link verifier integrated into CI.
 - [x] Final-audit verification record added.
 - [ ] Replace placeholder with real verified screenshots from release builds.
 - [ ] Complete clean-checkout manual verification on Windows, macOS, and Linux.
-- [ ] Confirm CI and CodeQL are green for the release commit.
+- [ ] Confirm CI and CodeQL are green for the exact release commit.
 - [ ] Confirm repository branch protection uses the actual workflow check names.
-- [ ] Tag first release candidate.
+- [ ] Tag `v2.6.0.2` only after all release gates pass.
 
-## Phase 6 — Final audit and stable release
+## Phase 6 — Final audit for 2.6.0.2
 
 Status: **Source/repository hardening complete for this pass; native GUI release gates remain**
 
 - [x] Perform source-level final audit for core clock/settings/window/chime failure paths.
 - [x] Add regression coverage for defects found during the final source audit.
+- [x] Prevent temporary settings read failures from quarantining potentially valid data.
 - [x] Add deterministic local-documentation link verification to CI.
+- [x] Add deterministic four-part version verification to CI/release workflows.
+- [x] Harden release artifacts with bundled policy/support docs and SHA-256 checksums.
 - [x] Record automated versus manual release evidence in `docs/final-audit.md`.
 - [ ] Run the complete release checklist in `docs/release.md` on real supported desktops.
 - [ ] Validate accessibility checklist on each primary platform.
-- [ ] Validate settings migration path after the first tagged preview creates a real prior-version fixture.
+- [ ] Validate settings migration path after a real prior tagged version fixture exists.
 - [ ] Audit documentation links against the exact tagged tree.
 - [ ] Confirm vulnerability scan has no unresolved moderate-or-higher dependency finding for the release commit.
 - [ ] Confirm no real credentials/private data are present in the release tag.
-- [ ] Publish stable `v1.0.0` only when the above gates pass.
+- [ ] Publish/tag `v2.6.0.2` only when the above gates pass.
 
-## Post-1.0 candidates
+## Post-2.6.0.2 candidates
 
 These are candidates, not promises:
 
