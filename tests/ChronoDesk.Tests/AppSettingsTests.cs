@@ -44,13 +44,34 @@ public sealed class AppSettingsTests
     public void Normalize_LimitsWorldClockCount()
     {
         var clocks = Enumerable.Range(0, 40)
-            .Select(index => new WorldClock(index.ToString(), $"Clock {index}", "UTC"))
+            .Select(index => new WorldClock(index.ToString(), $"Clock {index}", $"Zone/{index}"))
             .ToList();
         var settings = new AppSettings { WorldClocks = clocks };
 
         var normalized = settings.Normalize();
 
         Assert.Equal(24, normalized.WorldClocks.Count);
+    }
+
+    [Fact]
+    public void Normalize_DeduplicatesIdsAndTimezoneIdsCaseInsensitively()
+    {
+        var settings = new AppSettings
+        {
+            WorldClocks =
+            [
+                new WorldClock("first", "UTC primary", "UTC"),
+                new WorldClock("FIRST", "Duplicate id", "Zone/Other"),
+                new WorldClock("second", "Duplicate timezone", "utc"),
+                new WorldClock("third", "Unique", "Zone/Unique"),
+            ],
+        };
+
+        var normalized = settings.Normalize();
+
+        Assert.Equal(2, normalized.WorldClocks.Count);
+        Assert.Equal("first", normalized.WorldClocks[0].Id);
+        Assert.Equal("third", normalized.WorldClocks[1].Id);
     }
 
     [Fact]
