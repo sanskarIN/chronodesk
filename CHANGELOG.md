@@ -28,9 +28,13 @@ All notable ChronoDesk changes are documented here. The project uses semantic-ve
 - About screen with project, license, support, GitHub, funding, and **Made by the Sanskar** credit.
 - English-first `.resx` localization resource architecture for user-facing application strings.
 - xUnit coverage for clock formatting, calendar details, quiet hours, chime cadence, settings normalization, persistence/recovery, timezone lookup, and startup-preference consistency.
+- Deterministic startup-adapter tests using isolated filesystem/registry boundaries for Windows, macOS, Linux, unsupported-platform, cleanup, escaping, and cancellation behavior.
 - Deterministic property-style tests for quiet-hour and settings invariants.
 - Deterministic malformed-import fuzz coverage and oversized-import rejection.
 - Avalonia headless XUnit smoke tests for primary windows and focus/mini transitions.
+- Headless Settings-window interaction coverage for save mapping, quiet-hour validation, startup preference changes, and reset-to-defaults behavior.
+- Repository-local Markdown link validation in CI.
+- High-confidence committed-credential pattern scanning in CI.
 - Three-platform CI for formatting, build, tests, and NuGet vulnerability inspection.
 - CodeQL security analysis.
 - Pull-request dependency review.
@@ -43,6 +47,9 @@ All notable ChronoDesk changes are documented here. The project uses semantic-ve
 - Updated the Avalonia 11 baseline to the current 11.3.18 maintenance patch used throughout application and headless tests.
 - Updated GitHub Actions workflow action majors to maintained versions and explicitly configured .NET 9 before CodeQL autobuild.
 - Defined preview assembly/package metadata as `0.1.0-preview` while release verification remains incomplete.
+- Refactored platform startup integration behind injectable platform, filesystem, and registry boundaries so generated startup artifacts can be verified without altering the test runner's real login configuration.
+- Refactored Settings save/reset event flows into deterministic async operations that remain wired to the same UI handlers and can be exercised headlessly.
+- Consolidated reusable settings/startup/timezone/chime/logger test doubles under the test project.
 
 ### Fixed
 
@@ -62,13 +69,15 @@ All notable ChronoDesk changes are documented here. The project uses semantic-ve
 - User-scoped startup integration.
 - Imported backup files cannot silently change startup registration.
 - No required application secrets or remote credentials.
+- CI scans repository text for high-confidence private-key and common credential/token patterns without printing matched values.
 
 ### Documentation
 
 - Complete README baseline.
 - Contribution, support, security, privacy, code-of-conduct, roadmap, architecture, setup, development, testing, release, troubleshooting, accessibility, performance, GitHub-maintenance, release-note-template, and ADR documentation.
 - Privacy documentation explicitly covers safe import/startup behavior.
-- Testing and roadmap documents are aligned with property, fuzz, and headless UI coverage.
+- Testing and roadmap documents are aligned with property, fuzz, startup-adapter, and headless UI coverage.
+- Release/security guidance distinguishes automated repository-integrity checks from required human review and native-desktop release validation.
 
 ## Release policy
 
