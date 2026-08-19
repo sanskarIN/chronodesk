@@ -14,8 +14,11 @@
   <data name="ChimeStatus" xml:space="preserve"><value>Chime</value></data>
   <data name="ChimeUnavailable" xml:space="preserve"><value>Chime unavailable on this system</value></data>
   <data name="TimezoneAlreadyAdded" xml:space="preserve"><value>That timezone is already on the dashboard</value></data>
+  <data name="TimezoneSearchEmpty" xml:space="preserve"><value>No matching timezones found</value></data>
+  <data name="TimezoneSearchCountFormat" xml:space="preserve"><value>{0} timezones found</value></data>
   <data name="KeepOneWorldClock" xml:space="preserve"><value>Keep at least one world clock</value></data>
   <data name="WorldClockRemoved" xml:space="preserve"><value>World clock removed</value></data>
+  <data name="WorldClockRestored" xml:space="preserve"><value>World clock restored</value></data>
   <data name="SettingsExported" xml:space="preserve"><value>Settings exported</value></data>
   <data name="SettingsImported" xml:space="preserve"><value>Settings imported</value></data>
   <data name="SettingsReset" xml:space="preserve"><value>Settings reset to defaults</value></data>
@@ -26,6 +29,7 @@
   <data name="ActionSettings" xml:space="preserve"><value>Settings</value></data>
   <data name="ActionAbout" xml:space="preserve"><value>About</value></data>
   <data name="ActionRemove" xml:space="preserve"><value>Remove</value></data>
+  <data name="ActionUndo" xml:space="preserve"><value>Undo</value></data>
   <data name="ActionClose" xml:space="preserve"><value>Close</value></data>
   <data name="ActionCancel" xml:space="preserve"><value>Cancel</value></data>
   <data name="ActionSaveChanges" xml:space="preserve"><value>Save changes</value></data>
