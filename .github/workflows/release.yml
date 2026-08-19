@@ -38,6 +38,9 @@ jobs:
           "assembly_version=$assemblyVersion" >> $env:GITHUB_OUTPUT
           "prerelease=$($isPrerelease.ToString().ToLowerInvariant())" >> $env:GITHUB_OUTPUT
 
+      - name: Validate release metadata
+        run: python3 scripts/check_release_metadata.py --tag "${{ github.ref_name }}"
+
       - name: Validate local Markdown links
         run: python3 scripts/check_markdown_links.py
 
