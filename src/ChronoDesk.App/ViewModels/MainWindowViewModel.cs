@@ -313,7 +313,7 @@ public sealed class MainWindowViewModel : ObservableObject
         {
             if (startupApplied)
             {
-                await TryRollbackStartupAsync(previousStartupValue, cancellationToken);
+                await TryRollbackStartupAsync(previousStartupValue);
             }
 
             throw;
@@ -356,19 +356,11 @@ public sealed class MainWindowViewModel : ObservableObject
         StatusMessage = Strings.SettingsReset;
     }
 
-    private async Task TryRollbackStartupAsync(
-        bool previousValue,
-        CancellationToken cancellationToken)
+    private async Task TryRollbackStartupAsync(bool previousValue)
     {
         try
         {
-            await services.StartupManager.SetEnabledAsync(previousValue, cancellationToken);
-        }
-        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
-        {
-            services.Logger.Warning(
-                "startup.rollback_cancelled",
-                "Startup integration rollback was cancelled after settings persistence failed.");
+            await services.StartupManager.SetEnabledAsync(previousValue, CancellationToken.None);
         }
         catch (Exception exception)
         {
