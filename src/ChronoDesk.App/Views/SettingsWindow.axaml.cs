@@ -4,6 +4,7 @@ using Avalonia.Interactivity;
 using Avalonia.Markup.Xaml;
 using Avalonia.Platform.Storage;
 using ChronoDesk.App.Localization;
+using ChronoDesk.App.Services;
 using ChronoDesk.App.ViewModels;
 using ChronoDesk.Core.Models;
 
@@ -18,6 +19,7 @@ public sealed partial class SettingsWindow : Window
         this.viewModel = viewModel ?? throw new ArgumentNullException(nameof(viewModel));
         InitializeComponent();
         LoadControls(viewModel.Settings);
+        Control<TextBlock>("UpdateVersionText").Text = AppVersionInfo.GetDisplayVersion();
     }
 
     private void InitializeComponent() => AvaloniaXamlLoader.Load(this);
@@ -143,6 +145,14 @@ public sealed partial class SettingsWindow : Window
     }
 
     private void CancelButton_OnClick(object? sender, RoutedEventArgs e) => Close();
+
+    private void OpenReleasesButton_OnClick(object? sender, RoutedEventArgs e)
+    {
+        if (!ExternalUriLauncher.TryOpen(AppLinks.Releases))
+        {
+            SetStatus(UpdateStrings.ReleaseOpenError);
+        }
+    }
 
     private async void ExportButton_OnClick(object? sender, RoutedEventArgs e)
     {
