@@ -80,9 +80,11 @@ public sealed class HeadlessUiSmokeTests
         var viewModel = new MainWindowViewModel(new AppServices());
         var onboarding = new OnboardingWindow(viewModel);
         var about = new AboutWindow();
+        var versionText = about.FindControl<TextBlock>("VersionText");
 
         Assert.Equal(Strings.OnboardingTitle, onboarding.Title);
         Assert.Equal(Strings.AboutTitle, about.Title);
-        Assert.NotNull(about.FindControl<TextBlock>("VersionText"));
+        Assert.NotNull(versionText);
+        Assert.Contains("0.1.0-preview", versionText.Text, StringComparison.Ordinal);
     }
 }
