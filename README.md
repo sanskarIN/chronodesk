@@ -140,7 +140,30 @@ chronodesk/
 └─ what_changed.md              # Primary cross-chat / cross-session handoff
 ```
 
-See [docs/architecture.md](docs/architecture.md) for the dependency rules and runtime flow.
+For a deep, navigable technical map start at **[docs/README.md](docs/README.md)**. For the purpose of **every tracked file**, use **[docs/repository-reference.md](docs/repository-reference.md)**. See [docs/architecture.md](docs/architecture.md) for dependency rules and the system architecture.
+
+## Documentation
+
+ChronoDesk maintains product, technical, operational, architecture-decision, and file-inventory documentation as part of the implementation.
+
+Important entry points:
+
+- [Documentation hub](docs/README.md)
+- [Architecture](docs/architecture.md)
+- [Runtime behavior](docs/runtime-behavior.md)
+- [Complete settings reference](docs/settings-reference.md)
+- [Build/configuration reference](docs/configuration-reference.md)
+- [Platform integration](docs/platform-integration.md)
+- [Localization guide](docs/localization.md)
+- [Testing guide](docs/testing.md)
+- [Exhaustive test catalog](docs/test-catalog.md)
+- [CI/CD reference](docs/ci-cd.md)
+- [Release procedure](docs/release.md)
+- [Accessibility checklist](docs/accessibility.md)
+- [Troubleshooting](docs/troubleshooting.md)
+- [Repository file reference](docs/repository-reference.md)
+
+Documentation completeness is enforced in CI: every tracked file must have a canonical entry in `docs/repository-reference.md`.
 
 ## Quick start
 
@@ -168,7 +191,9 @@ For platform-specific prerequisites and packaging notes, read [docs/setup.md](do
 ```bash
 dotnet --info
 python3 scripts/check_markdown_links.py
+python3 scripts/check_documentation_inventory.py
 python3 scripts/check_repository_secrets.py
+python3 -m unittest discover -s scripts/tests -p 'test_*.py'
 dotnet restore ChronoDesk.sln
 dotnet format ChronoDesk.sln --verify-no-changes --no-restore
 dotnet build ChronoDesk.sln --configuration Release --no-restore
@@ -205,7 +230,10 @@ The current automated suite covers:
 - external-link scheme allowlisting;
 - semantic version display normalization;
 - Avalonia headless main/settings/onboarding/About smoke and interaction flows;
-- repository validation-script unit tests.
+- repository validation-script unit tests;
+- repository-local Markdown link integrity;
+- exhaustive tracked-file documentation inventory coverage;
+- high-confidence committed credential pattern scanning.
 
 Run:
 
@@ -214,7 +242,7 @@ dotnet test ChronoDesk.sln -c Release --collect:"XPlat Code Coverage"
 python3 -m unittest discover -s scripts/tests -p 'test_*.py'
 ```
 
-CI runs repository integrity plus formatting, build, tests, and NuGet vulnerability checks across Ubuntu, Windows, and macOS. See [docs/testing.md](docs/testing.md).
+CI runs repository integrity plus formatting, build, tests, and NuGet vulnerability checks across Ubuntu, Windows, and macOS. See [docs/testing.md](docs/testing.md) and [docs/test-catalog.md](docs/test-catalog.md).
 
 ## Build and publish
 
@@ -237,7 +265,7 @@ dotnet publish src/ChronoDesk.App/ChronoDesk.App.csproj \
 
 Equivalent RIDs used by release automation are `linux-x64`, `osx-x64`, and `osx-arm64`.
 
-Read [docs/release.md](docs/release.md) before creating a release tag. The release workflow rejects a tag if its matching changelog heading is missing or this README still references the explicit screenshot placeholder.
+Read [docs/release.md](docs/release.md) before creating a release tag. The release workflow rejects a tag if its matching changelog heading is missing, this README still references the explicit screenshot placeholder, local Markdown is broken, the tracked-file documentation inventory is incomplete, a high-confidence committed credential pattern is detected, formatting/build/tests fail, or NuGet vulnerability inspection reports a vulnerable package.
 
 ## Keyboard shortcuts
 
@@ -279,7 +307,7 @@ ChronoDesk/
 
 If a settings document is malformed, ChronoDesk returns to safe defaults and renames the malformed document with a timestamped `.corrupt-...json` suffix when possible.
 
-For the complete data policy, see [PRIVACY.md](PRIVACY.md).
+For the complete data policy, see [PRIVACY.md](PRIVACY.md) and [docs/settings-reference.md](docs/settings-reference.md).
 
 ## Security
 
@@ -291,7 +319,7 @@ ChronoDesk is an offline-first clock, but local desktop software still has a sec
 - atomic settings writes;
 - centralized HTTPS/mailto external-link allowlisting;
 - redacted structured logs;
-- repository-local Markdown and high-confidence credential scans;
+- repository-local Markdown, tracked-file documentation, and high-confidence credential scans;
 - CodeQL;
 - dependency review;
 - Dependabot;
@@ -324,7 +352,7 @@ ChronoDesk.Core ──X──> Avalonia / OS APIs / filesystem
 
 `ChronoDesk.Core` owns models and business rules. `ChronoDesk.Infrastructure` implements persistence and platform boundaries. `ChronoDesk.App` owns Avalonia composition and UI behavior. This keeps time/chime/settings logic testable without a desktop session.
 
-Architecture decisions live under [docs/adr](docs/adr/).
+Architecture decisions live under [docs/adr](docs/adr/). The detailed runtime sequence is in [docs/runtime-behavior.md](docs/runtime-behavior.md).
 
 ## Contributing
 
@@ -333,12 +361,14 @@ Contributions are welcome when they keep ChronoDesk focused, testable, accessibl
 Start with:
 
 1. [CONTRIBUTING.md](CONTRIBUTING.md)
-2. [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)
-3. [ROADMAP.md](ROADMAP.md)
-4. [docs/development.md](docs/development.md)
-5. [docs/testing.md](docs/testing.md)
+2. [docs/README.md](docs/README.md)
+3. [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)
+4. [ROADMAP.md](ROADMAP.md)
+5. [docs/development.md](docs/development.md)
+6. [docs/testing.md](docs/testing.md)
+7. [docs/repository-reference.md](docs/repository-reference.md)
 
-Please keep commits atomic and use Conventional Commits where practical.
+Please keep commits atomic and use Conventional Commits where practical. Any new tracked file must be documented in the repository reference in the same change.
 
 Local Git identity requested for this project:
 
@@ -350,6 +380,8 @@ git config user.email "sanskarin@outlook.in"
 ## GitHub repository maintenance
 
 The repository includes issue forms, a pull request checklist, dependency automation, CI, CodeQL, dependency review, repository-integrity automation, and hardened release packaging. Recommended branch-protection rules are documented in `docs/github-maintenance.md` so repository settings can match the checks actually present in source control.
+
+For the complete workflow/release automation map, see [docs/ci-cd.md](docs/ci-cd.md).
 
 ## Roadmap
 
