@@ -155,6 +155,30 @@
 
             <Border Classes="card">
               <StackPanel Spacing="12">
+                <TextBlock Text="{x:Static loc:DiagnosticsStrings.DiagnosticsTitle}" Classes="sectionTitle" />
+                <TextBlock Text="{x:Static loc:DiagnosticsStrings.DiagnosticsDescription}" TextWrapping="Wrap" />
+                <Grid ColumnDefinitions="180,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto" RowSpacing="10">
+                  <TextBlock Text="{x:Static loc:DiagnosticsStrings.AppVersionLabel}" VerticalAlignment="Center" />
+                  <TextBox x:Name="DiagnosticsVersionText" Grid.Column="1" IsReadOnly="True" />
+                  <TextBlock Grid.Row="1" Text="{x:Static loc:DiagnosticsStrings.OperatingSystemLabel}" VerticalAlignment="Center" />
+                  <TextBox x:Name="DiagnosticsOsText" Grid.Row="1" Grid.Column="1" IsReadOnly="True" />
+                  <TextBlock Grid.Row="2" Text="{x:Static loc:DiagnosticsStrings.FrameworkLabel}" VerticalAlignment="Center" />
+                  <TextBox x:Name="DiagnosticsFrameworkText" Grid.Row="2" Grid.Column="1" IsReadOnly="True" />
+                  <TextBlock Grid.Row="3" Text="{x:Static loc:DiagnosticsStrings.ArchitectureLabel}" VerticalAlignment="Center" />
+                  <TextBox x:Name="DiagnosticsArchitectureText" Grid.Row="3" Grid.Column="1" IsReadOnly="True" />
+                  <TextBlock Grid.Row="4" Text="{x:Static loc:DiagnosticsStrings.DataDirectoryLabel}" VerticalAlignment="Center" />
+                  <TextBox x:Name="DiagnosticsDataDirectoryText" Grid.Row="4" Grid.Column="1" IsReadOnly="True" TextWrapping="Wrap" />
+                  <TextBlock Grid.Row="5" Text="{x:Static loc:DiagnosticsStrings.SettingsPathLabel}" VerticalAlignment="Center" />
+                  <TextBox x:Name="DiagnosticsSettingsPathText" Grid.Row="5" Grid.Column="1" IsReadOnly="True" TextWrapping="Wrap" />
+                  <TextBlock Grid.Row="6" Text="{x:Static loc:DiagnosticsStrings.LogPathLabel}" VerticalAlignment="Center" />
+                  <TextBox x:Name="DiagnosticsLogPathText" Grid.Row="6" Grid.Column="1" IsReadOnly="True" TextWrapping="Wrap" />
+                </Grid>
+                <TextBlock Text="{x:Static loc:DiagnosticsStrings.DiagnosticsSharingNote}" Classes="muted" TextWrapping="Wrap" />
+              </StackPanel>
+            </Border>
+
+            <Border Classes="card">
+              <StackPanel Spacing="12">
                 <TextBlock Text="{x:Static loc:Strings.BackupRestoreTitle}" Classes="sectionTitle" />
                 <StackPanel Orientation="Horizontal" Spacing="8">
                   <Button Content="{x:Static loc:Strings.ActionExportSettings}" Click="ExportButton_OnClick" />
