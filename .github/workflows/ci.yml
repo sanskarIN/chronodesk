@@ -14,8 +14,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  documentation:
-    name: Documentation integrity
+  repository-integrity:
+    name: Repository integrity
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -23,6 +23,9 @@ jobs:
 
       - name: Validate local Markdown links
         run: python3 scripts/check_markdown_links.py
+
+      - name: Scan committed text for credentials
+        run: python3 scripts/check_repository_secrets.py
 
   build-test:
     name: ${{ matrix.os }} / .NET 9
