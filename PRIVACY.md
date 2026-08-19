@@ -72,9 +72,13 @@ Imported settings files are size-bounded, parsed as JSON, schema-checked, and no
 
 An imported file is **not allowed to enable or disable operating-system startup registration**. ChronoDesk preserves the current local startup preference during import; changing startup still requires an explicit user preference change in Settings.
 
-## Corrupt settings recovery
+## Invalid and temporarily unreadable settings
 
-If the normal settings document cannot be parsed, ChronoDesk attempts to preserve it with a timestamped `.corrupt-...json` suffix and returns to safe defaults. That preserved file remains local and may contain the same preference data that existed in the original settings file.
+If the normal settings document is malformed or otherwise fails data/schema validation, ChronoDesk attempts to preserve it with a timestamped `.corrupt-...json` suffix and returns to safe defaults. That preserved file remains local and may contain the same preference data that existed in the original settings file.
+
+A temporary operating-system I/O failure is treated differently. If the settings document cannot be read because of a transient read failure (for example, the file is temporarily unavailable), ChronoDesk returns safe defaults for that launch attempt but does **not** rename or quarantine the original settings document. A later read can therefore recover the original preferences after the transient condition clears.
+
+Permission failures are also handled as local-data availability problems by the application layer; ChronoDesk does not attempt to bypass filesystem permissions.
 
 ## Startup integration
 
