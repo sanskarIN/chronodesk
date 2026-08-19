@@ -64,7 +64,7 @@ Status: **Source implementation present; manual validation required**
 
 ## Phase 4 — Automated quality depth
 
-Status: **Implemented for domain/persistence/headless UI; native-desktop validation remains**
+Status: **Implemented for domain/persistence/startup/headless UI; native-desktop validation remains**
 
 - [x] Clock formatting tests.
 - [x] Quiet-hour boundary tests.
@@ -75,9 +75,9 @@ Status: **Implemented for domain/persistence/headless UI; native-desktop validat
 - [x] Deterministic property-style tests for quiet hours/settings invariants.
 - [x] Deterministic malformed-import fuzz coverage and oversized-input rejection.
 - [x] Avalonia headless XUnit smoke tests for primary windows and focus/mini transitions.
+- [x] Startup-adapter tests through isolated fake filesystem/registry abstractions.
+- [x] Deeper headless interaction tests for file-picker-independent settings save/validation/reset flows.
 - [x] Multi-OS CI.
-- [ ] Add startup-adapter tests through isolated fake filesystem/registry abstractions if platform regressions justify the extra abstraction.
-- [ ] Add deeper headless interaction tests for file-picker-independent settings flows after the first full CI pass establishes stable baseline behavior.
 
 ## Phase 5 — Release readiness
 
@@ -88,6 +88,7 @@ Status: **Infrastructure implemented; release candidate not declared**
 - [x] Release documentation baseline.
 - [x] README screenshot placeholder clearly identified as a placeholder.
 - [x] Preview assembly/package metadata established (`0.1.0-preview`).
+- [x] Repository-local Markdown link validation in CI.
 - [ ] Replace placeholder with real verified screenshots from release builds.
 - [ ] Complete clean-checkout manual verification on Windows, macOS, and Linux.
 - [ ] Confirm CI and CodeQL are green for the release commit.
@@ -101,7 +102,7 @@ Status: **Automated audit in progress; native GUI release gates remain**
 - [ ] Run the complete release checklist in `docs/release.md` on real supported desktops.
 - [ ] Validate accessibility checklist on each primary platform.
 - [ ] Validate settings migration path after the first tagged preview creates a real prior-version fixture.
-- [ ] Audit documentation links against the tagged tree.
+- [ ] Audit documentation links against the tagged tree (local link validation is automated; tagged/external review remains).
 - [ ] Confirm vulnerability scan has no unresolved moderate-or-higher dependency finding.
 - [ ] Confirm no real credentials/private data are present.
 - [ ] Publish stable `v1.0.0` only when the above gates pass.
