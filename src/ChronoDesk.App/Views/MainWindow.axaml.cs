@@ -22,6 +22,8 @@ public sealed partial class MainWindow : Window
     private double restoredHeight = 760;
     private PixelPoint restoredPosition;
     private bool hasRestoredPosition;
+    private WindowState restoredFocusWindowState = WindowState.Normal;
+    private WindowState restoredMiniWindowState = WindowState.Normal;
 
     public MainWindow(MainWindowViewModel viewModel)
     {
@@ -56,14 +58,26 @@ public sealed partial class MainWindow : Window
             ExitMiniMode();
         }
 
-        isFocusMode = !isFocusMode;
-        SetChromeVisibility(!isFocusMode);
-        WindowState = isFocusMode ? WindowState.FullScreen : WindowState.Normal;
-        var heroCard = this.FindControl<Border>("HeroCard");
-        if (heroCard is not null)
+        if (!isFocusMode)
         {
-            heroCard.MinHeight = isFocusMode ? 520 : 300;
+            restoredFocusWindowState = GetRestorableWindowState(WindowState);
+            isFocusMode = true;
+            SetChromeVisibility(false);
+            WindowState = WindowState.FullScreen;
+
+            var heroCard = this.FindControl<Border>("HeroCard");
+            if (heroCard is not null)
+            {
+                heroCard.MinHeight = 520;
+            }
+
+            return;
         }
+
+        isFocusMode = false;
+        SetChromeVisibility(true);
+        WindowState = restoredFocusWindowState;
+        ApplyLayout(viewModel.Settings.Layout);
     }
 
     public void ToggleMiniMode()
@@ -84,7 +98,9 @@ public sealed partial class MainWindow : Window
         restoredHeight = Height;
         restoredPosition = Position;
         hasRestoredPosition = true;
+        restoredMiniWindowState = GetRestorableWindowState(WindowState);
 
+        WindowState = WindowState.Normal;
         MinWidth = 360;
         MinHeight = 180;
         Width = 430;
@@ -212,6 +228,7 @@ public sealed partial class MainWindow : Window
     private void ExitMiniMode()
     {
         isMiniMode = false;
+        WindowState = WindowState.Normal;
         MinWidth = 780;
         MinHeight = 560;
         Width = restoredWidth;
@@ -225,7 +242,11 @@ public sealed partial class MainWindow : Window
         SystemDecorations = SystemDecorations.Full;
         SetChromeVisibility(true);
         ApplyLayout(viewModel.Settings.Layout);
+        WindowState = restoredMiniWindowState;
     }
+
+    private static WindowState GetRestorableWindowState(WindowState state) =>
+        state == WindowState.Maximized ? WindowState.Maximized : WindowState.Normal;
 
     private void SetChromeVisibility(bool visible)
     {
