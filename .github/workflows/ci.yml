@@ -24,6 +24,9 @@ jobs:
       - name: Validate local Markdown links
         run: python3 scripts/check_markdown_links.py
 
+      - name: Validate documentation inventory
+        run: python3 scripts/check_documentation_inventory.py
+
       - name: Scan committed text for credentials
         run: python3 scripts/check_repository_secrets.py
 
