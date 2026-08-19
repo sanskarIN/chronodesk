@@ -104,19 +104,20 @@ public sealed class MainWindowViewModel : ObservableObject
         try
         {
             Settings = await services.SettingsStore.LoadAsync(cancellationToken);
-            RebuildWorldClocks();
-            SearchTimeZones(string.Empty);
-            await TickAsync(cancellationToken);
             StatusMessage = Strings.AppReady;
-            IsInitialized = true;
-            SettingsChanged?.Invoke(this, Settings);
         }
         catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
         {
             services.Logger.Error("app.initialize_failed", exception, "ChronoDesk could not initialize all local data.");
+            Settings = new AppSettings();
             StatusMessage = Strings.LocalDataLoadWarning;
-            IsInitialized = true;
         }
+
+        RebuildWorldClocks();
+        SearchTimeZones(string.Empty);
+        await TickAsync(cancellationToken);
+        IsInitialized = true;
+        SettingsChanged?.Invoke(this, Settings);
     }
 
     public async Task TickAsync(CancellationToken cancellationToken = default)
