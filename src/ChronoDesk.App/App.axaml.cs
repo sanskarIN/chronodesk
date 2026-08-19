@@ -32,6 +32,7 @@ public sealed partial class App : Application
     {
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
+            ApplyCurrentPalette();
             var viewModel = new MainWindowViewModel(Services);
             var window = new MainWindow(viewModel);
             viewModel.SettingsChanged += (_, settings) => ApplyTheme(settings);
