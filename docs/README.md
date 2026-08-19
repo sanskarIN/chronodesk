@@ -1,13 +1,15 @@
 # ChronoDesk Documentation Hub
 
-This directory is the canonical technical documentation set for ChronoDesk. The root `README.md` is the product-facing overview; the documents here explain how the repository is built, how the application behaves, how it stores data, how platform integrations work, how releases are produced, and how every tracked file fits into the project.
+This directory is the canonical technical documentation set for ChronoDesk. The root `README.md` is the product-facing overview; the documents here explain how to use the application, how the repository is built, how the application behaves, how it stores data, how platform integrations work, how releases are produced, and how every tracked file fits into the project.
 
 ## Start here
 
 | Goal | Document |
 |---|---|
+| Learn how to use ChronoDesk | [User guide](user-guide.md) |
 | Install prerequisites and run ChronoDesk | [Setup](setup.md) |
 | Understand the codebase and dependency rules | [Architecture](architecture.md) |
+| Understand production classes and key method contracts | [Source-code reference](source-code-reference.md) |
 | Understand runtime behavior and application lifecycle | [Runtime behavior](runtime-behavior.md) |
 | Understand every setting and persisted field | [Settings reference](settings-reference.md) |
 | Understand local files, environment variables, build configuration, and packages | [Configuration reference](configuration-reference.md) |
@@ -43,8 +45,8 @@ These files intentionally live at the repository root because GitHub and open-so
 
 ChronoDesk documentation is maintained in four layers:
 
-1. **Product documentation** — what users can do and what the application promises.
-2. **Technical documentation** — architecture, runtime flows, persistence, platform integration, configuration, localization, testing, and CI/CD.
+1. **Product documentation** — the user guide plus public README describe what users can do and what the application promises.
+2. **Technical documentation** — architecture, production source reference, runtime flows, persistence, platform integration, configuration, localization, testing, and CI/CD.
 3. **Operational documentation** — release, troubleshooting, accessibility validation, performance validation, and GitHub maintenance.
 4. **Repository inventory** — a file-by-file reference covering every tracked file so new contributors can map code and configuration to responsibility quickly.
 
@@ -73,6 +75,8 @@ When changing behavior:
 - update `CHANGELOG.md` for user-visible changes;
 - update `PRIVACY.md` if data categories, network behavior, external navigation, or logging behavior changes;
 - update `SECURITY.md` when a trust boundary or security control changes;
+- update `docs/user-guide.md` when normal user operation changes;
+- update `docs/source-code-reference.md` when a production type's responsibility or important contract changes;
 - update `docs/testing.md` and `docs/test-catalog.md` when coverage changes;
 - update `docs/repository-reference.md` whenever tracked files are added, renamed, moved, or deleted;
 - add or amend an ADR when a durable architectural decision changes;
