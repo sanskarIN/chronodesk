@@ -2,9 +2,9 @@
 
 ## Current milestone
 
-**Phase 7 — version `2.6.0.2` final source/repository/release hardening, 2026-08-19.**
+**Phase 7 — version `2.6.0.2` final source/repository/release hardening, merged 2026-08-19.**
 
-The product/source baseline is now explicitly versioned as `2.6.0.2`. This pass fixes the remaining version-display and persistence edge cases, strengthens CI/release automation, expands release artifact integrity controls, and synchronizes the open-source documentation. Native desktop validation remains a release gate and is not fabricated by source inspection.
+The product/source baseline is explicitly versioned as `2.6.0.2`. The final source, reliability, release-automation, test, security/privacy, and open-source documentation hardening pass has been merged into `main`. Native desktop validation and repository settings remain release-evidence gates; they are not fabricated by source inspection.
 
 ## Source of truth
 
@@ -13,14 +13,23 @@ The product/source baseline is now explicitly versioned as `2.6.0.2`. This pass 
 - Version-hardening branch: `release-version-2.6.0.2`
 - Pull request: `#18` — `release: finalize ChronoDesk version 2.6.0.2 hardening`
 - `main` baseline before this pass: `acadb0e3861721bf72d90bdbb2c0282ef96b847d`
-- PR head before this final review-state handoff update: `b6d35c103235b57f187d79523e0554128ab565e2`
+- Final PR head merged: `011711503703c7cdc64120cafe9dbb5fdc11e0f5`
+- Merge commit: `d8179bdcac162059968c1700711e09e6ce904f63`
 - Canonical product version source: `src/ChronoDesk.App/ChronoDesk.App.csproj`
 - Required version: `2.6.0.2`
 - Product requirements: `10_chronodesk_master_prompt.md` supplied for the project plus the checked-in repository documentation.
 
+## Merge result
+
+PR #18 was reviewed and merged successfully into `main` using a normal merge commit, preserving the 24 atomic commits from the version-hardening branch. GitHub reports the PR as closed/merged with 21 changed files.
+
+The merge commit is GitHub-verified and records the author as **Sanskar `<sanskarin@outlook.in>`**.
+
+The `v2.6.0.2` tag was intentionally **not** created. A release tag is still gated on the release evidence listed below.
+
 ## Version state
 
-The application project now declares all of these as exactly `2.6.0.2`:
+The application project declares all of these as exactly `2.6.0.2`:
 
 - `Version`
 - `PackageVersion`
@@ -29,7 +38,7 @@ The application project now declares all of these as exactly `2.6.0.2`:
 
 The old `0.1.0-preview` metadata and three-component release guidance have been removed from the active release path.
 
-The About window now renders all four assembly-version components. A headless Avalonia regression test requires `2.6.0.2` to be present so the revision component cannot silently disappear again.
+The About window renders all four assembly-version components. A headless Avalonia regression test requires `2.6.0.2` to be present so the revision component cannot silently disappear again.
 
 ## Final code/reliability fixes in this pass
 
@@ -53,7 +62,7 @@ A regression test locks a valid settings file, verifies safe fallback without a 
 
 ### `scripts/check-version.ps1`
 
-The new verifier enforces:
+The verifier enforces:
 
 - exactly four numeric version components (`MAJOR.MINOR.PATCH.REVISION`);
 - matching `Version`, `PackageVersion`, `AssemblyVersion`, and `FileVersion`;
@@ -63,11 +72,11 @@ The new verifier enforces:
 
 ### CI
 
-The three-platform CI matrix now runs `scripts/check-version.ps1` before restore/build/test work, in addition to formatting, Markdown-link verification, tests, coverage collection, and vulnerability inspection.
+The three-platform CI matrix runs `scripts/check-version.ps1` before restore/build/test work, in addition to formatting, Markdown-link verification, tests, coverage collection, and vulnerability inspection.
 
 ### Tagged release workflow
 
-Release workflow hardening now includes:
+Release workflow hardening includes:
 
 - four-component tag trigger: `v*.*.*.*`;
 - exact tag/project-version verification before packaging;
@@ -76,11 +85,9 @@ Release workflow hardening now includes:
 - generated `SHA256SUMS.txt` for all release ZIPs;
 - checksum publication with the GitHub Release.
 
-The release tag `v2.6.0.2` has **not** been created. It remains blocked on the documented clean-checkout, CI/security, native desktop, accessibility, screenshot, branch/ruleset, and packaged-artifact verification gates.
-
 ## Documentation synchronized in this pass
 
-Updated documentation now consistently describes `2.6.0.2`, four-component release tags, the version verifier, persistence behavior, bundled release documents, and checksums:
+The following now consistently describe `2.6.0.2`, four-component release tags, the version verifier, persistence behavior, bundled release documents, and checksums:
 
 - `README.md`
 - `CHANGELOG.md`
@@ -96,7 +103,7 @@ Updated documentation now consistently describes `2.6.0.2`, four-component relea
 - `.github/pull_request_template.md`
 - this handoff file
 
-## Files changed in this pass
+## Files changed by PR #18
 
 PR #18 reports exactly 21 changed files:
 
@@ -139,22 +146,23 @@ PR #18 reports exactly 21 changed files:
 - Release/testing/security/privacy/contributor/maintenance documentation synchronized: **completed**.
 - Complete PR #18 changed-file list reviewed: **completed**.
 - Complete PR #18 unified diff reviewed for version drift, workflow/script issues, test compile risk, persistence behavior, and documentation contradictions: **completed**.
-- GitHub currently reports PR #18 as **mergeable**.
-- Commit author/committer metadata observed on this branch: **Sanskar `<sanskarin@outlook.in>`**.
+- PR #18 mergeability before merge: **PASS**.
+- PR #18 merge to `main`: **PASS**.
+- Merge commit present at `main`: **PASS**, `d8179bdcac162059968c1700711e09e6ce904f63` before this post-merge handoff commit.
 
-### Automated workflow state observed for the reviewed PR head
+### Automated workflow state observed for the final PR head
 
-For PR head `b6d35c103235b57f187d79523e0554128ab565e2`, GitHub created these pull-request workflow runs:
+For final PR head `011711503703c7cdc64120cafe9dbb5fdc11e0f5`, GitHub created these pull-request workflow runs:
 
-- CI run `332` / run id `32252847982` — **queued** when observed;
-- CodeQL run `331` / run id `32252847871` — **queued** when observed;
-- Dependency Review run `269` / run id `32252848578` — **queued** when observed.
+- CI run `333` / run id `32252935771` — **queued** when last observed before merge;
+- CodeQL run `332` / run id `32252936297` — **queued** when last observed before merge;
+- Dependency Review run `270` / run id `32252935476` — **queued** when last observed before merge.
 
 Queued is not passing evidence. These conclusions must not be rewritten as successful unless GitHub later reports success.
 
 ### Repository settings observed
 
-The actual GitHub `main` branch was observed as **not protected** at commit `acadb0e3861721bf72d90bdbb2c0282ef96b847d` (`protected: false`). Branch protection/rulesets are GitHub repository settings rather than files in the source tree.
+The actual GitHub `main` branch was observed as **not protected** both before and immediately after PR #18 was merged (`protected: false`). Branch protection/rulesets are GitHub repository settings rather than files in the source tree.
 
 The available GitHub connector in this pass exposes branch/ref operations but does not expose a branch-protection/ruleset mutation action. Therefore the source documentation is prepared, but an administrator must enable/verify the desired `main` ruleset in GitHub settings before release.
 
@@ -162,7 +170,7 @@ The available GitHub connector in this pass exposes branch/ref operations but do
 
 This chat execution environment did not provide `dotnet` or `pwsh` for an authoritative local build/test/script run. Therefore no local PASS claim is invented.
 
-The expected automated verification for the exact PR/release commit is:
+The expected automated verification for the exact release commit is:
 
 ```text
 ./scripts/check-version.ps1
@@ -196,7 +204,7 @@ For the actual tag, additionally:
 
 These are deliberately left open until evidence exists.
 
-## Commits created in the `2.6.0.2` pass before this final review-state handoff
+## Commits created in the `2.6.0.2` branch pass
 
 - `b117e95` — `build: set ChronoDesk version to 2.6.0.2`
 - `7e068de` — `fix: display full four-part application version`
@@ -221,11 +229,18 @@ These are deliberately left open until evidence exists.
 - `7dafcf5` — `docs: align security policy with 2.6.0.2 hardening`
 - `2b2b2cc` — `docs: record 2.6.0.2 final release hardening handoff`
 - `b6d35c1` — `test: simplify About version assertion`
-- final PR review-state handoff: this commit.
+- `0117115` — `docs: record final 2.6.0.2 pull request review state`
+- `d8179bd` — `merge: finalize ChronoDesk 2.6.0.2 source hardening`
+- post-merge handoff: this commit on `main`.
 
 ## Next exact tasks
 
-1. Merge PR #18 with normal merge history if its head remains unchanged and mergeable.
-2. Re-check `main` after merge and record the merge commit in this handoff.
-3. Observe any available workflow state without inventing a successful conclusion.
-4. Do **not** create `v2.6.0.2` until the remaining release-evidence gates above are actually satisfied.
+No additional source-code or repository-file change was identified as required by this final pass. The remaining work is release evidence and GitHub repository configuration:
+
+1. require green CI/CodeQL/dependency-security results for the exact release candidate;
+2. enable/verify the intended `main` branch protection/ruleset and exact required status-check contexts in GitHub settings;
+3. perform the documented Windows/macOS/Linux and accessibility checks;
+4. capture verified release screenshots;
+5. perform clean-checkout publish/launch validation for every advertised RID;
+6. create `v2.6.0.2` only after those gates pass;
+7. verify the generated release ZIPs and `SHA256SUMS.txt` after publication.
