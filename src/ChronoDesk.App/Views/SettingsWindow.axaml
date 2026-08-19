@@ -192,6 +192,44 @@
           </StackPanel>
         </ScrollViewer>
       </TabItem>
+
+      <TabItem Header="{x:Static loc:Strings.ActionAbout}">
+        <ScrollViewer>
+          <StackPanel Margin="8,18" Spacing="18">
+            <Border Classes="card">
+              <StackPanel Spacing="12">
+                <TextBlock Text="{x:Static loc:Strings.AboutTitle}" Classes="sectionTitle" />
+                <TextBlock Text="{x:Static loc:Strings.AboutDescription}" TextWrapping="Wrap" />
+                <TextBlock x:Name="SettingsAboutVersionText" FontWeight="SemiBold" />
+                <TextBlock Text="{x:Static loc:Strings.LicensePrivacyBody}" Classes="muted" TextWrapping="Wrap" />
+                <TextBlock Text="{x:Static loc:Strings.Credit}" FontSize="17" FontWeight="SemiBold" />
+              </StackPanel>
+            </Border>
+
+            <Border Classes="card">
+              <StackPanel Spacing="10">
+                <TextBlock Text="{x:Static loc:Strings.ProjectTitle}" Classes="sectionTitle" />
+                <WrapPanel>
+                  <Button Content="{x:Static loc:Strings.GitHubButton}" Margin="0,0,8,8" Click="SettingsGitHubButton_OnClick" />
+                  <Button Content="{x:Static loc:Strings.BmcButton}" Margin="0,0,8,8" Click="SettingsBmcButton_OnClick" />
+                </WrapPanel>
+                <TextBlock Text="{x:Static loc:Strings.DonationNote}" Classes="muted" TextWrapping="Wrap" />
+              </StackPanel>
+            </Border>
+
+            <Border Classes="card">
+              <StackPanel Spacing="10">
+                <TextBlock Text="{x:Static loc:Strings.ContactSupportTitle}" Classes="sectionTitle" />
+                <WrapPanel>
+                  <Button Content="{x:Static loc:Strings.BusinessPrimary}" Margin="0,0,8,8" Click="SettingsBusinessPrimaryButton_OnClick" />
+                  <Button Content="{x:Static loc:Strings.BusinessSecondary}" Margin="0,0,8,8" Click="SettingsBusinessSecondaryButton_OnClick" />
+                  <Button Content="{x:Static loc:Strings.SupportAddress}" Margin="0,0,8,8" Click="SettingsSupportButton_OnClick" />
+                </WrapPanel>
+              </StackPanel>
+            </Border>
+          </StackPanel>
+        </ScrollViewer>
+      </TabItem>
     </TabControl>
 
     <Border Grid.Row="2" BorderBrush="{DynamicResource ChronoBorderBrush}" BorderThickness="0,1,0,0" Padding="24,14">
