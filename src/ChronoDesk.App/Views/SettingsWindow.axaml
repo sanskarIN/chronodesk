@@ -1,0 +1,179 @@
+<Window
+    x:Class="ChronoDesk.App.Views.SettingsWindow"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    Title="ChronoDesk Settings"
+    Width="860"
+    Height="720"
+    MinWidth="720"
+    MinHeight="600"
+    WindowStartupLocation="CenterOwner"
+    ShowInTaskbar="False"
+    Icon="/Assets/chronodesk.ico">
+
+  <Grid RowDefinitions="Auto,*,Auto">
+    <StackPanel Margin="24,20,24,14" Spacing="4">
+      <TextBlock Text="Settings" FontSize="30" FontWeight="Bold" />
+      <TextBlock Text="Appearance, accessibility, chimes, startup, privacy, and local data." Classes="muted" />
+    </StackPanel>
+
+    <TabControl Grid.Row="1" Margin="20,0">
+      <TabItem Header="Clock">
+        <ScrollViewer>
+          <StackPanel Margin="8,18" Spacing="18">
+            <Border Classes="card">
+              <StackPanel Spacing="12">
+                <TextBlock Text="Clock display" Classes="sectionTitle" />
+                <Grid ColumnDefinitions="220,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" RowSpacing="12">
+                  <TextBlock Text="Time format" VerticalAlignment="Center" />
+                  <ComboBox x:Name="FormatCombo" Grid.Column="1" SelectedIndex="1">
+                    <ComboBoxItem Content="12-hour" />
+                    <ComboBoxItem Content="24-hour" />
+                  </ComboBox>
+                  <TextBlock Grid.Row="1" Text="Show seconds" VerticalAlignment="Center" />
+                  <CheckBox x:Name="ShowSecondsCheck" Grid.Row="1" Grid.Column="1" />
+                  <TextBlock Grid.Row="2" Text="Show date" VerticalAlignment="Center" />
+                  <CheckBox x:Name="ShowDateCheck" Grid.Row="2" Grid.Column="1" />
+                  <TextBlock Grid.Row="3" Text="Show weekday" VerticalAlignment="Center" />
+                  <CheckBox x:Name="ShowWeekdayCheck" Grid.Row="3" Grid.Column="1" />
+                  <TextBlock Grid.Row="4" Text="Show ISO week number" VerticalAlignment="Center" />
+                  <CheckBox x:Name="ShowWeekNumberCheck" Grid.Row="4" Grid.Column="1" />
+                  <TextBlock Grid.Row="5" Text="Show calendar details" VerticalAlignment="Center" />
+                  <CheckBox x:Name="ShowCalendarDetailsCheck" Grid.Row="5" Grid.Column="1" />
+                </Grid>
+              </StackPanel>
+            </Border>
+
+            <Border Classes="card">
+              <StackPanel Spacing="12">
+                <TextBlock Text="Chime" Classes="sectionTitle" />
+                <CheckBox x:Name="ChimeEnabledCheck" Content="Enable time chime" />
+                <Grid ColumnDefinitions="220,*" RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="12">
+                  <TextBlock Text="Interval" VerticalAlignment="Center" />
+                  <ComboBox x:Name="ChimeIntervalCombo" Grid.Column="1" SelectedIndex="0">
+                    <ComboBoxItem Content="Hourly" />
+                    <ComboBoxItem Content="Every 30 minutes" />
+                    <ComboBoxItem Content="Every 15 minutes" />
+                  </ComboBox>
+                  <TextBlock Grid.Row="1" Text="Quiet hours" VerticalAlignment="Center" />
+                  <CheckBox x:Name="QuietHoursCheck" Grid.Row="1" Grid.Column="1" />
+                  <TextBlock Grid.Row="2" Text="Quiet start (24h)" VerticalAlignment="Center" />
+                  <TextBox x:Name="QuietStartText" Grid.Row="2" Grid.Column="1" Watermark="22:00" MaxLength="5" />
+                  <TextBlock Grid.Row="3" Text="Quiet end (24h)" VerticalAlignment="Center" />
+                  <TextBox x:Name="QuietEndText" Grid.Row="3" Grid.Column="1" Watermark="07:00" MaxLength="5" />
+                </Grid>
+                <TextBlock Text="Chimes are local and optional. Quiet hours can cross midnight." Classes="muted" TextWrapping="Wrap" />
+              </StackPanel>
+            </Border>
+          </StackPanel>
+        </ScrollViewer>
+      </TabItem>
+
+      <TabItem Header="Appearance">
+        <ScrollViewer>
+          <StackPanel Margin="8,18" Spacing="18">
+            <Border Classes="card">
+              <Grid ColumnDefinitions="220,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto" RowSpacing="14">
+                <TextBlock Text="Theme" VerticalAlignment="Center" />
+                <ComboBox x:Name="ThemeCombo" Grid.Column="1">
+                  <ComboBoxItem Content="System" />
+                  <ComboBoxItem Content="Light" />
+                  <ComboBoxItem Content="Dark" />
+                  <ComboBoxItem Content="High contrast" />
+                </ComboBox>
+                <TextBlock Grid.Row="1" Text="Clock layout" VerticalAlignment="Center" />
+                <ComboBox x:Name="LayoutCombo" Grid.Row="1" Grid.Column="1">
+                  <ComboBoxItem Content="Centered" />
+                  <ComboBoxItem Content="Compact" />
+                  <ComboBoxItem Content="Dashboard" />
+                </ComboBox>
+                <TextBlock Grid.Row="2" Text="Font family" VerticalAlignment="Center" />
+                <TextBox x:Name="FontFamilyText" Grid.Row="2" Grid.Column="1" Watermark="Inter" />
+                <TextBlock Grid.Row="3" Text="Clock size" VerticalAlignment="Center" />
+                <Slider x:Name="FontSizeSlider" Grid.Row="3" Grid.Column="1" Minimum="42" Maximum="240" TickFrequency="2" />
+                <TextBlock Grid.Row="4" Text="Content spacing" VerticalAlignment="Center" />
+                <Slider x:Name="SpacingSlider" Grid.Row="4" Grid.Column="1" Minimum="4" Maximum="48" TickFrequency="1" />
+              </Grid>
+            </Border>
+          </StackPanel>
+        </ScrollViewer>
+      </TabItem>
+
+      <TabItem Header="Accessibility">
+        <ScrollViewer>
+          <StackPanel Margin="8,18" Spacing="18">
+            <Border Classes="card">
+              <StackPanel Spacing="12">
+                <TextBlock Text="Accessibility" Classes="sectionTitle" />
+                <CheckBox x:Name="ReducedMotionCheck" Content="Reduce motion and avoid non-essential animation" />
+                <CheckBox x:Name="HighContrastCheck" Content="Use high-contrast palette" />
+                <TextBlock Text="ChronoDesk also supports keyboard navigation, visible focus, scalable text, descriptive control names, and screen-reader-friendly labels through Avalonia accessibility semantics." Classes="muted" TextWrapping="Wrap" />
+              </StackPanel>
+            </Border>
+            <Border Classes="card">
+              <StackPanel Spacing="8">
+                <TextBlock Text="Keyboard shortcuts" Classes="sectionTitle" />
+                <TextBlock Text="F11 — focus clock" />
+                <TextBlock Text="Ctrl+M — mini mode" />
+                <TextBlock Text="Ctrl+K — timezone search" />
+                <TextBlock Text="Ctrl+, — settings" />
+                <TextBlock Text="Ctrl+Shift+T — always on top" />
+                <TextBlock Text="Esc — leave focus/mini mode" />
+              </StackPanel>
+            </Border>
+          </StackPanel>
+        </ScrollViewer>
+      </TabItem>
+
+      <TabItem Header="Behavior">
+        <ScrollViewer>
+          <StackPanel Margin="8,18" Spacing="18">
+            <Border Classes="card">
+              <StackPanel Spacing="12">
+                <TextBlock Text="Window and startup" Classes="sectionTitle" />
+                <CheckBox x:Name="AlwaysOnTopCheck" Content="Keep the main clock always on top" />
+                <CheckBox x:Name="StartWithSystemCheck" Content="Start ChronoDesk when I sign in" />
+                <CheckBox x:Name="MinimizeToTrayCheck" Content="Hide to tray when closing the main window" />
+                <TextBlock Text="Startup is disabled by default and is changed only when you save this setting." Classes="muted" TextWrapping="Wrap" />
+              </StackPanel>
+            </Border>
+          </StackPanel>
+        </ScrollViewer>
+      </TabItem>
+
+      <TabItem Header="Data &amp; Privacy">
+        <ScrollViewer>
+          <StackPanel Margin="8,18" Spacing="18">
+            <Border Classes="card">
+              <StackPanel Spacing="10">
+                <TextBlock Text="Private by default" Classes="sectionTitle" />
+                <TextBlock Text="ChronoDesk does not require an account, analytics service, cloud database, or network connection for its clock features. Settings, world clocks, and logs are stored locally." TextWrapping="Wrap" />
+                <TextBlock Text="Logs intentionally redact common email and secret patterns and do not record raw settings contents." Classes="muted" TextWrapping="Wrap" />
+              </StackPanel>
+            </Border>
+
+            <Border Classes="card">
+              <StackPanel Spacing="12">
+                <TextBlock Text="Backup and restore" Classes="sectionTitle" />
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                  <Button Content="Export settings" Click="ExportButton_OnClick" />
+                  <Button Content="Import settings" Click="ImportButton_OnClick" />
+                  <Button Content="Reset defaults" Click="ResetButton_OnClick" />
+                </StackPanel>
+                <TextBlock Text="Exports contain preferences and timezone card labels only. Review files before sharing them." Classes="muted" TextWrapping="Wrap" />
+              </StackPanel>
+            </Border>
+          </StackPanel>
+        </ScrollViewer>
+      </TabItem>
+    </TabControl>
+
+    <Border Grid.Row="2" BorderBrush="{DynamicResource ChronoBorderBrush}" BorderThickness="0,1,0,0" Padding="24,14">
+      <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8">
+        <TextBlock x:Name="SettingsStatusText" Classes="muted" VerticalAlignment="Center" />
+        <Button Grid.Column="1" Content="Cancel" Click="CancelButton_OnClick" />
+        <Button Grid.Column="2" Content="Save changes" Classes="primary" Click="SaveButton_OnClick" />
+      </Grid>
+    </Border>
+  </Grid>
+</Window>
