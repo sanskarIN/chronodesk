@@ -35,7 +35,7 @@ public sealed class StartupRegistrationDocumentsTests
         Assert.Contains("com.sanskar.chronodesk", strings);
         Assert.Contains("/Applications/ChronoDesk & Tools/ChronoDesk", strings);
         Assert.Contains("--background", strings);
-        Assert.Contains("&amp;", document, StringComparison.Ordinal);
+        Assert.Contains("&amp;", document);
     }
 
     [Fact]
@@ -44,9 +44,9 @@ public sealed class StartupRegistrationDocumentsTests
         var document = StartupRegistrationDocuments.BuildLinuxDesktopEntry(
             "/home/user/Chrono Desk/$clock`test\\app");
 
-        Assert.Contains("[Desktop Entry]", document, StringComparison.Ordinal);
-        Assert.Contains("Exec=\"/home/user/Chrono Desk/\\$clock\\`test\\\\app\" --background", document, StringComparison.Ordinal);
-        Assert.Contains("Terminal=false", document, StringComparison.Ordinal);
+        Assert.Contains("[Desktop Entry]", document);
+        Assert.Contains("Exec=\"/home/user/Chrono Desk/\\$clock\\`test\\\\app\" --background", document);
+        Assert.Contains("Terminal=false", document);
     }
 
     [Theory]
