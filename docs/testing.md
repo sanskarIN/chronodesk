@@ -5,13 +5,14 @@
 The intended release gate is:
 
 ```bash
+python3 scripts/check_markdown_links.py
 dotnet restore ChronoDesk.sln
 dotnet format ChronoDesk.sln --verify-no-changes --no-restore
 dotnet build ChronoDesk.sln -c Release --no-restore
 dotnet test ChronoDesk.sln -c Release --no-build --collect:"XPlat Code Coverage"
 ```
 
-CI executes equivalent formatting/build/test work on Ubuntu, Windows, and macOS and also inspects NuGet dependencies for reported vulnerabilities.
+CI validates repository-local Markdown links and executes equivalent formatting/build/test work on Ubuntu, Windows, and macOS. The .NET matrix also inspects NuGet dependencies for reported vulnerabilities.
 
 ## Automated test areas
 
@@ -76,6 +77,23 @@ Tests must not read or write the developer's real ChronoDesk data folder.
 - invalid-ID fallback;
 - bounded case-insensitive search.
 
+### Startup adapters
+
+`PlatformStartupManagerTests` drives the production startup manager through fake filesystem and registry boundaries. The tests verify without changing the CI runner's real startup configuration:
+
+- the Windows current-user Run entry uses a quoted executable plus `--background`;
+- disabling Windows startup removes the application value;
+- startup detection only accepts entries containing the ChronoDesk executable path;
+- macOS LaunchAgent paths are derived from the supplied user profile and XML-sensitive executable characters are escaped;
+- disabling macOS startup removes an existing LaunchAgent;
+- Linux honors `XDG_CONFIG_HOME` and otherwise falls back to `~/.config/autostart`;
+- Linux desktop entries quote executable paths containing spaces;
+- disabling Linux startup removes an existing desktop entry;
+- unsupported platforms reject startup writes;
+- pre-cancelled operations honor cancellation.
+
+These tests validate generated user-level startup artifacts, but real registry/LaunchAgent/XDG session behavior still requires native desktop verification before release.
+
 ### Property-style robustness tests
 
 `DomainPropertyTests` runs deterministic seeded randomized cases against reference invariants. It verifies thousands of quiet-hour combinations and checks that settings normalization is idempotent, bounded, and produces unique clock IDs.
@@ -88,18 +106,30 @@ This test style gives broad edge coverage while staying deterministic in CI. A f
 
 Fuzz inputs are generated locally inside the test and never contain production/user data.
 
-### Headless Avalonia UI smoke tests
+### Headless Avalonia UI tests
 
-`AvaloniaTestSetup` and `HeadlessUiSmokeTests` use `Avalonia.Headless.XUnit` with the same Avalonia 11.3 maintenance baseline as the application. Current smoke coverage verifies:
+`AvaloniaTestSetup`, `HeadlessUiSmokeTests`, and `SettingsWindowHeadlessTests` use `Avalonia.Headless.XUnit` with the same Avalonia maintenance baseline as the application. Current coverage verifies:
 
 - main-window XAML/resource loading;
 - key named controls exist;
 - mini mode can enter and restore normal dimensions;
 - focus mode hides/restores application chrome;
 - Settings loads primary preference controls;
-- onboarding and About windows load localized resources.
+- onboarding and About windows load localized resources;
+- Settings save maps edited controls into normalized persisted preferences;
+- explicit startup preference changes flow through the startup service;
+- invalid quiet-hour text displays validation without persistence;
+- reset-to-defaults persists defaults and reloads the visible controls.
 
-Headless UI tests strengthen cross-platform CI but do **not** replace real desktop testing for system tray, startup registration, sound playback, accessibility APIs, display scaling, or native file pickers.
+File-picker-backed import/export remains outside the headless interaction suite because native picker behavior belongs to platform validation. The view-model persistence/import/export operations themselves remain automated independently.
+
+Headless UI tests strengthen cross-platform CI but do **not** replace real desktop testing for system tray, native startup registration, sound playback, accessibility APIs, display scaling, or native file pickers.
+
+### Documentation integrity
+
+`scripts/check_markdown_links.py` scans every repository Markdown file without network access and validates repository-local link/image targets. Links that escape the repository or point at missing files fail the dedicated CI documentation job.
+
+External URLs are deliberately excluded from this deterministic check; release review should still verify important external project/support links when preparing a tag.
 
 ## Manual UI checklist
 
@@ -187,7 +217,7 @@ When fixing a bug:
 
 ## Coverage philosophy
 
-Coverage percentage is not a release target by itself. Prefer tests that protect invariants and failure paths. A high line percentage that does not exercise timezone boundaries, persistence corruption, chime suppression, malformed import handling, or window-mode transitions is less useful than focused behavioral coverage.
+Coverage percentage is not a release target by itself. Prefer tests that protect invariants and failure paths. A high line percentage that does not exercise timezone boundaries, persistence corruption, chime suppression, malformed import handling, startup artifact generation, or window-mode transitions is less useful than focused behavioral coverage.
 
 ## Performance testing
 
