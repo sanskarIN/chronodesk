@@ -52,6 +52,8 @@ Implements boundaries that interact with the environment:
 - `SafeFileLogger` — structured JSONL logging with redaction.
 - `AppPaths` — deterministic current-user data path resolution.
 
+Platform startup code additionally has narrow internal boundaries for platform detection, filesystem access, and Windows current-user registry access. Production composition uses the real operating-system adapters; tests inject isolated implementations. This keeps platform artifact generation testable without writing a CI runner's real login configuration or weakening the public `IStartupManager` boundary consumed by the application.
+
 ### `ChronoDesk.App`
 
 Owns Avalonia composition and presentation:
@@ -66,6 +68,8 @@ Owns Avalonia composition and presentation:
 - settings/import/export UI;
 - About/support/funding UI;
 - focus/mini mode and keyboard handling.
+
+UI event handlers remain thin where deterministic interaction testing is useful. Settings save/reset handlers delegate to internal async operations so headless tests can await the same production logic instead of simulating timing around `async void` event handlers.
 
 ## Runtime flow
 
@@ -170,6 +174,8 @@ Startup remains disabled by default. A change is applied only when the user save
 - Windows: current-user `Run` registry value.
 - macOS: current-user LaunchAgent plist.
 - Linux: current-user XDG autostart desktop file.
+
+`PlatformStartupManager` receives the executable path and, in production, detects the current OS and uses system filesystem/registry adapters. Its internal constructor accepts deterministic platform and storage adapters for tests. This separation verifies quoting, XML escaping, XDG path fallback, cleanup, and unsupported-platform behavior without touching a real startup entry.
 
 The startup command contains a `--background` flag. After settings load, the main window hides itself when that flag is present and minimize-to-tray is enabled.
 
