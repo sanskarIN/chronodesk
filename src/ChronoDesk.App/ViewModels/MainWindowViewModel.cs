@@ -198,7 +198,9 @@ public sealed class MainWindowViewModel : ObservableObject
 
         if (Settings.WorldClocks.Count >= AppSettings.MaximumWorldClockCount)
         {
-            StatusMessage = Strings.WorldClockLimitReached;
+            StatusMessage = Strings.Format(
+                nameof(Strings.WorldClockLimitReachedFormat),
+                AppSettings.MaximumWorldClockCount);
             return;
         }
 
