@@ -13,6 +13,10 @@ permissions:
   security-events: write
   packages: read
 
+concurrency:
+  group: codeql-${{ github.ref }}-${{ github.workflow }}
+  cancel-in-progress: true
+
 jobs:
   analyze:
     name: CodeQL / C#
