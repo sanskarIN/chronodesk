@@ -26,7 +26,7 @@ public sealed class SafeFileLogger : IAppLogger
 
     public void Warning(string eventName, string message) => Write("warning", eventName, message, null);
 
-    public void Error(string eventName, Exception exception, string safeMessage)
+    public void LogError(string eventName, Exception exception, string safeMessage)
     {
         ArgumentNullException.ThrowIfNull(exception);
         Write("error", eventName, safeMessage, exception.GetType().Name);
