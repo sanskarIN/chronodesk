@@ -1,11 +1,11 @@
+using ChronoDesk.Core.Abstractions;
 using ChronoDesk.Core.Models;
-using ChronoDesk.Core.Services;
 
 namespace ChronoDesk.App.ViewModels;
 
 public sealed class WorldClockCardViewModel : ObservableObject
 {
-    private readonly ClockFormatter formatter;
+    private readonly IClockFormatter formatter;
     private readonly TimeZoneInfo timeZone;
     private string timeText = string.Empty;
     private string dateText = string.Empty;
@@ -14,7 +14,7 @@ public sealed class WorldClockCardViewModel : ObservableObject
     public WorldClockCardViewModel(
         WorldClock model,
         TimeZoneInfo timeZone,
-        ClockFormatter formatter)
+        IClockFormatter formatter)
     {
         Model = model ?? throw new ArgumentNullException(nameof(model));
         this.timeZone = timeZone ?? throw new ArgumentNullException(nameof(timeZone));
