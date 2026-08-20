@@ -6,5 +6,5 @@ public interface IAppLogger
 
     void Warning(string eventName, string message);
 
-    void Error(string eventName, Exception exception, string safeMessage);
+    void LogError(string eventName, Exception exception, string safeMessage);
 }
