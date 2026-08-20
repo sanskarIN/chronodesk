@@ -22,13 +22,18 @@ public sealed partial class App : Application
 
     public override void OnFrameworkInitializationCompleted()
     {
+        var viewModel = new MainWindowViewModel(Services);
+        viewModel.SettingsChanged += (_, settings) => ApplyTheme(settings);
+
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
-            var viewModel = new MainWindowViewModel(Services);
             var window = new MainWindow(viewModel);
-            viewModel.SettingsChanged += (_, settings) => ApplyTheme(settings);
             desktop.MainWindow = window;
             TryCreateTrayIcon(window, desktop);
+        }
+        else if (ApplicationLifetime is ISingleViewApplicationLifetime singleView)
+        {
+            singleView.MainView = new MainView(viewModel);
         }
 
         base.OnFrameworkInitializationCompleted();
@@ -86,7 +91,7 @@ public sealed partial class App : Application
     {
         try
         {
-            using var stream = AssetLoader.Open(new Uri("avares://ChronoDesk/Assets/chronodesk.ico"));
+            using var stream = AssetLoader.Open(new Uri("avares://ChronoDesk.App/Assets/chronodesk.ico"));
             var icon = new WindowIcon(stream);
             trayIcon = new TrayIcon
             {
