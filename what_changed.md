@@ -2,7 +2,7 @@
 
 ## Current milestone
 
-**Phase 8 — full cross-platform migration for version `2.6.0.2`, in pull request #19.**
+**Phase 8 — full cross-platform migration and final repository audit for version `2.6.0.2`, in pull request #19.**
 
 ChronoDesk has been restructured from a desktop-only Avalonia executable into a shared cross-platform Avalonia application with dedicated Desktop, Android, iOS/iPadOS, and Browser/WebAssembly hosts.
 
@@ -52,7 +52,7 @@ It owns:
 
 ### Desktop host
 
-New `src/ChronoDesk.Desktop`:
+`src/ChronoDesk.Desktop`:
 
 - owns `Program.Main`;
 - owns the desktop application manifest;
@@ -63,7 +63,7 @@ The old desktop `Program.cs` and `app.manifest` were moved out of the shared app
 
 ### Android host
 
-New `src/ChronoDesk.Android`:
+`src/ChronoDesk.Android`:
 
 - targets `net10.0-android`;
 - uses `Avalonia.Android`;
@@ -74,7 +74,7 @@ New `src/ChronoDesk.Android`:
 
 ### iOS / iPadOS host
 
-New `src/ChronoDesk.iOS`:
+`src/ChronoDesk.iOS`:
 
 - targets `net10.0-ios`;
 - uses `Avalonia.iOS`;
@@ -87,7 +87,7 @@ New `src/ChronoDesk.iOS`:
 
 ### Browser host
 
-New `src/ChronoDesk.Browser`:
+`src/ChronoDesk.Browser`:
 
 - targets `net10.0-browser`;
 - uses `Microsoft.NET.Sdk.WebAssembly` and `Avalonia.Browser`;
@@ -116,15 +116,19 @@ The single-view shell includes:
 - touch-friendly controls;
 - shared status/credit display.
 
-Lifecycle behavior:
+Lifecycle/reliability behavior:
 
 - shared view model initializes on visual-tree attachment;
 - first-run state completes without a desktop modal onboarding window;
 - 250 ms clock timer starts when attached;
 - timer stops when detached;
-- overlapping tick execution is suppressed.
+- overlapping tick execution is suppressed;
+- if first-run persistence fails after initialization, the failure is logged but the clock timer still starts;
+- format/seconds/world-clock async button actions catch/log persistence failures instead of leaking unhandled event-handler exceptions.
 
-## Platform-safety fix
+## Platform-safety fixes
+
+### Startup integration
 
 `PlatformStartupManager` previously required `Environment.ProcessPath` during construction. Sandboxed/mobile runtimes may not provide that value.
 
@@ -136,6 +140,10 @@ It now:
 - throws `PlatformNotSupportedException` only if a caller explicitly attempts to mutate unsupported startup integration.
 
 This prevents Browser/mobile service construction from failing simply because desktop startup registration is unavailable.
+
+### Single-view persistence failure handling
+
+`MainView` initialization now separates shared model initialization from first-run persistence. A failed onboarding/settings write can no longer suppress the active clock after initialization succeeded. User-triggered single-view persistence actions are also contained/logged rather than escaping from `async void` event handlers.
 
 ## SDK/package changes
 
@@ -160,27 +168,21 @@ This prevents Browser/mobile service construction from failing simply because de
 - `ChronoDesk.Browser`
 - `ChronoDesk.Tests`
 
-A full-solution restore requires all workload-specific SDK packs. Normal development is documented as host-scoped restore/build instead.
+A full-solution restore requires workload-specific SDK packs. Normal development is documented as host-scoped restore/build instead.
 
 ## CI changes
 
-`.github/workflows/ci.yml` is now platform-aware.
+`.github/workflows/ci.yml` is platform-aware.
 
 ### Desktop matrix
 
-Runs on:
-
-- Ubuntu;
-- Windows;
-- macOS.
-
-Performs:
+Runs on Ubuntu, Windows, and macOS and performs:
 
 - cross-platform version verification;
-- desktop/test restore;
+- Desktop/Test restore;
 - formatting checks;
 - local Markdown-link verification;
-- desktop build;
+- Desktop Release build;
 - shared/headless tests with coverage;
 - NuGet vulnerability inspection.
 
@@ -204,11 +206,23 @@ Performs:
 - selects simulator RID based on runner architecture;
 - builds Release configuration.
 
-CodeQL and Dependency Review remain independent PR security workflows.
+### CodeQL correction found during final audit
+
+The separate CodeQL workflow was still pinned to .NET 9 and `autobuild` after the initial platform migration. That stale configuration was fixed.
+
+CodeQL now:
+
+- installs .NET 10;
+- initializes C# CodeQL with `build-mode: manual`;
+- restores `ChronoDesk.Desktop`;
+- explicitly builds the shared/Desktop graph in Release mode;
+- avoids trying to autobuild the full workload-specific solution on one runner.
+
+Dependency Review remains independent on pull requests.
 
 ## Release automation changes
 
-`.github/workflows/release.yml` now targets .NET 10 and packages:
+`.github/workflows/release.yml` targets .NET 10 and packages:
 
 - `win-x64`
 - `win-arm64`
@@ -216,7 +230,7 @@ CodeQL and Dependency Review remain independent PR security workflows.
 - `linux-arm64`
 - `osx-x64`
 - `osx-arm64`
-- Browser/WebAssembly static site ZIP
+- Browser/WebAssembly static-site ZIP
 
 Desktop ZIPs include repository release documents. Browser ZIP includes the static site plus license/privacy documents. All ZIPs are included in generated `SHA256SUMS.txt`.
 
@@ -227,7 +241,7 @@ Android/iOS production signing is intentionally **not** performed with committed
 `scripts/check-version.ps1` now verifies:
 
 - canonical shared `Version`, `PackageVersion`, `AssemblyVersion`, `FileVersion`;
-- exact desktop version match;
+- exact Desktop version match;
 - Android display version equals canonical `2.6.0.2`;
 - positive Android version code;
 - Apple marketing version equals canonical first three components (`2.6.0`);
@@ -244,32 +258,61 @@ Android/iOS production signing is intentionally **not** performed with committed
 
 Existing desktop headless focus/mini/Settings/About coverage remains.
 
-## Documentation updated in this migration
+## Documentation and repository UX updated
+
+The final migration/audit updated:
 
 - `README.md`
 - `CHANGELOG.md`
+- `CONTRIBUTING.md`
+- `PRIVACY.md`
+- `SECURITY.md`
+- `SUPPORT.md`
+- `ROADMAP.md`
 - `docs/setup.md`
 - `docs/architecture.md`
 - `docs/development.md`
 - `docs/testing.md`
 - `docs/release.md`
+- `docs/troubleshooting.md`
+- `docs/accessibility.md`
+- `docs/performance.md`
+- `docs/github-maintenance.md`
+- `docs/release-notes-template.md`
+- `docs/final-audit.md`
+- `.github/pull_request_template.md`
+- `.github/ISSUE_TEMPLATE/bug_report.yml`
+- `.github/ISSUE_TEMPLATE/feature_request.yml`
 - `what_changed.md`
 
-These documents now describe .NET 10, host-scoped workload installation, desktop/mobile/browser capability differences, ARM64 release RIDs, Browser static deployment, Apple version mapping, and protected mobile signing.
+These now consistently describe:
+
+- .NET 10;
+- shared App + thin host architecture;
+- host-scoped workload installation/build commands;
+- Windows/macOS/Linux x64 + arm64 release targets;
+- Android/iOS/iPadOS host requirements;
+- Browser/WebAssembly deployment and sandbox behavior;
+- desktop-only versus single-view capabilities;
+- Apple/Android version mapping;
+- protected mobile signing;
+- mobile lifecycle/orientation/accessibility requirements;
+- browser zoom/storage/main-thread/performance considerations;
+- cross-platform issue reporting and PR verification.
 
 ## Pull request state
 
-PR #19 was opened from `feature/full-cross-platform-2.6.0.2` to `main`.
+PR #19 is open from `feature/full-cross-platform-2.6.0.2` to `main`.
 
-GitHub reported it mergeable after branch synchronization with `main`.
+GitHub previously reported it mergeable after branch synchronization with `main`. Every new branch commit correctly starts/restarts the PR workflow set.
 
-Pull-request workflows were observed starting/restarting as commits were added:
+Workflow families to require on the **exact final stable head**:
 
 - CI;
 - CodeQL;
 - Dependency Review.
 
-Do not record a queued/in-progress run as passing. The final branch head must remain stable long enough for the final workflow set to complete, and any reported compile/test failure must be fixed before merge.
+Do not record a queued/in-progress run as passing. Any actual compiler/test/security failure must be fixed rather than weakening the check.
 
 ## Current verification boundary
 
@@ -278,14 +321,16 @@ Source/repository work completed by inspection includes:
 - platform host structure;
 - solution registration;
 - shared/single-view lifetime split;
+- single-view persistence-failure containment;
 - startup-manager sandbox safety;
 - .NET 10 SDK/package alignment;
 - platform-aware CI configuration;
+- .NET 10 host-scoped CodeQL configuration;
 - expanded desktop/browser release packaging;
 - version mapping/verification;
-- README/setup/architecture/development/testing/release documentation;
-- new single-view headless smoke test;
-- PR mergeability.
+- comprehensive cross-platform documentation/repository templates;
+- single-view headless smoke test;
+- PR creation/mergeability review.
 
 Still evidence-gated until GitHub/native environments confirm it:
 
@@ -314,14 +359,14 @@ Desktop-only capabilities remain desktop-only by design:
 - current-user desktop startup registration;
 - process-based native desktop chime helper.
 
-Android/iOS/iPadOS/Browser use the shared clock/world-clock single-view shell and must degrade safely when a desktop-only capability is unavailable.
+Android/iOS/iPadOS/Browser use the shared clock/world-clock single-view shell and degrade safely when a desktop-only capability is unavailable.
 
 ## Next exact tasks
 
-1. Let the final PR #19 workflow set complete on a stable head.
-2. Inspect CI job logs if any platform host fails to restore/compile.
-3. Fix real failures only; do not weaken checks to manufacture green status.
-4. Re-run until CI, CodeQL, and Dependency Review are green for the exact final head.
-5. Review final changed-file list/diff for accidental or stale desktop-only instructions.
-6. Merge PR #19 only after verification is satisfactory.
-7. Perform the manual native/emulator/browser release evidence in `docs/testing.md` / `docs/release.md` before tagging `v2.6.0.2`.
+1. Freeze the final branch head and allow the exact PR #19 workflow set to run.
+2. Inspect CI/CodeQL/Dependency Review results for that exact head.
+3. If a platform host fails, inspect the failing job steps/logs and fix the real compiler/workload issue.
+4. Repeat until the final stable head is green or record an external runner/blocking condition accurately.
+5. Merge PR #19 only after repository verification is satisfactory.
+6. Perform the manual native/emulator/browser release evidence in `docs/testing.md` / `docs/release.md` before tagging `v2.6.0.2`.
+7. Do not tag/publish `v2.6.0.2` until the evidence-gated release checklist is complete.
