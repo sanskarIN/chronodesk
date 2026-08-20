@@ -16,15 +16,21 @@ public sealed class PlatformStartupManager : IStartupManager
     {
         this.executablePath = executablePath
             ?? Environment.ProcessPath
-            ?? throw new InvalidOperationException("ChronoDesk executable path could not be determined.");
+            ?? string.Empty;
     }
 
     public bool IsSupported =>
-        OperatingSystem.IsWindows() || OperatingSystem.IsMacOS() || OperatingSystem.IsLinux();
+        !string.IsNullOrWhiteSpace(executablePath)
+        && (OperatingSystem.IsWindows() || OperatingSystem.IsMacOS() || OperatingSystem.IsLinux());
 
     public Task<bool> IsEnabledAsync(CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
+
+        if (!IsSupported)
+        {
+            return Task.FromResult(false);
+        }
 
         if (OperatingSystem.IsWindows())
         {
@@ -47,6 +53,11 @@ public sealed class PlatformStartupManager : IStartupManager
     public async Task SetEnabledAsync(bool enabled, CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
+
+        if (!IsSupported)
+        {
+            throw new PlatformNotSupportedException("Startup integration is only available on supported desktop hosts.");
+        }
 
         if (OperatingSystem.IsWindows())
         {

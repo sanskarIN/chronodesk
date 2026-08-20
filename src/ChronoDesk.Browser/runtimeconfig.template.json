@@ -1,0 +1,6 @@
+{
+  "configProperties": {
+    "System.Globalization.Invariant": false,
+    "System.Runtime.Serialization.EnableUnsafeBinaryFormatterSerialization": false
+  }
+}

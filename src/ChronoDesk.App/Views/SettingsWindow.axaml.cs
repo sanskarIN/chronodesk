@@ -189,12 +189,12 @@ public sealed partial class SettingsWindow : Window
             FileTypeFilter = [jsonType],
         });
 
-        var file = files.FirstOrDefault();
-        if (file is null)
+        if (files.Count == 0)
         {
             return;
         }
 
+        var file = files[0];
         try
         {
             await viewModel.ImportSettingsAsync(file.Path.LocalPath);

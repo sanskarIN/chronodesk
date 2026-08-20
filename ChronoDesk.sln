@@ -8,6 +8,14 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChronoDesk.Infrastructure",
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChronoDesk.App", "src\ChronoDesk.App\ChronoDesk.App.csproj", "{7D1CE75F-1C83-45CB-A477-DB391CBFCA70}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChronoDesk.Desktop", "src\ChronoDesk.Desktop\ChronoDesk.Desktop.csproj", "{F63C68B2-92C9-4D2F-BE36-2C4D7197D0C1}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChronoDesk.Android", "src\ChronoDesk.Android\ChronoDesk.Android.csproj", "{E3D81374-6B11-44E8-A36A-6FC94708B367}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChronoDesk.iOS", "src\ChronoDesk.iOS\ChronoDesk.iOS.csproj", "{3199C87E-1D08-46F0-93DC-14D4214F3AAF}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChronoDesk.Browser", "src\ChronoDesk.Browser\ChronoDesk.Browser.csproj", "{B8D9EF27-36CC-46F4-A62F-CC89EAC0D17D}"
+EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChronoDesk.Tests", "tests\ChronoDesk.Tests\ChronoDesk.Tests.csproj", "{AD9234AA-E5EA-4F58-A293-8F3A12645038}"
 EndProject
 Global
@@ -28,6 +36,22 @@ Global
 		{7D1CE75F-1C83-45CB-A477-DB391CBFCA70}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7D1CE75F-1C83-45CB-A477-DB391CBFCA70}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7D1CE75F-1C83-45CB-A477-DB391CBFCA70}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F63C68B2-92C9-4D2F-BE36-2C4D7197D0C1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F63C68B2-92C9-4D2F-BE36-2C4D7197D0C1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F63C68B2-92C9-4D2F-BE36-2C4D7197D0C1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F63C68B2-92C9-4D2F-BE36-2C4D7197D0C1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E3D81374-6B11-44E8-A36A-6FC94708B367}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E3D81374-6B11-44E8-A36A-6FC94708B367}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E3D81374-6B11-44E8-A36A-6FC94708B367}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E3D81374-6B11-44E8-A36A-6FC94708B367}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3199C87E-1D08-46F0-93DC-14D4214F3AAF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3199C87E-1D08-46F0-93DC-14D4214F3AAF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3199C87E-1D08-46F0-93DC-14D4214F3AAF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3199C87E-1D08-46F0-93DC-14D4214F3AAF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B8D9EF27-36CC-46F4-A62F-CC89EAC0D17D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B8D9EF27-36CC-46F4-A62F-CC89EAC0D17D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B8D9EF27-36CC-46F4-A62F-CC89EAC0D17D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B8D9EF27-36CC-46F4-A62F-CC89EAC0D17D}.Release|Any CPU.Build.0 = Release|Any CPU
 		{AD9234AA-E5EA-4F58-A293-8F3A12645038}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{AD9234AA-E5EA-4F58-A293-8F3A12645038}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{AD9234AA-E5EA-4F58-A293-8F3A12645038}.Release|Any CPU.ActiveCfg = Release|Any CPU

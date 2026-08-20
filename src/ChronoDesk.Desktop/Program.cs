@@ -1,6 +1,7 @@
 using Avalonia;
+using ChronoDesk.App;
 
-namespace ChronoDesk.App;
+namespace ChronoDesk.Desktop;
 
 internal static class Program
 {

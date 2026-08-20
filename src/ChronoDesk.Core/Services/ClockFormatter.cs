@@ -1,9 +1,10 @@
 using System.Globalization;
+using ChronoDesk.Core.Abstractions;
 using ChronoDesk.Core.Models;
 
 namespace ChronoDesk.Core.Services;
 
-public sealed class ClockFormatter
+public sealed class ClockFormatter : IClockFormatter
 {
     public ClockSnapshot CreateSnapshot(
         DateTimeOffset instant,

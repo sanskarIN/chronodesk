@@ -3,13 +3,13 @@
 
 # ChronoDesk
 
-**A focused, private-by-default digital clock and world-clock dashboard for Windows, macOS, and Linux.**
+**A focused, private-by-default clock and world-clock dashboard for Windows, macOS, Linux, Android, iOS/iPadOS, and WebAssembly browsers.**
 
 [![CI](https://github.com/sanskarIN/chronodesk/actions/workflows/ci.yml/badge.svg)](https://github.com/sanskarIN/chronodesk/actions/workflows/ci.yml)
 [![CodeQL](https://github.com/sanskarIN/chronodesk/actions/workflows/codeql.yml/badge.svg)](https://github.com/sanskarIN/chronodesk/actions/workflows/codeql.yml)
 [![Version](https://img.shields.io/badge/version-2.6.0.2-512BD4)](src/ChronoDesk.App/ChronoDesk.App.csproj)
 [![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![.NET 9](https://img.shields.io/badge/.NET-9.0-512BD4)](https://dotnet.microsoft.com/)
+[![.NET 10](https://img.shields.io/badge/.NET-10.0-512BD4)](https://dotnet.microsoft.com/)
 
 [![Buy Me a Coffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-sanskarIN-FFDD00?logo=buy-me-a-coffee&logoColor=000000)](https://buymeacoffee.com/sanskarIN)
 
@@ -20,13 +20,13 @@
 
 ## Why ChronoDesk?
 
-ChronoDesk is intentionally more than a classroom clock demo. It separates clock/timezone logic from UI and platform integration, persists preferences safely, supports multiple world clocks, offers focus and mini modes, respects accessibility preferences, provides optional quiet-hours-aware chimes, and includes the repository quality expected from a serious open-source desktop project.
+ChronoDesk is intentionally more than a classroom clock demo. The application separates reusable clock/timezone logic, infrastructure, shared Avalonia UI, and platform hosts so one codebase can run across desktop, mobile, tablet, and browser environments. It supports multiple world clocks, local preferences, accessible/touch-friendly layouts, optional quiet-hours-aware desktop chimes, and desktop focus/mini modes while keeping platform-specific capabilities isolated from the shared core.
 
-The application does not require sign-in, analytics, a cloud database, or a network connection for its clock features. Timezone data comes from the operating system, settings stay local, and the product remains fully usable without funding or donations.
+The application does not require sign-in, analytics, a cloud database, or a network connection for its clock features. Timezone data comes from the operating system/.NET runtime, application data stays local to the host, and the product remains usable without funding or donations.
 
 ## Current source version
 
-The application, package, assembly, and file version is **`2.6.0.2`**.
+The canonical application, package, assembly, and file version is **`2.6.0.2`**.
 
 ChronoDesk uses four numeric components:
 
@@ -34,11 +34,13 @@ ChronoDesk uses four numeric components:
 MAJOR.MINOR.PATCH.REVISION
 ```
 
-`scripts/check-version.ps1` verifies that all version-bearing project properties agree. A release tag must match the application version exactly, so this source version corresponds to `v2.6.0.2` only after the release checklist has passed.
+`scripts/check-version.ps1` verifies the shared app, desktop package, Android package metadata, and Apple package metadata. A release tag must match the canonical application version exactly, so this source version corresponds to `v2.6.0.2` only after the release checklist has passed.
+
+Apple requires a three-component marketing version, so the iOS/iPadOS host maps `2.6.0.2` to marketing version `2.6.0` with build number `2602`; the shared/in-app ChronoDesk version remains `2.6.0.2`.
 
 ## Screenshot
 
-> This image is an explicit placeholder until a release build is captured on a supported desktop. The repository does not pretend that an unverified mockup is a real running-app screenshot.
+> This image is an explicit placeholder until verified release builds are captured. The repository does not pretend that an unverified mockup is a real running-app screenshot.
 
 ![ChronoDesk screenshot placeholder](docs/assets/screenshot-placeholder.svg)
 
@@ -51,23 +53,36 @@ MAJOR.MINOR.PATCH.REVISION
 - Date and weekday display.
 - ISO week number.
 - Optional calendar detail line with day-of-year, ISO week, and UTC offset.
-- Configurable clock font family, font size, spacing, theme, and layout.
+- Configurable clock font family, font size, spacing, theme, and layout in the desktop settings experience.
+- Responsive single-view clock shell for phone, tablet, and browser hosts.
 
 ### World clocks
 
 - Up to 24 local world-clock cards.
-- Search the timezone database available through `TimeZoneInfo` on the host OS.
+- Search the timezone database available through `TimeZoneInfo` on the host runtime.
 - Portable IANA/Windows timezone-ID conversion fallback where .NET can map an ID.
-- Graceful UTC fallback when a persisted timezone is unavailable on the current OS.
+- Graceful UTC fallback when a persisted timezone is unavailable on the current platform.
 - No remote timezone API is required.
 
 ### Desktop modes
 
+These features are intentionally desktop-only because they depend on desktop window/session concepts:
+
 - **Focus mode:** `F11` full-screen clock.
 - **Mini mode:** `Ctrl+M` compact always-on-top clock.
 - Configurable normal always-on-top behavior.
-- System tray menu with Show, Focus, Mini, and Quit actions where the platform tray implementation is available.
+- System tray menu with Show, Focus, Mini, and Quit actions where the desktop environment supports tray integration.
 - Optional minimize-to-tray behavior.
+- User-scoped start-with-system integration on Windows, macOS, and Linux.
+
+### Mobile, tablet, and browser shell
+
+- Avalonia single-view lifetime for Android, iPhone, iPad, and WebAssembly.
+- Touch-friendly clock-format and seconds controls.
+- Responsive world-clock cards.
+- Timezone search, add, and remove flows.
+- Safe degradation of desktop-only startup/tray/window features.
+- Orientation-aware mobile host configuration.
 
 ### Chimes and quiet hours
 
@@ -75,49 +90,56 @@ MAJOR.MINOR.PATCH.REVISION
 - Hourly, half-hourly, and quarter-hourly cadence options.
 - Quiet hours can span midnight.
 - Duplicate chimes within the same minute are suppressed.
-- Playback uses OS-appropriate best-effort system facilities without a remote dependency.
+- Native system chime playback is currently a desktop integration; non-desktop hosts safely no-op rather than invoking unsupported process APIs.
 
 ### Accessibility
 
-- Keyboard-first operation and shortcuts.
+- Keyboard-first desktop operation and shortcuts.
+- Touch-friendly mobile controls.
 - High-contrast palette.
 - Reduced-motion preference; the application intentionally avoids decorative motion by default.
 - Visible native focus behavior from Avalonia/Fluent controls.
 - Semantic automation names on key clock/search controls.
-- Scalable clock typography and touch-friendly control sizing.
+- Scalable clock typography.
 - Non-color-only status text.
+- Responsive browser viewport and safe-area handling.
 
 ### Privacy and reliability
 
-- Local JSON settings only.
-- Atomic temporary-file writes before settings replacement.
-- Malformed settings are preserved for manual recovery instead of silently destroyed.
+- Local settings; no cloud account is required.
+- Atomic temporary-file writes before settings replacement on filesystem-backed hosts.
+- Malformed settings are preserved for manual recovery instead of silently destroyed where the host filesystem permits it.
 - Temporary I/O/read failures fall back safely without renaming a potentially valid settings file as corrupt.
-- Import/export is size-bounded and schema-validated.
-- Structured JSONL logging with common email/secret-pattern redaction.
+- Import/export is size-bounded and schema-validated in the desktop settings workflow.
+- Structured JSONL logging with common email/secret-pattern redaction on filesystem-backed hosts.
 - No credentials or API keys are required.
-- Startup behavior is opt-in and user-scoped.
+- Startup behavior is opt-in, user-scoped, and desktop-only.
 
 ## Supported platforms
 
-ChronoDesk targets desktop systems supported by Avalonia and .NET 9:
+ChronoDesk uses a shared Avalonia UI/application layer with dedicated platform hosts:
 
-| Platform | Target | Notes |
+| Platform | Project / target | Support notes |
 |---|---|---|
-| Windows | x64 | User-level startup registration through the current-user Run key. |
-| macOS | x64 / arm64 | User LaunchAgent startup integration. |
-| Linux | x64 | XDG autostart integration; tray/chime behavior can vary by desktop environment. |
+| Windows | `ChronoDesk.Desktop` / x64, arm64 | Desktop shell, tray, startup integration, focus/mini modes. |
+| macOS | `ChronoDesk.Desktop` / x64, arm64 | Desktop shell, LaunchAgent startup integration, focus/mini modes. |
+| Linux | `ChronoDesk.Desktop` / x64, arm64 | Desktop shell and XDG autostart; tray/chime behavior may vary by desktop environment. |
+| Android | `ChronoDesk.Android` / `net10.0-android` | Phone/tablet single-view shell; requires the .NET Android workload to build. |
+| iOS | `ChronoDesk.iOS` / `net10.0-ios` | iPhone single-view shell; build/sign on macOS with Apple tooling. |
+| iPadOS | `ChronoDesk.iOS` / `net10.0-ios` | iPad orientations supported through the same Apple host. |
+| Web browser | `ChronoDesk.Browser` / `net10.0-browser` | WebAssembly single-view shell for modern WASM-capable browsers. |
 
-Release automation produces self-contained ZIP artifacts for `win-x64`, `linux-x64`, `osx-x64`, and `osx-arm64` when a verified four-component tag such as `v2.6.0.2` is pushed.
+Tagged release automation produces self-contained ZIP artifacts for `win-x64`, `win-arm64`, `linux-x64`, `linux-arm64`, `osx-x64`, and `osx-arm64`, plus a deployable `browser-wasm` site ZIP. Android and iOS/iPadOS are continuously built in CI; store/distribution packages require developer signing credentials and should be produced through the documented platform signing process rather than committed secrets.
 
 ## Technology stack
 
 - C#
-- .NET 9
-- Avalonia UI 11
+- .NET 10
+- Avalonia UI 11.3.x
+- Avalonia Desktop, Android, iOS, and Browser hosts
 - Fluent theme
 - `System.Text.Json`
-- xUnit
+- xUnit + Avalonia Headless
 - GitHub Actions
 - GitHub CodeQL
 - Dependabot
@@ -133,47 +155,101 @@ chronodesk/
 ├─ scripts/                     # Deterministic repository verification helpers
 ├─ src/
 │  ├─ ChronoDesk.Core/          # Domain models, formatting, chime policy, contracts
-│  ├─ ChronoDesk.Infrastructure/# JSON persistence, timezone/startup/chime/log adapters
-│  └─ ChronoDesk.App/           # Avalonia shell, views, view models, assets
+│  ├─ ChronoDesk.Infrastructure/# Persistence, timezone/startup/chime/log adapters
+│  ├─ ChronoDesk.App/           # Shared Avalonia app, views, view models, assets
+│  ├─ ChronoDesk.Desktop/       # Windows/macOS/Linux entry point
+│  ├─ ChronoDesk.Android/       # Android host
+│  ├─ ChronoDesk.iOS/           # iPhone/iPad host
+│  └─ ChronoDesk.Browser/       # WebAssembly host and wwwroot
 ├─ tests/
-│  └─ ChronoDesk.Tests/         # Unit/integration-oriented automated tests
+│  └─ ChronoDesk.Tests/         # Shared logic and Avalonia headless tests
 ├─ ChronoDesk.sln
+├─ global.json                  # .NET 10 SDK family
 ├─ Directory.Build.props
 ├─ Directory.Packages.props
 └─ what_changed.md              # Primary cross-chat / cross-session handoff
 ```
 
-See [docs/architecture.md](docs/architecture.md) for the dependency rules and runtime flow.
+See [docs/architecture.md](docs/architecture.md) for dependency rules and runtime flow.
 
 ## Quick start
 
-### Prerequisites
+### Common prerequisites
 
 - Git
-- .NET 9 SDK
-- A supported Windows, macOS, or Linux desktop
+- .NET 10 SDK
 
-### Clone and run
+Clone once:
 
 ```bash
 git clone https://github.com/sanskarIN/chronodesk.git
 cd chronodesk
-dotnet restore ChronoDesk.sln
-dotnet run --project src/ChronoDesk.App/ChronoDesk.App.csproj
 ```
 
-The first run shows a short onboarding window. No account is created and no remote service is contacted by ChronoDesk itself.
+Do not restore the entire solution unless all mobile/browser workloads are installed. Restore the host you are developing instead.
+
+### Windows, macOS, or Linux
+
+```bash
+dotnet restore src/ChronoDesk.Desktop/ChronoDesk.Desktop.csproj
+dotnet run --project src/ChronoDesk.Desktop/ChronoDesk.Desktop.csproj
+```
+
+The first desktop run shows the onboarding window. No account is created and no remote service is contacted by ChronoDesk itself.
+
+### Android
+
+Install the workload once:
+
+```bash
+dotnet workload install android
+dotnet restore src/ChronoDesk.Android/ChronoDesk.Android.csproj
+dotnet build src/ChronoDesk.Android/ChronoDesk.Android.csproj -c Debug
+```
+
+Use Android Studio/ADB or the .NET Android tooling on your development machine to select an emulator/device and deploy the generated app.
+
+### iOS / iPadOS
+
+Apple targets require macOS with a compatible Xcode installation:
+
+```bash
+dotnet workload install ios
+dotnet restore src/ChronoDesk.iOS/ChronoDesk.iOS.csproj
+dotnet build src/ChronoDesk.iOS/ChronoDesk.iOS.csproj -c Debug
+```
+
+Use an iOS/iPadOS simulator for unsigned development builds. Device/App Store distribution requires your Apple signing identity and provisioning configuration.
+
+### WebAssembly browser
+
+```bash
+dotnet workload install wasm-tools
+dotnet restore src/ChronoDesk.Browser/ChronoDesk.Browser.csproj
+dotnet run --project src/ChronoDesk.Browser/ChronoDesk.Browser.csproj
+```
+
+For a static deployment bundle:
+
+```bash
+dotnet publish src/ChronoDesk.Browser/ChronoDesk.Browser.csproj -c Release -o publish/browser
+```
+
+Serve the generated `publish/browser/wwwroot` over HTTP(S); do not open `index.html` directly from `file://` because the WebAssembly runtime loads module/runtime files through web requests.
 
 For platform-specific prerequisites and packaging notes, read [docs/setup.md](docs/setup.md).
 
 ## Development setup
 
+Desktop/shared development does not require mobile workloads:
+
 ```bash
 dotnet --info
-dotnet restore ChronoDesk.sln
-dotnet format ChronoDesk.sln --verify-no-changes --no-restore
-dotnet build ChronoDesk.sln --configuration Release --no-restore
-dotnet test ChronoDesk.sln --configuration Release --no-build
+dotnet restore src/ChronoDesk.Desktop/ChronoDesk.Desktop.csproj
+dotnet restore tests/ChronoDesk.Tests/ChronoDesk.Tests.csproj
+dotnet format src/ChronoDesk.Desktop/ChronoDesk.Desktop.csproj --verify-no-changes --no-restore
+dotnet build src/ChronoDesk.Desktop/ChronoDesk.Desktop.csproj --configuration Release --no-restore
+dotnet test tests/ChronoDesk.Tests/ChronoDesk.Tests.csproj --configuration Release --no-restore
 ```
 
 Repository checks:
@@ -183,7 +259,7 @@ Repository checks:
 ./scripts/check-markdown-links.ps1
 ```
 
-Optional development data isolation:
+Optional development data isolation for filesystem-backed hosts:
 
 ```bash
 # PowerShell
@@ -193,13 +269,13 @@ $env:CHRONODESK_DATA_DIR = "$PWD/.local-data"
 export CHRONODESK_DATA_DIR="$PWD/.local-data"
 ```
 
-`CHRONODESK_DATA_DIR` is the only application-specific environment variable. It is not a secret.
+`CHRONODESK_DATA_DIR` is not a secret. Browser builds use the WebAssembly runtime filesystem model and should not rely on a desktop absolute path.
 
 More detail: [docs/development.md](docs/development.md).
 
 ## Testing
 
-The current automated suite covers:
+The automated suite covers:
 
 - 12/24-hour and seconds formatting.
 - ISO week/calendar details.
@@ -210,28 +286,29 @@ The current automated suite covers:
 - timezone catalog discovery/search/fallback behavior.
 - startup preference rollback/import behavior.
 - malformed import fuzzing and settings property invariants.
-- Avalonia headless window smoke coverage including focus/mini transitions and exact `2.6.0.2` About version rendering.
+- Avalonia headless desktop-window smoke coverage including focus/mini transitions.
+- shared app rendering and exact `2.6.0.2` About version rendering.
 
-Run:
+Run shared tests:
 
 ```bash
-dotnet test ChronoDesk.sln -c Release --collect:"XPlat Code Coverage"
+dotnet test tests/ChronoDesk.Tests/ChronoDesk.Tests.csproj -c Release --collect:"XPlat Code Coverage"
 ```
 
-CI validates version metadata and local documentation links, then runs formatting, build, tests, and NuGet vulnerability checks across Ubuntu, Windows, and macOS. See [docs/testing.md](docs/testing.md).
+CI additionally builds Windows/macOS/Linux shared/desktop code, Android, iOS/iPadOS simulator code, and Browser/WebAssembly with their required workloads. See [docs/testing.md](docs/testing.md).
 
 ## Build and publish
 
-Framework-dependent local publish:
+Framework-dependent desktop publish:
 
 ```bash
-dotnet publish src/ChronoDesk.App/ChronoDesk.App.csproj -c Release
+dotnet publish src/ChronoDesk.Desktop/ChronoDesk.Desktop.csproj -c Release
 ```
 
 Example self-contained Windows x64 publish:
 
 ```bash
-dotnet publish src/ChronoDesk.App/ChronoDesk.App.csproj \
+dotnet publish src/ChronoDesk.Desktop/ChronoDesk.Desktop.csproj \
   -c Release \
   -r win-x64 \
   --self-contained true \
@@ -239,13 +316,26 @@ dotnet publish src/ChronoDesk.App/ChronoDesk.App.csproj \
   -p:IncludeNativeLibrariesForSelfExtract=true
 ```
 
-Equivalent RIDs used by release automation are `linux-x64`, `osx-x64`, and `osx-arm64`.
+Desktop release RIDs are:
 
-Tagged release ZIPs include the application plus `LICENSE`, `README.md`, `CHANGELOG.md`, `PRIVACY.md`, `SECURITY.md`, and `SUPPORT.md`. The release workflow also publishes `SHA256SUMS.txt` so downloaded ZIPs can be integrity-checked.
+```text
+win-x64
+win-arm64
+linux-x64
+linux-arm64
+osx-x64
+osx-arm64
+```
+
+Browser release packaging publishes `src/ChronoDesk.Browser` and archives its static `wwwroot` site. Mobile CI verifies that the Android and Apple hosts compile, while signed APK/AAB/IPA/App Store packages must be generated with the maintainer's private signing credentials.
+
+Tagged desktop ZIPs include the application plus `LICENSE`, `README.md`, `CHANGELOG.md`, `PRIVACY.md`, `SECURITY.md`, and `SUPPORT.md`. Release automation publishes `SHA256SUMS.txt` for integrity verification.
 
 Read [docs/release.md](docs/release.md) before creating a release tag.
 
 ## Keyboard shortcuts
+
+Desktop-only shortcuts:
 
 | Shortcut | Action |
 |---|---|
@@ -258,15 +348,15 @@ Read [docs/release.md](docs/release.md) before creating a release tag.
 
 ## Timezone update strategy
 
-ChronoDesk deliberately does not ship a private or silently downloaded timezone database. `TimeZoneInfo` reads timezone information supplied by the operating system/.NET runtime. This keeps timezone updates aligned with system security/maintenance updates and allows clock features to remain offline.
+ChronoDesk deliberately does not ship a private or silently downloaded timezone database. `TimeZoneInfo` reads timezone information supplied by the operating system/.NET runtime. This keeps timezone updates aligned with platform maintenance updates and allows clock features to remain offline.
 
-After the OS timezone database is updated, restart ChronoDesk to rebuild its in-memory timezone catalog. Imported settings can contain Windows or IANA IDs; ChronoDesk attempts the platform mappings exposed by .NET before falling back to UTC for an unavailable ID.
+After the host timezone database/runtime data is updated, restart ChronoDesk to rebuild its in-memory timezone catalog. Imported settings can contain Windows or IANA IDs; ChronoDesk attempts the platform mappings exposed by .NET before falling back to UTC for an unavailable ID.
 
 See [docs/architecture.md](docs/architecture.md) and ADR 0003 for the design decision.
 
 ## Local data
 
-By default, settings and logs are placed under the user's application-data folder in a `ChronoDesk` directory. The exact base path is resolved through .NET's `Environment.SpecialFolder.ApplicationData` for the current user.
+On filesystem-backed desktop/mobile hosts, settings and logs are resolved beneath the current user's application-data location in a `ChronoDesk` directory unless an explicit development override is configured.
 
 Typical contents:
 
@@ -277,18 +367,20 @@ ChronoDesk/
    └─ chronodesk.log.jsonl
 ```
 
-If a settings document is malformed, ChronoDesk returns to safe defaults and renames the malformed document with a timestamped `.corrupt-...json` suffix when possible. Temporary read/I/O failures return safe defaults without quarantining the original file, so a later read can recover once the transient problem clears.
+WebAssembly runs inside the browser sandbox and uses the runtime's virtual filesystem semantics. Browser storage lifetime therefore depends on the hosting/runtime persistence configuration; ChronoDesk does not claim a desktop path or unrestricted filesystem access in the browser.
+
+If a settings document is malformed, filesystem-backed hosts return to safe defaults and preserve/quarantine the malformed document when possible. Temporary read/I/O failures return safe defaults without quarantining the original file, so a later read can recover once the transient problem clears.
 
 For the complete data policy, see [PRIVACY.md](PRIVACY.md).
 
 ## Security
 
-ChronoDesk is an offline-first clock, but local desktop software still has a security boundary. The repository therefore uses:
+ChronoDesk is offline-first, but local application software still has a security boundary. The repository therefore uses:
 
-- user-scoped startup integration;
+- user-scoped desktop startup integration;
 - bounded settings imports;
 - safe JSON parsing;
-- atomic settings writes;
+- atomic settings writes where supported;
 - restricted external-link schemes;
 - redacted structured logs;
 - exact release-tag/version matching;
@@ -297,29 +389,31 @@ ChronoDesk is an offline-first clock, but local desktop software still has a sec
 - dependency review;
 - Dependabot;
 - CI vulnerability inspection;
-- no committed production credentials.
+- no committed production signing credentials or API secrets.
 
 Do not report vulnerabilities in a public issue. Follow [SECURITY.md](SECURITY.md).
 
 ## Accessibility
 
-Accessibility is a release criterion rather than a post-release extra. Before a tagged release, manually review keyboard-only use, visible focus, screen-reader naming, contrast, text scaling, reduced-motion behavior, and focus/mini window transitions on each primary platform.
+Accessibility is a release criterion rather than a post-release extra. Before a tagged release, manually review keyboard-only desktop use, touch use, visible focus, screen-reader naming, contrast, text scaling, reduced-motion behavior, mobile orientations, browser viewport scaling, and desktop focus/mini transitions on the applicable target platforms.
 
 See [docs/accessibility.md](docs/accessibility.md).
 
 ## Architecture
 
-ChronoDesk is a modular desktop monolith:
+ChronoDesk is a shared cross-platform application with thin platform hosts:
 
 ```text
-ChronoDesk.App
-   ├──> ChronoDesk.Core
-   └──> ChronoDesk.Infrastructure ──> ChronoDesk.Core
+ChronoDesk.Desktop ─┐
+ChronoDesk.Android ─┤
+ChronoDesk.iOS ─────┼──> ChronoDesk.App ───> ChronoDesk.Core
+ChronoDesk.Browser ─┘          │
+                               └──> ChronoDesk.Infrastructure ───> ChronoDesk.Core
 
 ChronoDesk.Core ──X──> Avalonia / OS APIs / filesystem
 ```
 
-`ChronoDesk.Core` owns models and business rules. `ChronoDesk.Infrastructure` implements persistence and platform boundaries. `ChronoDesk.App` owns Avalonia composition and UI behavior. This keeps time/chime/settings logic testable without a desktop session.
+`ChronoDesk.Core` owns models and business rules. `ChronoDesk.Infrastructure` implements persistence and guarded platform boundaries. `ChronoDesk.App` owns reusable Avalonia composition, desktop window views, the single-view mobile/browser shell, and view models. Platform hosts contain only the entry point and platform packaging configuration needed by each runtime.
 
 Architecture decisions live under [docs/adr](docs/adr/).
 
@@ -346,16 +440,18 @@ git config user.email "sanskarin@outlook.in"
 
 ## GitHub repository maintenance
 
-The repository includes issue forms, a pull request checklist, dependency automation, CI, CodeQL, dependency review, release packaging, version verification, and checksum generation. Recommended branch-protection rules are documented in `docs/github-maintenance.md` so repository settings can match the checks actually present in source control.
+The repository includes issue forms, a pull request checklist, dependency automation, platform-aware CI, CodeQL, dependency review, release packaging, version verification, and checksum generation. Recommended branch-protection rules are documented in `docs/github-maintenance.md` so repository settings can match the checks actually present in source control.
 
 ## Roadmap
 
 See [ROADMAP.md](ROADMAP.md). The immediate release path for `2.6.0.2` is:
 
-- require green CI/CodeQL/dependency-security checks for the exact release commit;
-- capture real per-platform screenshots;
-- validate tray, startup, chime, and accessibility behavior on supported desktops;
-- verify packaged ZIPs and SHA-256 checksums;
+- require green desktop, Android, iOS/iPadOS, Browser, CodeQL, and dependency-security checks for the exact release commit;
+- capture real screenshots on representative desktop/mobile/browser targets;
+- validate tray/startup/chime behavior on desktops and touch/orientation behavior on mobile/tablet;
+- validate browser hosting from an HTTP(S) static server;
+- verify packaged desktop/browser ZIPs and SHA-256 checksums;
+- generate signed mobile distribution packages only from protected maintainer signing credentials;
 - tag `v2.6.0.2` only after the clean-checkout release checklist passes.
 
 ## License

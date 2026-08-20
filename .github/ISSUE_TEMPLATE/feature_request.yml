@@ -1,12 +1,12 @@
 name: Feature request
-description: Propose a focused improvement that fits ChronoDesk.
+description: Propose a focused improvement that fits ChronoDesk on one or more supported hosts.
 title: "[Feature]: "
 labels: [enhancement, needs-triage]
 body:
   - type: markdown
     attributes:
       value: |
-        ChronoDesk favors coherent clock, timezone, accessibility, reliability, and desktop-productivity features over feature count.
+        ChronoDesk favors coherent clock, timezone, accessibility, reliability, privacy, and platform-appropriate features over feature count. Desktop-only concepts should not be copied to mobile/browser unless the platform has a meaningful equivalent.
   - type: textarea
     id: problem
     attributes:
@@ -18,7 +18,25 @@ body:
     id: proposal
     attributes:
       label: Proposed behavior
-      description: Describe the smallest useful version of the feature.
+      description: Describe the smallest useful version of the feature and how it should behave on affected hosts.
+    validations:
+      required: true
+  - type: dropdown
+    id: platforms
+    attributes:
+      label: Primary platform scope
+      options:
+        - Shared / all supported hosts
+        - Windows
+        - macOS
+        - Linux
+        - Android
+        - iOS / iPhone
+        - iPadOS / iPad
+        - Browser / WebAssembly
+        - Desktop only (Windows / macOS / Linux)
+        - Mobile / tablet only
+        - Not sure
     validations:
       required: true
   - type: textarea
@@ -32,13 +50,17 @@ body:
       options:
         - Clock display
         - World clocks / timezones
-        - Focus / mini / tray behavior
+        - Shared mobile / browser UI
+        - Focus / mini / tray behavior (desktop)
         - Appearance
         - Accessibility
         - Chimes / quiet hours
         - Import / export
-        - Startup / platform integration
+        - Startup / desktop integration
+        - Browser storage / hosting
+        - Mobile lifecycle / packaging
         - Documentation / developer experience
+        - Build / CI / release
         - Other
     validations:
       required: true
@@ -49,5 +71,7 @@ body:
       options:
         - label: I searched existing issues and roadmap items first.
           required: true
-        - label: This request does not require sending private clock data to a remote service.
+        - label: I considered whether this is shared behavior or a platform-specific capability.
+          required: true
+        - label: This request does not require sending private clock data to a remote service without an explicit privacy/security design.
           required: true

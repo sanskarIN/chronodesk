@@ -1,53 +1,208 @@
 # ChronoDesk Troubleshooting
 
-Use this guide for common local setup and runtime problems. For reproducible defects not covered here, use the repository bug-report form and provide only sanitized diagnostic information.
+Use this guide for common local setup, build, packaging, and runtime problems across the supported ChronoDesk hosts. For reproducible defects not covered here, use the repository bug-report form and provide only sanitized diagnostic information.
+
+## First identify the host
+
+ChronoDesk has separate host projects:
+
+| Host | Project |
+|---|---|
+| Windows / macOS / Linux | `src/ChronoDesk.Desktop/ChronoDesk.Desktop.csproj` |
+| Android | `src/ChronoDesk.Android/ChronoDesk.Android.csproj` |
+| iOS / iPadOS | `src/ChronoDesk.iOS/ChronoDesk.iOS.csproj` |
+| Browser / WebAssembly | `src/ChronoDesk.Browser/ChronoDesk.Browser.csproj` |
+
+`src/ChronoDesk.App` is the shared Avalonia application library and is not the executable desktop entry point.
 
 ## The project does not restore
 
-Run:
+Start with:
 
 ```bash
 dotnet --info
-dotnet restore ChronoDesk.sln
+dotnet workload list
 ```
 
-Check that a .NET 9 SDK is installed and that `global.json` can resolve an installed .NET 9 feature band through its roll-forward policy.
+Check that the .NET 10 SDK family required by `global.json` is installed.
 
-If NuGet access is unavailable, restore cannot obtain packages that are not already cached. ChronoDesk itself does not need the internet after dependencies/build artifacts are present, but development restore normally uses NuGet package sources.
+Do **not** use a full `dotnet restore ChronoDesk.sln` as the first troubleshooting step unless all workload-specific projects are supported on that machine. Restore the host you are working on instead.
+
+### Desktop
+
+```bash
+dotnet restore src/ChronoDesk.Desktop/ChronoDesk.Desktop.csproj
+```
+
+### Android
+
+```bash
+dotnet workload install android
+dotnet restore src/ChronoDesk.Android/ChronoDesk.Android.csproj
+```
+
+Also verify JDK 17 and the Android SDK/tooling are available.
+
+### iOS / iPadOS
+
+Run on macOS with compatible Xcode:
+
+```bash
+dotnet workload install ios
+dotnet restore src/ChronoDesk.iOS/ChronoDesk.iOS.csproj
+```
+
+### Browser
+
+```bash
+dotnet workload install wasm-tools
+dotnet restore src/ChronoDesk.Browser/ChronoDesk.Browser.csproj
+```
+
+If NuGet access is unavailable, restore cannot obtain packages that are not cached. ChronoDesk's runtime clock features do not require the internet, but development restore normally uses NuGet package sources.
 
 ## Build fails with formatting or analyzer warnings
 
-ChronoDesk treats compiler/analyzer warnings as errors. Run:
+ChronoDesk treats compiler/analyzer warnings as errors. For shared/desktop work:
 
 ```bash
-dotnet format ChronoDesk.sln
-dotnet build ChronoDesk.sln -c Release
+dotnet format src/ChronoDesk.Desktop/ChronoDesk.Desktop.csproj
+dotnet format tests/ChronoDesk.Tests/ChronoDesk.Tests.csproj
+dotnet build src/ChronoDesk.Desktop/ChronoDesk.Desktop.csproj -c Release
 ```
 
-Review the first diagnostic rather than disabling warnings globally. If a platform API needs an operating-system guard or annotation, add the narrow correct guard instead of suppressing the entire analyzer category.
+Review the first diagnostic instead of disabling warnings globally. If a platform API needs an OS guard, platform annotation, or host-specific implementation, add the narrow correct boundary rather than suppressing an analyzer category.
+
+## Why does full-solution build fail on my machine?
+
+`ChronoDesk.sln` intentionally contains Desktop, Android, iOS, Browser, shared App, Infrastructure, Core, and Tests projects. Android/iOS/WebAssembly use workload-specific target frameworks.
+
+A machine that has only the desktop SDK workload can work normally on shared/Desktop code by building the Desktop and Tests projects directly. CI validates the additional platform hosts on runners with the correct workloads.
+
+## Desktop app no longer runs from `ChronoDesk.App`
+
+This command is obsolete:
+
+```text
+dotnet run --project src/ChronoDesk.App/ChronoDesk.App.csproj
+```
+
+Use:
+
+```bash
+dotnet run --project src/ChronoDesk.Desktop/ChronoDesk.Desktop.csproj
+```
+
+The shared App project is intentionally a library so Android, iOS/iPadOS, Browser, and Desktop can reuse it.
+
+## Android workload/build problems
+
+Verify:
+
+```bash
+dotnet --info
+dotnet workload list
+java -version
+```
+
+Expected development prerequisites include:
+
+- .NET 10 SDK;
+- Android workload;
+- JDK 17;
+- Android SDK/platform/build tools;
+- an emulator or device for deployment testing.
+
+Then rebuild only the Android host:
+
+```bash
+dotnet restore src/ChronoDesk.Android/ChronoDesk.Android.csproj
+dotnet build src/ChronoDesk.Android/ChronoDesk.Android.csproj -c Debug --no-restore
+```
+
+If compile succeeds but deployment fails, separate the issue into:
+
+1. project compilation;
+2. Android SDK/device/emulator connectivity;
+3. application startup/runtime behavior.
+
+Report the Android API level, ABI, emulator/device model, .NET workload version, and exact first error. Do not publish device identifiers or account details unnecessarily.
+
+## iOS / iPadOS build problems
+
+Apple targets require macOS and compatible Xcode tooling. Verify:
+
+```bash
+dotnet --info
+dotnet workload list
+xcodebuild -version
+```
+
+Then:
+
+```bash
+dotnet restore src/ChronoDesk.iOS/ChronoDesk.iOS.csproj
+dotnet build src/ChronoDesk.iOS/ChronoDesk.iOS.csproj -c Debug --no-restore
+```
+
+Distinguish simulator compilation from device/App Store signing. A simulator build can validate much of the host without production signing credentials. Device/store failures involving certificates/provisioning must be debugged without posting private signing material publicly.
+
+ChronoDesk canonical version `2.6.0.2` maps to Apple marketing version `2.6.0` and build number `2602`.
+
+## Browser/WebAssembly build problems
+
+Verify the workload:
+
+```bash
+dotnet workload list
+dotnet workload install wasm-tools
+```
+
+Build:
+
+```bash
+dotnet restore src/ChronoDesk.Browser/ChronoDesk.Browser.csproj
+dotnet build src/ChronoDesk.Browser/ChronoDesk.Browser.csproj -c Release --no-restore
+```
+
+Publish:
+
+```bash
+dotnet publish src/ChronoDesk.Browser/ChronoDesk.Browser.csproj -c Release -o publish/browser
+```
+
+Serve `publish/browser/wwwroot` through HTTP(S). Do not double-click `index.html` from a `file://` URL; the WebAssembly runtime loads framework/module assets through browser requests.
+
+When reporting browser startup failures, include browser/version, hosting method, the first console error, and network request failure status if relevant. Remove private hostnames/tokens before posting logs.
+
+## Browser settings do not survive reload
+
+The Browser host runs inside a sandbox and currently uses the .NET WebAssembly runtime filesystem model. Browser/runtime/hosting persistence semantics can differ from native application-data directories.
+
+Do not assume desktop filesystem persistence. Verify behavior on the actual deployment host. If persistence is a release requirement for a specific browser deployment and the runtime filesystem is not persistent there, track that as a browser-storage adapter issue rather than attempting unrestricted native filesystem access.
 
 ## The window opens with default settings unexpectedly
 
-ChronoDesk falls back to defaults when its settings file cannot be parsed safely. Look in the ChronoDesk application-data directory for a file similar to:
+On filesystem-backed hosts, ChronoDesk falls back to defaults when the settings file cannot be parsed safely. Look in the ChronoDesk application-data area for a file similar to:
 
 ```text
 settings.json.corrupt-YYYYMMDD-HHMMSS.json
 ```
 
-If present, the original malformed settings document was preserved for manual inspection/recovery.
+If present, the malformed settings document was preserved for manual recovery where the host filesystem allowed it.
 
-Do not paste that entire file into a public issue without reviewing it; world-clock labels are user-controlled text.
+Do not paste the entire file into a public issue without reviewing it; world-clock labels are user-controlled text.
 
-## Settings do not persist
+## Settings do not persist on a filesystem-backed host
 
 Possible causes:
 
-- the current user cannot write the application-data directory;
-- `CHRONODESK_DATA_DIR` points to a read-only/unavailable path;
-- endpoint security software blocked the temporary-file replacement;
+- the application/user sandbox cannot write the selected directory;
+- `CHRONODESK_DATA_DIR` points to a read-only/unavailable path on a host where that override is meaningful;
+- endpoint security software blocked native temporary-file replacement;
 - the filesystem became unavailable/full.
 
-For development, test with an isolated writable path:
+For desktop development, test with an isolated writable path:
 
 ```bash
 export CHRONODESK_DATA_DIR="$PWD/.local-data"
@@ -61,43 +216,43 @@ $env:CHRONODESK_DATA_DIR = "$PWD/.local-data"
 
 Do not solve permissions by running ChronoDesk as administrator/root as a normal operating mode.
 
-## A timezone displays UTC after import
+## A timezone displays UTC after import or migration
 
-ChronoDesk first tries the stored timezone ID, then .NET's Windows/IANA conversion helpers. When no matching timezone is available on the current OS/runtime, it deliberately falls back to UTC rather than crashing.
+ChronoDesk first tries the stored timezone ID, then .NET's Windows/IANA conversion helpers. When no matching timezone is available on the current host/runtime, it deliberately falls back to UTC rather than crashing.
 
 Actions:
 
-1. update the operating system/runtime timezone data through normal system updates;
+1. update platform/runtime timezone data through normal supported updates;
 2. restart ChronoDesk;
 3. search for the intended timezone and re-add the card;
 4. remove the unavailable imported card if appropriate.
 
 ## Timezone search does not show a recently changed rule
 
-The timezone catalog is built when ChronoDesk starts. After updating OS timezone/tzdata packages, quit ChronoDesk completely and launch it again.
+The timezone catalog is built when ChronoDesk initializes. After updating host timezone/tzdata/runtime data, close/restart the app or reload the host as appropriate.
 
 ## The tray icon is missing
 
-Tray integration depends on the platform/desktop environment.
+Tray integration is **desktop-only** and depends on the operating system/desktop environment.
 
 Try:
 
-- verify ChronoDesk is still running before assuming the app exited;
+- verify the Desktop host is still running before assuming it exited;
 - disable **Hide to tray when closing** if your desktop does not expose a usable tray/status area;
 - on Linux, record the desktop environment and status-notifier/AppIndicator support when filing a bug;
-- use the normal main-window close behavior with minimize-to-tray disabled as the fallback.
+- use normal main-window close behavior with minimize-to-tray disabled as the fallback.
 
-A tray failure should not stop the main clock.
+Android, iOS/iPadOS, and Browser do not use the desktop tray feature.
 
-## Closing the main window appears to do nothing
+## Closing the desktop main window appears to do nothing
 
-When **Hide to tray when closing the main window** is enabled, closing the window hides it instead of exiting. Use the tray **Quit** action to exit completely.
+When **Hide to tray when closing the main window** is enabled, closing hides the desktop window instead of exiting. Use the tray **Quit** action to exit completely.
 
-If your desktop does not provide a tray icon, reopen ChronoDesk if needed and disable minimize-to-tray in Settings → Behavior.
+If your desktop does not provide a usable tray icon, reopen ChronoDesk if needed and disable minimize-to-tray in Settings → Behavior.
 
-## Startup does not work
+## Start-with-system does not work
 
-First confirm the preference is enabled and settings were successfully saved.
+Start-with-system is intentionally **desktop-only**.
 
 ### Windows
 
@@ -105,13 +260,13 @@ ChronoDesk uses the current-user Run key. Corporate/group policy or endpoint-sec
 
 ### macOS
 
-Check the per-user file:
+Check:
 
 ```text
 ~/Library/LaunchAgents/com.sanskar.chronodesk.plist
 ```
 
-A moved/deleted application path can make an existing LaunchAgent stale; disable/re-enable the preference after moving the executable.
+A moved/deleted executable path can make an existing LaunchAgent stale; disable/re-enable the preference after moving the desktop executable.
 
 ### Linux
 
@@ -127,27 +282,28 @@ or:
 ~/.config/autostart/chronodesk.desktop
 ```
 
-Desktop environments can apply their own autostart policy.
+Android/iOS/iPadOS/Browser do not expose this desktop adapter; `PlatformStartupManager.IsSupported` is false there.
 
 ## Chime is enabled but silent
 
-The clock/chime policy can be working even when an OS sound facility is unavailable.
+The cross-platform chime **policy** is separate from native playback.
 
-Check:
+Desktop checks:
 
-- current time is exactly on the configured cadence boundary;
+- current time is on the configured cadence boundary;
 - quiet hours do not contain the current local time;
 - system audio is not muted;
-- on macOS, the normal `/usr/bin/afplay` and system sound are available;
-- on Linux, one of the fixed supported local sound helpers/files is available.
+- on macOS, `/usr/bin/afplay` and the expected system sound are available;
+- on Linux, one of the fixed supported local helpers/files is available.
 
-ChronoDesk intentionally does not download a sound player or execute arbitrary shell commands to make chimes work.
+The current mobile/browser host does not emulate desktop process-based playback. Unsupported playback must not stop the clock.
 
 ## The chime repeats
 
 The policy suppresses repeat playback within the same local minute. If repeated sounds occur, capture:
 
 - ChronoDesk version/commit;
+- platform/architecture;
 - timezone;
 - cadence;
 - quiet-hour settings;
@@ -155,63 +311,98 @@ The policy suppresses repeat playback within the same local minute. If repeated 
 
 Do not include unrelated system logs or private data.
 
-## Mini mode/window does not restore exactly
+## Mini/focus mode problems
 
-ChronoDesk restores its recorded dimensions/position after leaving mini mode. Window managers may constrain or reposition windows when monitors, scale factors, work areas, or virtual desktops change while mini mode is active.
+Mini and focus modes are desktop-window features.
 
-If reproducible on an unchanged monitor setup, report the OS, display scaling, monitor layout, and steps.
+For mini-mode restoration issues, report OS, display scaling, monitor layout, and steps. Window managers can constrain/reposition windows after monitor/work-area changes.
 
-## Focus mode does not cover the expected monitor
+`F11` focus mode uses the desktop window manager's full-screen state for the monitor containing the window. Move the window to the desired display before entering focus mode.
 
-`F11` uses the window manager's full-screen state for the monitor containing the window. Move the window to the desired display before entering focus mode and retry.
+These modes do not apply to Android/iOS/iPadOS/Browser single-view hosts.
+
+## Mobile screen does not fit after rotation
+
+The single-view shell is vertically scrollable and intended to tolerate portrait/landscape changes. If content becomes unreachable:
+
+- record Android/iOS/iPadOS version, device class, orientation, and display/text scaling;
+- confirm whether the problem occurs after a fresh launch or only after rotation/resume;
+- capture a screenshot with private notifications/account data removed;
+- verify that scrolling remains available.
+
+Do not work around a layout defect by hard-coding one device's pixel size.
+
+## Browser page is clipped or incorrectly scaled
+
+Verify:
+
+- a normal responsive viewport is active;
+- the app is served over HTTP(S);
+- browser zoom/text scaling;
+- mobile browser safe-area/notch behavior;
+- whether the issue reproduces in another modern browser.
+
+The Browser shell includes responsive sizing and safe-area padding; report any browser-specific deviation with sanitized console details.
 
 ## High contrast looks incorrect
 
-Report the exact OS theme/high-contrast setting and a screenshot containing no private data. Verify whether the problem occurs with:
+Report the exact platform theme/high-contrast setting and a screenshot containing no private data. Verify whether the problem occurs with:
 
-- ChronoDesk's **High contrast** setting;
-- the OS-level theme only;
+- ChronoDesk High Contrast setting;
+- host-level contrast/theme only;
 - both combined.
 
-Do not fix contrast by hard-coding a color that works in one theme but removes dynamic palette behavior elsewhere.
+On mobile/browser, also report text scaling/browser zoom. Do not fix contrast by hard-coding a color that works in only one theme or host.
 
 ## Import is rejected
 
-An import is rejected when the file is missing/unreadable, too large, invalid JSON, empty, or declares a settings schema newer than the running ChronoDesk supports.
+The desktop import flow rejects a file when it is missing/unreadable, too large, invalid JSON, empty, or declares a settings schema newer than the running ChronoDesk supports.
 
 Use an export created by a compatible ChronoDesk version. Do not manually add secrets or arbitrary data to an export.
 
-## About links do not open
+## About/support links do not open
 
-ChronoDesk delegates fixed `https`/`mailto` destinations to the OS. If no browser/mail handler is configured, the action can fail without affecting the app. The visible URL/email remains available for manual use.
+ChronoDesk delegates validated `https`/`mailto` destinations to the active host. If no compatible browser/mail handler exists, the action can fail without affecting clock operation.
 
 ## Logs
 
-Logs are normally under:
+On filesystem-backed hosts, logs are normally under:
 
 ```text
 <application-data>/ChronoDesk/logs/chronodesk.log.jsonl
 ```
 
-They are structured JSON Lines and automatically rotate near 1 MiB. The logger redacts common email/secret patterns, but always review excerpts before sharing.
+They are structured JSON Lines and rotate near 1 MiB. The logger redacts common email/secret patterns, but always review excerpts before sharing.
+
+Browser/mobile persistence locations can be sandboxed and may not map to a user-visible desktop path.
 
 ## Clean reset
 
-To reset preferences from the UI, use Settings → Data & Privacy → **Reset defaults**.
+The exact reset method depends on the host.
 
-For a complete local reset:
+### Desktop
 
-1. disable startup if enabled;
+Use Settings → Data & Privacy → **Reset defaults**, or for a full local reset:
+
+1. disable desktop startup if enabled;
 2. quit ChronoDesk fully;
-3. back up any settings export you intentionally want to keep;
-4. delete the ChronoDesk user application-data directory;
-5. launch ChronoDesk again.
+3. back up exports you intentionally want to keep;
+4. delete the ChronoDesk current-user application-data directory;
+5. launch again.
 
-This removes local settings/logs; there is no ChronoDesk cloud account.
+### Android / iOS / iPadOS
+
+Use the operating system's app-data clearing/uninstall controls when a complete native sandbox reset is needed.
+
+### Browser
+
+Use browser/site-storage controls for the ChronoDesk hosting origin when resetting persisted browser-side runtime data.
+
+There is no ChronoDesk cloud account to reset/delete.
 
 ## Still stuck?
 
-See `SUPPORT.md` and open a sanitized bug report when appropriate.
+See `SUPPORT.md` and open a sanitized bug report when appropriate. Include the exact host/platform and architecture/runtime where relevant.
 
 - Support: supportramsandesh@gmail.com
 - Business: sanskarin@outlook.in

@@ -26,8 +26,8 @@ public sealed class AppServices
         ITimeZoneCatalog timeZones,
         IStartupManager startupManager,
         IChimePlayer chimePlayer,
-        ClockFormatter? clockFormatter = null,
-        ChimePolicy? chimePolicy = null)
+        IClockFormatter? clockFormatter = null,
+        IChimePolicy? chimePolicy = null)
     {
         Logger = logger ?? throw new ArgumentNullException(nameof(logger));
         SettingsStore = settingsStore ?? throw new ArgumentNullException(nameof(settingsStore));
@@ -48,7 +48,7 @@ public sealed class AppServices
 
     public IChimePlayer ChimePlayer { get; }
 
-    public ClockFormatter ClockFormatter { get; }
+    public IClockFormatter ClockFormatter { get; }
 
-    public ChimePolicy ChimePolicy { get; }
+    public IChimePolicy ChimePolicy { get; }
 }

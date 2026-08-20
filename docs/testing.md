@@ -2,29 +2,74 @@
 
 ## Quality gates
 
-The intended release gate is:
+ChronoDesk contains workload-specific platform projects, so release validation is intentionally split by host rather than forcing every machine to restore/build `ChronoDesk.sln`.
+
+### Shared and desktop gate
 
 ```bash
-dotnet restore ChronoDesk.sln
-dotnet format ChronoDesk.sln --verify-no-changes --no-restore
-dotnet build ChronoDesk.sln -c Release --no-restore
-dotnet test ChronoDesk.sln -c Release --no-build --collect:"XPlat Code Coverage"
+dotnet restore src/ChronoDesk.Desktop/ChronoDesk.Desktop.csproj
+dotnet restore tests/ChronoDesk.Tests/ChronoDesk.Tests.csproj
+dotnet format src/ChronoDesk.Desktop/ChronoDesk.Desktop.csproj --verify-no-changes --no-restore
+dotnet format tests/ChronoDesk.Tests/ChronoDesk.Tests.csproj --verify-no-changes --no-restore
+dotnet build src/ChronoDesk.Desktop/ChronoDesk.Desktop.csproj -c Release --no-restore
+dotnet test tests/ChronoDesk.Tests/ChronoDesk.Tests.csproj -c Release --no-restore --collect:"XPlat Code Coverage"
 ```
 
-Also verify version metadata and repository-local Markdown links with PowerShell:
+Repository checks:
 
 ```powershell
 ./scripts/check-version.ps1
 ./scripts/check-markdown-links.ps1
 ```
 
-For a tagged release candidate, also bind the tag to the application version:
+Tagged candidate:
 
 ```powershell
 ./scripts/check-version.ps1 -Tag "v2.6.0.2"
 ```
 
-CI executes equivalent version/documentation/formatting/build/test work on Ubuntu, Windows, and macOS and also inspects NuGet dependencies for reported vulnerabilities.
+### Android gate
+
+```bash
+dotnet workload install android
+dotnet restore src/ChronoDesk.Android/ChronoDesk.Android.csproj
+dotnet build src/ChronoDesk.Android/ChronoDesk.Android.csproj -c Release --no-restore
+```
+
+### iOS/iPadOS gate
+
+Run on macOS with compatible Xcode:
+
+```bash
+dotnet workload install ios
+dotnet restore src/ChronoDesk.iOS/ChronoDesk.iOS.csproj
+dotnet build src/ChronoDesk.iOS/ChronoDesk.iOS.csproj -c Release --no-restore
+```
+
+CI selects an iOS simulator runtime identifier based on the runner architecture.
+
+### Browser gate
+
+```bash
+dotnet workload install wasm-tools
+dotnet restore src/ChronoDesk.Browser/ChronoDesk.Browser.csproj
+dotnet build src/ChronoDesk.Browser/ChronoDesk.Browser.csproj -c Release --no-restore
+```
+
+## CI matrix
+
+`.github/workflows/ci.yml` validates:
+
+| Job | Runner | Purpose |
+|---|---|---|
+| Desktop | Ubuntu, Windows, macOS | Version/docs/format/build/tests/vulnerability inspection. |
+| Android | Ubuntu | Install Android workload and compile Android host. |
+| iOS/iPadOS | macOS | Install iOS workload and compile simulator host. |
+| Browser | Ubuntu | Install `wasm-tools` and compile WebAssembly host. |
+
+CodeQL and Dependency Review remain separate pull-request security gates.
+
+A successful desktop test run alone is not enough to claim a cross-platform release; all applicable host-build checks must pass for the exact release commit.
 
 ## Automated test areas
 
@@ -37,7 +82,7 @@ CI executes equivalent version/documentation/formatting/build/test work on Ubunt
 - ISO week number;
 - UTC offset/calendar detail rendering.
 
-Use explicit `DateTimeOffset`, timezone, and culture inputs so tests do not depend on the machine's current wall clock.
+Use explicit `DateTimeOffset`, timezone, and culture inputs so tests do not depend on the current wall clock.
 
 ### Quiet hours
 
@@ -57,7 +102,7 @@ Use explicit `DateTimeOffset`, timezone, and culture inputs so tests do not depe
 - duplicate suppression within the same minute;
 - quiet-hour suppression.
 
-New cadence behavior must remain independent of actual sound playback.
+Cadence behavior must remain independent of actual native sound playback so it is testable on every host.
 
 ### Settings model
 
@@ -79,9 +124,11 @@ New cadence behavior must remain independent of actual sound playback.
 - malformed JSON fallback;
 - corrupt-file preservation;
 - transient read failures fall back safely without renaming a potentially valid settings file;
-- normal loading resumes after the transient file lock is released.
+- normal loading resumes after a transient lock is released.
 
-Tests must not read or write the developer's real ChronoDesk data folder.
+Tests must never read or write the developer's real ChronoDesk data folder.
+
+Browser persistence is a different runtime boundary: WebAssembly uses a browser sandbox/virtual filesystem. Native temporary-directory tests validate the serializer/store contract, while browser-host CI validates compilation. Browser persistence lifetime must also be manually verified on the intended deployment host.
 
 ### View-model reliability
 
@@ -89,8 +136,10 @@ Tests must not read or write the developer's real ChronoDesk data folder.
 
 - explicit startup changes are applied once;
 - startup integration is rolled back when persistence fails;
-- portable imports cannot silently change the machine startup preference;
-- unreadable settings fall back to defaults while the clock, world clocks, and timezone search still initialize.
+- portable imports cannot silently change machine startup preference;
+- unreadable settings fall back to defaults while clock/world clocks/timezone search still initialize.
+
+Platform-specific startup is kept behind `IStartupManager`; mobile/browser hosts must not assume it is supported.
 
 ### Timezone catalog
 
@@ -103,146 +152,172 @@ Tests must not read or write the developer's real ChronoDesk data folder.
 
 ### Property-style robustness tests
 
-`DomainPropertyTests` runs deterministic seeded randomized cases against reference invariants. It verifies thousands of quiet-hour combinations and checks that settings normalization is idempotent, bounded, and produces unique clock IDs.
-
-This test style gives broad edge coverage while staying deterministic in CI. A failure can always be reproduced from the committed seed.
+`DomainPropertyTests` runs deterministic seeded randomized cases against reference invariants. It verifies thousands of quiet-hour combinations and checks settings normalization idempotence, bounds, and unique clock IDs.
 
 ### Import fuzz tests
 
-`SettingsImportFuzzTests` feeds a deterministic corpus of malformed binary/JSON inputs into the settings importer and verifies that the primary settings document is not changed. It also verifies rejection of files above the configured size limit.
-
-Fuzz inputs are generated locally inside the test and never contain production/user data.
+`SettingsImportFuzzTests` feeds a deterministic corpus of malformed binary/JSON inputs into the settings importer and verifies that the primary settings document is not changed. It also verifies rejection of inputs above the configured size limit.
 
 ### Headless Avalonia UI smoke tests
 
-`AvaloniaTestSetup` and `HeadlessUiSmokeTests` use `Avalonia.Headless.XUnit` with the same Avalonia 11.3 maintenance baseline as the application. Current smoke coverage verifies:
+`AvaloniaTestSetup` and `HeadlessUiSmokeTests` use `Avalonia.Headless.XUnit` with the application Avalonia baseline.
 
-- main-window XAML/resource loading;
-- key named controls exist;
+Coverage verifies:
+
+- desktop `MainWindow` XAML/resource loading;
+- key named controls;
+- `MainView` single-view XAML/resource loading for mobile/browser reuse;
+- `MainView` keeps the supplied shared view model as its data context;
 - mini mode can enter and restore normal dimensions;
-- focus mode hides/restores application chrome;
-- focus mode restores the prior normal/maximized window state;
+- focus mode hides/restores desktop application chrome;
+- focus mode restores prior window state;
 - Settings loads primary preference controls;
-- onboarding and About windows load localized resources;
-- About displays the complete four-part `2.6.0.2` assembly version rather than truncating the revision component.
+- onboarding and About load localized resources;
+- About displays complete canonical version `2.6.0.2`.
 
-Headless UI tests strengthen cross-platform CI but do **not** replace real desktop testing for system tray, startup registration, sound playback, accessibility APIs, display scaling, or native file pickers.
+Headless tests strengthen shared UI validation but do **not** replace native/emulator/device/browser testing for tray, startup, sound, accessibility APIs, display scaling, touch, orientations, store packaging, or browser hosting.
 
 ## Version verification
 
-`scripts/check-version.ps1` reads the application project and enforces:
+`scripts/check-version.ps1` enforces:
 
-- a four-component numeric `Version` (`MAJOR.MINOR.PATCH.REVISION`);
-- matching `PackageVersion`, `AssemblyVersion`, and `FileVersion` values;
-- no conflicting `VersionPrefix`/`VersionSuffix` values;
-- assembly-version component bounds;
-- exact tag equality when `-Tag` is supplied.
+- four-component canonical `Version` (`MAJOR.MINOR.PATCH.REVISION`);
+- matching shared `PackageVersion`, `AssemblyVersion`, and `FileVersion`;
+- matching desktop package/assembly/file version fields;
+- Android display version equality and a positive numeric version code;
+- iOS three-component marketing-version mapping plus positive build number;
+- no conflicting shared `VersionPrefix`/`VersionSuffix` values;
+- assembly component bounds;
+- exact `v<canonical-version>` tag equality when `-Tag` is supplied.
 
-The current required source version is `2.6.0.2`.
+Current canonical version: `2.6.0.2`.
+
+Apple package mapping: marketing version `2.6.0`, build `2602`.
 
 ## Documentation-link verification
 
-`scripts/check-markdown-links.ps1` recursively inspects Markdown documents and validates repository-local file and directory targets. It ignores external URLs and same-document anchors so transient network failures do not make offline verification nondeterministic.
+`scripts/check-markdown-links.ps1` recursively validates repository-local Markdown file/directory destinations. It intentionally ignores external URLs and same-document anchors so transient network failures cannot make this offline repository check nondeterministic.
 
-The check rejects missing local targets and relative links that escape the repository root. Repository paths containing spaces should be percent-encoded or use Markdown's angle-bracket destination form.
+## Manual cross-platform checklist
 
-## Manual UI checklist
+### Shared clock/world-clock behavior
 
-Automated Core/headless tests are not a substitute for desktop validation. Before a tagged release, test each supported primary platform.
+Test on representative desktop, Android, Apple, and browser hosts:
 
-### Launch/onboarding
+- [ ] Clock starts without an account/network dependency.
+- [ ] 12/24-hour toggle works.
+- [ ] Seconds toggle works.
+- [ ] Date/timezone display is correct for the host.
+- [ ] Timezone search returns usable results.
+- [ ] Selected timezone can be added.
+- [ ] Duplicate add is handled safely.
+- [ ] World-clock card can be removed without violating the minimum-card invariant.
+- [ ] Narrow/small displays remain usable.
+- [ ] Landscape/portrait transitions remain usable where applicable.
+
+### Desktop launch/onboarding
 
 - [ ] Fresh data directory opens onboarding.
 - [ ] Onboarding explains offline/private behavior accurately.
-- [ ] Completing onboarding persists and it does not reappear next launch.
-- [ ] An unreadable settings location produces a warning while the clock remains usable.
-- [ ] A temporary settings-file lock does not rename/delete the valid settings file.
+- [ ] Completing onboarding persists.
+- [ ] Temporary settings-file failures do not destroy a valid file.
 
-### Main clock
+### Desktop focus mode
 
-- [ ] Time updates smoothly without visible duplicate/reordered text.
-- [ ] 12/24-hour toggle is immediate.
-- [ ] Seconds toggle is immediate.
-- [ ] Date/weekday/week/calendar settings match visible output.
-- [ ] Large font sizes remain usable at the documented minimum window size.
-
-### World clocks
-
-- [ ] Search accepts city/region/timezone-ID fragments.
-- [ ] A selected timezone can be added.
-- [ ] Duplicate timezone add is rejected with status text.
-- [ ] A card can be removed.
-- [ ] The last remaining card cannot be removed.
-- [ ] Restart preserves the list.
-- [ ] Imported duplicate IDs/timezone IDs normalize to one card per unique value.
-
-### Focus mode
-
-- [ ] `F11` enters full screen.
-- [ ] `F11` exits full screen.
+- [ ] `F11` enters/exits full screen.
 - [ ] `Esc` exits focus mode.
-- [ ] Header, world clocks, add section, and footer hide during focus mode.
-- [ ] A maximized window returns to maximized after leaving focus mode.
+- [ ] Header/world-clock/add/footer sections hide while focused.
+- [ ] Previous maximized/normal state restores correctly.
 
-### Mini mode
+### Desktop mini mode
 
-- [ ] `Ctrl+M` enters a compact window.
+- [ ] `Ctrl+M` enters/exits compact mode.
 - [ ] Mini mode is always on top.
-- [ ] `Esc` exits mini mode.
-- [ ] Previous window dimensions/position are restored reasonably.
-- [ ] Normal always-on-top preference remains correct after leaving mini mode.
+- [ ] Previous dimensions/position restore reasonably.
+- [ ] Normal always-on-top preference remains correct afterward.
 
-### Tray
+### Desktop tray/startup
 
-- [ ] Tray icon appears where the OS/desktop supports tray icons.
-- [ ] Show restores and activates the window.
-- [ ] Focus toggles focus mode.
-- [ ] Mini toggles mini mode.
-- [ ] Quit exits the process.
-- [ ] Closing the main window hides it when minimize-to-tray is enabled.
-- [ ] Closing exits normally when minimize-to-tray is disabled.
+- [ ] Tray icon appears where supported.
+- [ ] Show/Focus/Mini/Quit actions work.
+- [ ] Minimize-to-tray behavior follows settings.
+- [ ] Startup preference creates/removes only the current-user integration.
+- [ ] Unsupported/non-desktop platforms never attempt desktop startup registration.
 
-### Settings
+### Desktop settings
 
-- [ ] Theme changes apply.
-- [ ] High contrast applies without unreadable controls.
-- [ ] Layout changes visibly affect the hero clock.
-- [ ] Font/size/spacing values persist.
-- [ ] Startup setting writes/removes the correct current-user integration.
-- [ ] Import/export round-trips a settings file.
-- [ ] Invalid import displays a safe error and does not replace good settings.
+- [ ] Theme/high-contrast/layout changes apply.
+- [ ] Font/size/spacing persist.
+- [ ] Import/export round-trips.
+- [ ] Invalid import cannot replace good settings.
 - [ ] Reset returns to defaults.
+
+### Android
+
+- [ ] Debug app installs/launches on at least one emulator/device matching supported API expectations.
+- [ ] Single-view clock fills the activity correctly.
+- [ ] Back/resume/reopen lifecycle does not create duplicate timers.
+- [ ] Portrait/landscape remains usable.
+- [ ] No desktop tray/startup/window API is invoked.
+- [ ] Release package can be signed through the protected maintainer signing process.
+
+### iOS/iPadOS
+
+- [ ] Simulator launch succeeds.
+- [ ] iPhone portrait/landscape layouts remain usable.
+- [ ] iPad portrait/landscape layouts remain usable.
+- [ ] App lifecycle resume does not duplicate timers.
+- [ ] Package metadata uses marketing `2.6.0`, build `2602`.
+- [ ] Device/App Store signing is performed only with protected credentials.
+
+### Browser/WebAssembly
+
+- [ ] Published `wwwroot` loads over HTTP(S).
+- [ ] Browser console shows no startup/runtime errors.
+- [ ] Narrow and wide responsive layouts remain usable.
+- [ ] Reload behavior matches documented browser storage expectations.
+- [ ] No `file://`, unrestricted filesystem, registry, or external-process assumption exists.
+- [ ] Keyboard focus/automation semantics remain usable.
 
 ### About/version
 
-- [ ] About displays `2.6.0.2` exactly.
-- [ ] File/application metadata on packaged binaries reports `2.6.0.2` where the platform exposes it.
+- [ ] About displays `2.6.0.2` exactly on shared UI.
+- [ ] Desktop package metadata reports `2.6.0.2` where exposed.
+- [ ] Android version name reports `2.6.0.2`.
+- [ ] Apple package mapping is `2.6.0` / build `2602`.
 
 ### Chime
+
+Desktop:
 
 - [ ] Disabled chime is silent.
 - [ ] Enabled cadence fires once on a boundary.
 - [ ] Quiet hours suppress playback.
-- [ ] Clock continues normally when OS sound helpers are missing.
+- [ ] Clock continues when native sound helpers are missing.
+
+Mobile/browser:
+
+- [ ] Unsupported native chime path safely no-ops and never stops the clock.
 
 ### Accessibility
 
-Use the detailed checklist in `docs/accessibility.md`.
+Use the detailed checklist in `docs/accessibility.md`, and add phone/tablet/browser touch and scaling checks for the single-view shell.
 
-## Regression test rule
+## Regression rule
 
 When fixing a bug:
 
 1. reproduce it;
-2. add the smallest failing automated test when the defect is below the UI/platform boundary;
+2. add the smallest failing automated test when below the UI/platform boundary;
 3. apply the fix;
-4. confirm the new test passes with the complete suite;
-5. document manual reproduction/verification for UI-only defects.
+4. run relevant shared tests;
+5. run the affected platform-host build;
+6. document native/manual reproduction for UI/device/browser-only defects.
 
 ## Coverage philosophy
 
-Coverage percentage is not a release target by itself. Prefer tests that protect invariants and failure paths. A high line percentage that does not exercise timezone boundaries, persistence corruption, chime suppression, malformed import handling, or window-mode transitions is less useful than focused behavioral coverage.
+Coverage percentage is not a release target by itself. Prefer tests that protect invariants and failure paths. Cross-platform host compilation plus focused behavior tests are more meaningful than a high line percentage that ignores timezone, persistence, lifecycle, and unsupported-capability boundaries.
 
 ## Performance testing
 
-Clock ticks should not perform settings I/O or network I/O. If a future change adds heavy work to the tick path, capture CPU/allocation measurements and update `docs/performance.md`.
+Clock ticks must not perform network I/O or routine settings writes. If a future change adds work to the tick path, capture CPU/allocation measurements and update `docs/performance.md`. On mobile/browser, also test lifecycle suspension/detachment so timers do not run unnecessarily after the view is detached.

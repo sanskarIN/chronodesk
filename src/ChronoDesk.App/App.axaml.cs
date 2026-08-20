@@ -12,9 +12,10 @@ using ChronoDesk.Core.Models;
 
 namespace ChronoDesk.App;
 
-public sealed partial class App : Application
+public sealed partial class App : Application, IDisposable
 {
     private TrayIcon? trayIcon;
+    private bool disposed;
 
     public AppServices Services { get; } = new();
 
@@ -22,16 +23,34 @@ public sealed partial class App : Application
 
     public override void OnFrameworkInitializationCompleted()
     {
+        var viewModel = new MainWindowViewModel(Services);
+        viewModel.SettingsChanged += (_, settings) => ApplyTheme(settings);
+
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
-            var viewModel = new MainWindowViewModel(Services);
             var window = new MainWindow(viewModel);
-            viewModel.SettingsChanged += (_, settings) => ApplyTheme(settings);
             desktop.MainWindow = window;
             TryCreateTrayIcon(window, desktop);
         }
+        else if (ApplicationLifetime is ISingleViewApplicationLifetime singleView)
+        {
+            singleView.MainView = new MainView(viewModel);
+        }
 
         base.OnFrameworkInitializationCompleted();
+    }
+
+    public void Dispose()
+    {
+        if (disposed)
+        {
+            return;
+        }
+
+        trayIcon?.Dispose();
+        trayIcon = null;
+        disposed = true;
+        GC.SuppressFinalize(this);
     }
 
     private void ApplyTheme(AppSettings settings)
@@ -86,7 +105,7 @@ public sealed partial class App : Application
     {
         try
         {
-            using var stream = AssetLoader.Open(new Uri("avares://ChronoDesk/Assets/chronodesk.ico"));
+            using var stream = AssetLoader.Open(new Uri("avares://ChronoDesk.App/Assets/chronodesk.ico"));
             var icon = new WindowIcon(stream);
             trayIcon = new TrayIcon
             {
@@ -96,11 +115,11 @@ public sealed partial class App : Application
                 IsVisible = true,
             };
             TrayIcon.SetIcons(this, new TrayIcons { trayIcon });
-            desktop.Exit += (_, _) => trayIcon?.Dispose();
+            desktop.Exit += (_, _) => Dispose();
         }
         catch (Exception exception)
         {
-            Services.Logger.Error("tray.initialize_failed", exception, "System tray integration could not be initialized.");
+            Services.Logger.LogError("tray.initialize_failed", exception, "System tray integration could not be initialized.");
         }
     }
 

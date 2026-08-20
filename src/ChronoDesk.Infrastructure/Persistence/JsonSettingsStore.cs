@@ -41,13 +41,13 @@ public sealed class JsonSettingsStore : ISettingsStore
         }
         catch (Exception exception) when (exception is JsonException or InvalidDataException)
         {
-            logger.Error("settings.load_failed", exception, "Settings data was invalid; defaults were used.");
+            logger.LogError("settings.load_failed", exception, "Settings data was invalid; defaults were used.");
             PreserveCorruptSettings();
             return new AppSettings();
         }
         catch (IOException exception)
         {
-            logger.Error("settings.load_failed", exception, "Settings could not be read; defaults were used without modifying the settings file.");
+            logger.LogError("settings.load_failed", exception, "Settings could not be read; defaults were used without modifying the settings file.");
             return new AppSettings();
         }
     }
@@ -171,7 +171,7 @@ public sealed class JsonSettingsStore : ISettingsStore
         }
         catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
         {
-            logger.Error("settings.corrupt_preserve_failed", exception, "Corrupt settings could not be preserved.");
+            logger.LogError("settings.corrupt_preserve_failed", exception, "Corrupt settings could not be preserved.");
         }
     }
 }

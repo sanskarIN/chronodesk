@@ -1,8 +1,9 @@
+using ChronoDesk.Core.Abstractions;
 using ChronoDesk.Core.Models;
 
 namespace ChronoDesk.Core.Services;
 
-public sealed class ChimePolicy
+public sealed class ChimePolicy : IChimePolicy
 {
     public bool ShouldChime(
         DateTimeOffset instant,

@@ -108,7 +108,7 @@ public sealed class MainWindowViewModel : ObservableObject
         }
         catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
         {
-            services.Logger.Error("app.initialize_failed", exception, "ChronoDesk could not initialize all local data.");
+            services.Logger.LogError("app.initialize_failed", exception, "ChronoDesk could not initialize all local data.");
             Settings = new AppSettings();
             StatusMessage = Strings.LocalDataLoadWarning;
         }
@@ -152,7 +152,7 @@ public sealed class MainWindowViewModel : ObservableObject
             }
             catch (Exception exception)
             {
-                services.Logger.Error("chime.play_failed", exception, "The configured chime could not be played.");
+                services.Logger.LogError("chime.play_failed", exception, "The configured chime could not be played.");
                 StatusMessage = Strings.ChimeUnavailable;
             }
         }
@@ -315,7 +315,7 @@ public sealed class MainWindowViewModel : ObservableObject
         }
         catch (Exception exception)
         {
-            services.Logger.Error(
+            services.Logger.LogError(
                 "startup.rollback_failed",
                 exception,
                 "Startup integration could not be restored after settings persistence failed.");

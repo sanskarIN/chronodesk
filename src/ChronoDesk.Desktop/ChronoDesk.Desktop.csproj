@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <RootNamespace>ChronoDesk.Desktop</RootNamespace>
+    <AssemblyName>ChronoDesk</AssemblyName>
+    <Description>ChronoDesk desktop host for Windows, macOS, and Linux.</Description>
+    <Version>2.6.0.2</Version>
+    <PackageVersion>2.6.0.2</PackageVersion>
+    <AssemblyVersion>2.6.0.2</AssemblyVersion>
+    <FileVersion>2.6.0.2</FileVersion>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon Condition="$([MSBuild]::IsOSPlatform('Windows'))">..\ChronoDesk.App\Assets\chronodesk.ico</ApplicationIcon>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia.Desktop" />
+    <PackageReference Include="Avalonia.Fonts.Inter" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ChronoDesk.App\ChronoDesk.App.csproj" />
+  </ItemGroup>
+</Project>

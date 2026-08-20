@@ -14,8 +14,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build-test:
-    name: ${{ matrix.os }} / .NET 9
+  desktop:
+    name: Desktop / ${{ matrix.os }} / .NET 10
     strategy:
       fail-fast: false
       matrix:
@@ -26,10 +26,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
 
-      - name: Setup .NET 9
+      - name: Setup .NET 10
         uses: actions/setup-dotnet@v6
         with:
-          dotnet-version: 9.0.x
+          dotnet-version: 10.0.x
           cache: true
           cache-dependency-path: |
             **/*.csproj
@@ -39,26 +39,32 @@ jobs:
         shell: pwsh
         run: ./scripts/check-version.ps1
 
-      - name: Restore
-        run: dotnet restore ChronoDesk.sln
+      - name: Restore desktop
+        run: dotnet restore src/ChronoDesk.Desktop/ChronoDesk.Desktop.csproj
 
-      - name: Verify formatting
-        run: dotnet format ChronoDesk.sln --verify-no-changes --no-restore
+      - name: Restore tests
+        run: dotnet restore tests/ChronoDesk.Tests/ChronoDesk.Tests.csproj
+
+      - name: Verify desktop formatting
+        run: dotnet format src/ChronoDesk.Desktop/ChronoDesk.Desktop.csproj --verify-no-changes --no-restore
+
+      - name: Verify test formatting
+        run: dotnet format tests/ChronoDesk.Tests/ChronoDesk.Tests.csproj --verify-no-changes --no-restore
 
       - name: Verify local documentation links
         shell: pwsh
         run: ./scripts/check-markdown-links.ps1
 
-      - name: Build
-        run: dotnet build ChronoDesk.sln --configuration Release --no-restore
+      - name: Build desktop
+        run: dotnet build src/ChronoDesk.Desktop/ChronoDesk.Desktop.csproj --configuration Release --no-restore
 
-      - name: Test
-        run: dotnet test ChronoDesk.sln --configuration Release --no-build --collect:"XPlat Code Coverage" --results-directory TestResults
+      - name: Test shared application
+        run: dotnet test tests/ChronoDesk.Tests/ChronoDesk.Tests.csproj --configuration Release --no-restore --collect:"XPlat Code Coverage" --results-directory TestResults
 
-      - name: Check vulnerable packages
+      - name: Check vulnerable desktop packages
         shell: pwsh
         run: |
-          $output = dotnet list ChronoDesk.sln package --vulnerable --include-transitive 2>&1 | Out-String
+          $output = dotnet list src/ChronoDesk.Desktop/ChronoDesk.Desktop.csproj package --vulnerable --include-transitive 2>&1 | Out-String
           $output | Write-Host
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           if ($output -match "has the following vulnerable packages") {
@@ -74,3 +80,82 @@ jobs:
           path: TestResults
           if-no-files-found: ignore
           retention-days: 14
+
+  browser:
+    name: Browser / WebAssembly / .NET 10
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Install WebAssembly workload
+        run: dotnet workload install wasm-tools
+
+      - name: Restore browser host
+        run: dotnet restore src/ChronoDesk.Browser/ChronoDesk.Browser.csproj
+
+      - name: Build browser host
+        run: dotnet build src/ChronoDesk.Browser/ChronoDesk.Browser.csproj --configuration Release --no-restore
+
+  android:
+    name: Android / .NET 10
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Install Android workload
+        run: dotnet workload install android
+
+      - name: Restore Android host
+        run: dotnet restore src/ChronoDesk.Android/ChronoDesk.Android.csproj
+
+      - name: Build Android host
+        run: dotnet build src/ChronoDesk.Android/ChronoDesk.Android.csproj --configuration Release --no-restore
+
+  ios:
+    name: iOS and iPadOS / .NET 10
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Install iOS workload
+        run: dotnet workload install ios
+
+      - name: Restore iOS host
+        run: dotnet restore src/ChronoDesk.iOS/ChronoDesk.iOS.csproj
+
+      - name: Build iOS simulator host
+        shell: bash
+        run: |
+          if [[ "$(uname -m)" == "arm64" ]]; then
+            rid="iossimulator-arm64"
+          else
+            rid="iossimulator-x64"
+          fi
+          dotnet build src/ChronoDesk.iOS/ChronoDesk.iOS.csproj --configuration Release --no-restore -p:RuntimeIdentifier="$rid"

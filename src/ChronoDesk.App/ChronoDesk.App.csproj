@@ -1,17 +1,13 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <OutputType>WinExe</OutputType>
+    <OutputType>Library</OutputType>
     <RootNamespace>ChronoDesk.App</RootNamespace>
-    <AssemblyName>ChronoDesk</AssemblyName>
-    <Description>A polished cross-platform desktop clock built with Avalonia.</Description>
+    <AssemblyName>ChronoDesk.App</AssemblyName>
+    <Description>Shared cross-platform Avalonia UI for ChronoDesk.</Description>
     <Version>2.6.0.2</Version>
     <PackageVersion>2.6.0.2</PackageVersion>
     <AssemblyVersion>2.6.0.2</AssemblyVersion>
     <FileVersion>2.6.0.2</FileVersion>
-    <ApplicationManifest>app.manifest</ApplicationManifest>
-    <ApplicationIcon Condition="$([MSBuild]::IsOSPlatform('Windows'))">Assets\chronodesk.ico</ApplicationIcon>
-    <PublishSingleFile>false</PublishSingleFile>
-    <SelfContained>false</SelfContained>
   </PropertyGroup>
 
   <ItemGroup>
@@ -21,7 +17,6 @@
 
   <ItemGroup>
     <PackageReference Include="Avalonia" />
-    <PackageReference Include="Avalonia.Desktop" />
     <PackageReference Include="Avalonia.Fonts.Inter" />
     <PackageReference Include="Avalonia.Themes.Fluent" />
     <PackageReference Include="Avalonia.Diagnostics" Condition="'$(Configuration)' == 'Debug'" />
