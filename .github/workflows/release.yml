@@ -9,16 +9,20 @@ permissions:
   contents: write
 
 jobs:
-  package:
-    name: Package ${{ matrix.rid }}
+  package-desktop:
+    name: Package desktop ${{ matrix.rid }}
     strategy:
       fail-fast: false
       matrix:
         include:
           - os: windows-latest
             rid: win-x64
+          - os: windows-latest
+            rid: win-arm64
           - os: ubuntu-latest
             rid: linux-x64
+          - os: ubuntu-latest
+            rid: linux-arm64
           - os: macos-latest
             rid: osx-x64
           - os: macos-latest
@@ -29,23 +33,25 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
 
-      - name: Setup .NET 9
+      - name: Setup .NET 10
         uses: actions/setup-dotnet@v6
         with:
-          dotnet-version: 9.0.x
+          dotnet-version: 10.0.x
 
       - name: Verify release version
         shell: pwsh
         run: ./scripts/check-version.ps1 -Tag "${{ github.ref_name }}"
 
-      - name: Restore
-        run: dotnet restore ChronoDesk.sln
+      - name: Restore desktop and tests
+        run: |
+          dotnet restore src/ChronoDesk.Desktop/ChronoDesk.Desktop.csproj
+          dotnet restore tests/ChronoDesk.Tests/ChronoDesk.Tests.csproj
 
-      - name: Test
-        run: dotnet test ChronoDesk.sln --configuration Release --no-restore
+      - name: Test shared application
+        run: dotnet test tests/ChronoDesk.Tests/ChronoDesk.Tests.csproj --configuration Release --no-restore
 
-      - name: Publish self-contained app
-        run: dotnet publish src/ChronoDesk.App/ChronoDesk.App.csproj --configuration Release --runtime ${{ matrix.rid }} --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:DebugType=None --output publish/${{ matrix.rid }}
+      - name: Publish self-contained desktop app
+        run: dotnet publish src/ChronoDesk.Desktop/ChronoDesk.Desktop.csproj --configuration Release --runtime ${{ matrix.rid }} --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:DebugType=None --output publish/${{ matrix.rid }}
 
       - name: Add release documentation
         shell: pwsh
@@ -72,9 +78,52 @@ jobs:
           if-no-files-found: error
           retention-days: 14
 
+  package-browser:
+    name: Package WebAssembly site
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Install WebAssembly workload
+        run: dotnet workload install wasm-tools
+
+      - name: Verify release version
+        shell: pwsh
+        run: ./scripts/check-version.ps1 -Tag "${{ github.ref_name }}"
+
+      - name: Publish browser site
+        run: dotnet publish src/ChronoDesk.Browser/ChronoDesk.Browser.csproj --configuration Release --output publish/browser
+
+      - name: Package browser site
+        shell: pwsh
+        run: |
+          $site = "publish/browser/wwwroot"
+          if (-not (Test-Path -LiteralPath $site)) {
+            throw "Published WebAssembly site was not found at $site."
+          }
+          Copy-Item LICENSE "$site/LICENSE"
+          Copy-Item PRIVACY.md "$site/PRIVACY.md"
+          New-Item -ItemType Directory -Force -Path dist | Out-Null
+          Compress-Archive -Path "$site/*" -DestinationPath "dist/chronodesk-${{ github.ref_name }}-browser-wasm.zip"
+
+      - name: Upload browser package
+        uses: actions/upload-artifact@v7
+        with:
+          name: chronodesk-browser-wasm
+          path: dist/*.zip
+          if-no-files-found: error
+          retention-days: 14
+
   release:
     name: Publish GitHub release
-    needs: package
+    needs: [package-desktop, package-browser]
     runs-on: ubuntu-latest
 
     steps:
