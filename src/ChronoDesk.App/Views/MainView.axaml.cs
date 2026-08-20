@@ -37,18 +37,29 @@ public sealed partial class MainView : UserControl
             {
                 await viewModel.InitializeAsync();
             }
-
-            if (viewModel.Settings.IsFirstRun)
-            {
-                await viewModel.CompleteOnboardingAsync();
-            }
-
-            clockTimer.Start();
         }
         catch (Exception exception)
         {
-            LogFailure("single_view.initialize_failed", exception, "The single-view shell could not finish initialization.");
+            LogFailure("single_view.initialize_failed", exception, "The single-view shell could not initialize.");
+            return;
         }
+
+        if (viewModel.Settings.IsFirstRun)
+        {
+            try
+            {
+                await viewModel.CompleteOnboardingAsync();
+            }
+            catch (Exception exception)
+            {
+                LogFailure(
+                    "single_view.onboarding_persist_failed",
+                    exception,
+                    "The first-run state could not be persisted; the clock will continue running.");
+            }
+        }
+
+        clockTimer.Start();
     }
 
     private void MainView_OnDetachedFromVisualTree(object? sender, VisualTreeAttachmentEventArgs e) =>
@@ -77,10 +88,16 @@ public sealed partial class MainView : UserControl
     }
 
     private async void FormatButton_OnClick(object? sender, RoutedEventArgs e) =>
-        await viewModel.ToggleClockFormatAsync();
+        await ExecuteUiActionAsync(
+            () => viewModel.ToggleClockFormatAsync(),
+            "single_view.format_failed",
+            "The clock format could not be changed.");
 
     private async void SecondsButton_OnClick(object? sender, RoutedEventArgs e) =>
-        await viewModel.ToggleSecondsAsync();
+        await ExecuteUiActionAsync(
+            () => viewModel.ToggleSecondsAsync(),
+            "single_view.seconds_failed",
+            "The seconds preference could not be changed.");
 
     private void TimeZoneSearchBox_OnTextChanged(object? sender, TextChangedEventArgs e)
     {
@@ -95,7 +112,10 @@ public sealed partial class MainView : UserControl
         var list = this.FindControl<ListBox>("TimeZoneResults");
         if (list?.SelectedItem is TimeZoneDescriptor descriptor)
         {
-            await viewModel.AddWorldClockAsync(descriptor);
+            await ExecuteUiActionAsync(
+                () => viewModel.AddWorldClockAsync(descriptor),
+                "single_view.world_clock_add_failed",
+                "The selected world clock could not be added.");
         }
     }
 
@@ -103,7 +123,25 @@ public sealed partial class MainView : UserControl
     {
         if (sender is Button { Tag: string id })
         {
-            await viewModel.RemoveWorldClockAsync(id);
+            await ExecuteUiActionAsync(
+                () => viewModel.RemoveWorldClockAsync(id),
+                "single_view.world_clock_remove_failed",
+                "The selected world clock could not be removed.");
+        }
+    }
+
+    private static async Task ExecuteUiActionAsync(
+        Func<Task> action,
+        string eventName,
+        string safeMessage)
+    {
+        try
+        {
+            await action();
+        }
+        catch (Exception exception)
+        {
+            LogFailure(eventName, exception, safeMessage);
         }
     }
 
