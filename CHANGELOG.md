@@ -22,6 +22,8 @@ All notable ChronoDesk changes are documented here. ChronoDesk uses four-compone
 - ARM64 desktop release packaging for Windows and Linux in addition to existing Apple Silicon support.
 - Cross-platform version validation for desktop, Android, and Apple package metadata.
 - Headless Avalonia smoke coverage for the single-view mobile/browser shell.
+- Platform-aware bug report and feature request forms covering desktop, Android, iOS/iPadOS, and Browser/WebAssembly.
+- Host-aware pull-request validation checklist for shared, desktop, mobile, and browser changes.
 - 12/24-hour clock formats and seconds toggle.
 - Date, weekday, ISO week number, and optional calendar/UTC-offset details.
 - Multiple locally persisted world-clock cards with runtime timezone search.
@@ -60,12 +62,13 @@ All notable ChronoDesk changes are documented here. ChronoDesk uses four-compone
 - The application resource URI now resolves from the renamed shared `ChronoDesk.App` assembly.
 - Solution registration now includes Desktop, Android, iOS/iPadOS, Browser, Core, Infrastructure, shared App, and Tests projects.
 - CI no longer assumes a full-solution restore is valid on runners without mobile/browser workloads; every host is restored/built with the workload it needs.
+- CodeQL now uses .NET 10 with an explicit shared/Desktop build graph instead of stale .NET 9 solution autobuild behavior.
 - Release automation now publishes six desktop RID ZIPs plus a Browser/WebAssembly ZIP and SHA-256 checksums.
 - Android package metadata maps canonical version `2.6.0.2` to display version `2.6.0.2` and numeric version code `2602`.
 - Apple package metadata maps canonical version `2.6.0.2` to marketing version `2.6.0` and build number `2602` while the in-app version stays `2.6.0.2`.
 - Updated the Avalonia baseline to 11.3.18 throughout application/host/headless packages.
 - Release tags use four components and must exactly match canonical application version.
-- README, setup, architecture, development, testing, and release documentation now describe the complete cross-platform host/workload model.
+- README, setup, architecture, development, testing, release, roadmap, contribution, support, security, privacy, troubleshooting, accessibility, performance, GitHub-maintenance, release-note-template, and final-audit documentation now describe the complete cross-platform host/workload model.
 - Desktop-only behavior is documented as capability-specific instead of being falsely represented as available on mobile/browser.
 
 ### Fixed
@@ -73,6 +76,8 @@ All notable ChronoDesk changes are documented here. ChronoDesk uses four-compone
 - `PlatformStartupManager` no longer assumes `Environment.ProcessPath` is always available. Mobile/browser runtimes now safely report startup integration unsupported instead of failing during service construction.
 - Single-view hosts no longer need a desktop modal onboarding window; first-run state is completed through the shared view-model flow.
 - Single-view timer lifecycle starts on visual-tree attachment and stops on detachment to avoid unnecessary updates after the view leaves the active tree.
+- A failed first-run persistence write in `MainView` is logged without preventing the already-initialized clock timer from starting.
+- Single-view format/seconds/world-clock button actions now contain persistence failures instead of leaking unhandled async event-handler exceptions.
 - Settings-save failure makes a best-effort rollback when an explicit startup integration change had already been applied.
 - Imported settings preserve the device's current startup preference instead of allowing a portable JSON file to silently alter operating-system startup registration.
 - About-screen branding no longer relies on unsupported built-in SVG image decoding and remains visible across theme variants.
@@ -86,6 +91,7 @@ All notable ChronoDesk changes are documented here. ChronoDesk uses four-compone
 
 - Production mobile signing keys/provisioning credentials are intentionally excluded from source and unsigned CI jobs.
 - Browser host respects WebAssembly sandbox boundaries and does not introduce registry/process/startup assumptions.
+- Security/privacy/support documentation now defines Android/iOS application-sandbox boundaries and protected signing requirements.
 - Bounded imported settings documents.
 - JSON settings schema-version validation.
 - Numeric enum values are rejected in settings JSON; enum strings must be recognized.
@@ -108,7 +114,11 @@ All notable ChronoDesk changes are documented here. ChronoDesk uses four-compone
 - Development guide explains host-scoped restore/build workflows and platform-specific code rules.
 - Testing guide defines platform-aware CI gates and manual desktop/mobile/browser validation.
 - Release guide covers six desktop RID packages, Browser static packaging, and protected mobile signing responsibilities.
-- Contribution, support, security, privacy, code-of-conduct, roadmap, troubleshooting, accessibility, performance, GitHub-maintenance, release-note-template, final-audit, and ADR documentation remain part of the repository documentation set.
+- Roadmap tracks cross-platform implementation and remaining native/emulator/browser evidence separately.
+- Contributing/support/troubleshooting guides use host-specific .NET 10 workflows rather than obsolete full-solution .NET 9 commands.
+- Accessibility/performance guides now include touch, orientation, browser zoom, mobile lifecycle, WebAssembly main-thread work, and real-device evidence requirements.
+- GitHub-maintenance guidance includes mobile/browser labels, exact CI families, .NET 10 CodeQL, protected signing environments, and cross-platform repository About metadata.
+- Release-note and final-audit templates now require evidence for Desktop, Android, iOS/iPadOS, Browser, CodeQL, Dependency Review, package integrity, and signing boundaries.
 
 ## Release policy
 
