@@ -22,6 +22,17 @@ public sealed class HeadlessUiSmokeTests
     }
 
     [AvaloniaFact]
+    public void MainView_LoadsSingleViewClockShell()
+    {
+        var viewModel = new MainWindowViewModel(new AppServices());
+        var view = new MainView(viewModel);
+
+        Assert.NotNull(view.FindControl<TextBox>("TimeZoneSearchBox"));
+        Assert.NotNull(view.FindControl<ListBox>("TimeZoneResults"));
+        Assert.Contains(Strings.WorldClocksTitle, view.ToString() ?? string.Empty, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [AvaloniaFact]
     public void MainWindow_MiniModeCanRoundTripWithoutLosingNormalSize()
     {
         var viewModel = new MainWindowViewModel(new AppServices());
