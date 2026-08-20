@@ -1,36 +1,46 @@
 name: Bug report
-description: Report a reproducible ChronoDesk defect.
+description: Report a reproducible ChronoDesk defect on any supported host.
 title: "[Bug]: "
 labels: [bug, needs-triage]
 body:
   - type: markdown
     attributes:
       value: |
-        Thanks for helping improve ChronoDesk. Do not include passwords, tokens, private files, or sensitive personal data.
+        Thanks for helping improve ChronoDesk. Do not include passwords, tokens, signing material, private files, device identifiers, or sensitive personal data.
   - type: input
     id: version
     attributes:
       label: ChronoDesk version
-      placeholder: "Example: 0.1.0"
+      placeholder: "Example: 2.6.0.2"
     validations:
       required: true
   - type: dropdown
     id: platform
     attributes:
-      label: Platform
+      label: Platform / host
       options:
         - Windows
         - macOS
         - Linux
+        - Android
+        - iOS / iPhone
+        - iPadOS / iPad
+        - Browser / WebAssembly
     validations:
       required: true
   - type: input
     id: platform-version
     attributes:
-      label: OS version / desktop environment
-      placeholder: "Example: Windows 11 24H2 or Ubuntu 26.04 GNOME"
+      label: OS / browser / environment version
+      placeholder: "Example: Windows 11 24H2, Android 16, iPadOS 20, or Chrome 140 on Linux"
     validations:
       required: true
+  - type: input
+    id: architecture
+    attributes:
+      label: Architecture / device / browser details
+      description: Provide only non-sensitive information needed to identify the runtime.
+      placeholder: "Example: win-arm64, Android arm64 emulator, iPhone simulator arm64, browser-wasm"
   - type: textarea
     id: steps
     attributes:
@@ -57,8 +67,8 @@ body:
   - type: textarea
     id: logs
     attributes:
-      label: Relevant sanitized logs
-      description: Paste only the minimal redacted lines needed to diagnose the issue.
+      label: Relevant sanitized logs / browser console output
+      description: Paste only minimal redacted lines needed to diagnose the issue. Never include signing credentials or private tokens.
       render: text
   - type: checkboxes
     id: checks
@@ -67,5 +77,5 @@ body:
       options:
         - label: I searched existing issues for duplicates.
           required: true
-        - label: I removed secrets and sensitive personal data from this report.
+        - label: I removed secrets, signing material, device identifiers, and sensitive personal data from this report.
           required: true
