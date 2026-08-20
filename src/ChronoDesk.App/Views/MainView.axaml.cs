@@ -149,7 +149,7 @@ public sealed partial class MainView : UserControl
     {
         if (Application.Current is App app)
         {
-            app.Services.Logger.Error(eventName, exception, safeMessage);
+            app.Services.Logger.LogError(eventName, exception, safeMessage);
         }
     }
 }
