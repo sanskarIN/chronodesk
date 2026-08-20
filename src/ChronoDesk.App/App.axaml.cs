@@ -12,9 +12,10 @@ using ChronoDesk.Core.Models;
 
 namespace ChronoDesk.App;
 
-public sealed partial class App : Application
+public sealed partial class App : Application, IDisposable
 {
     private TrayIcon? trayIcon;
+    private bool disposed;
 
     public AppServices Services { get; } = new();
 
@@ -37,6 +38,19 @@ public sealed partial class App : Application
         }
 
         base.OnFrameworkInitializationCompleted();
+    }
+
+    public void Dispose()
+    {
+        if (disposed)
+        {
+            return;
+        }
+
+        trayIcon?.Dispose();
+        trayIcon = null;
+        disposed = true;
+        GC.SuppressFinalize(this);
     }
 
     private void ApplyTheme(AppSettings settings)
@@ -101,7 +115,7 @@ public sealed partial class App : Application
                 IsVisible = true,
             };
             TrayIcon.SetIcons(this, new TrayIcons { trayIcon });
-            desktop.Exit += (_, _) => trayIcon?.Dispose();
+            desktop.Exit += (_, _) => Dispose();
         }
         catch (Exception exception)
         {
