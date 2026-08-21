@@ -171,7 +171,7 @@ public sealed partial class MainWindow : Window
         {
             if (Application.Current is App app)
             {
-                app.Services.Logger.Error("clock.tick_failed", exception, "The clock could not refresh for one tick.");
+                app.Services.Logger.LogError("clock.tick_failed", exception, "The clock could not refresh for one tick.");
             }
         }
         finally
