@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using ChronoDesk.Core.Models;
 
@@ -5,6 +6,10 @@ namespace ChronoDesk.Core.Services;
 
 public sealed class ClockFormatter
 {
+    [SuppressMessage(
+        "Performance",
+        "CA1822:Mark members as static",
+        Justification = "The formatter is intentionally an instance service so it can remain an injectable application dependency.")]
     public ClockSnapshot CreateSnapshot(
         DateTimeOffset instant,
         TimeZoneInfo timeZone,
@@ -45,14 +50,16 @@ public sealed class ClockFormatter
             zoneName);
     }
 
-    private static string BuildTimeFormat(ClockFormat format, bool showSeconds) =>
-        (format, showSeconds) switch
+    private static string BuildTimeFormat(ClockFormat format, bool showSeconds)
+    {
+        return (format, showSeconds) switch
         {
             (ClockFormat.TwelveHour, true) => "hh:mm:ss tt",
             (ClockFormat.TwelveHour, false) => "hh:mm tt",
             (ClockFormat.TwentyFourHour, true) => "HH:mm:ss",
             _ => "HH:mm",
         };
+    }
 
     private static string BuildCalendarDetails(
         DateTimeOffset local,

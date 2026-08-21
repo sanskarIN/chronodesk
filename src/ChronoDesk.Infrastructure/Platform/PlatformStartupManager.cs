@@ -1,5 +1,4 @@
 using System.Runtime.Versioning;
-using System.Security;
 using ChronoDesk.Core.Abstractions;
 using Microsoft.Win32;
 
@@ -74,7 +73,7 @@ public sealed class PlatformStartupManager : IStartupManager
     {
         using var key = Registry.CurrentUser.OpenSubKey(WindowsRunKey, writable: false);
         return key?.GetValue(AppName) is string value
-            && value.Contains(executablePath, StringComparison.OrdinalIgnoreCase);
+            && WindowsStartupCommand.Matches(value, executablePath);
     }
 
     [SupportedOSPlatform("windows")]
@@ -85,7 +84,10 @@ public sealed class PlatformStartupManager : IStartupManager
 
         if (enabled)
         {
-            key.SetValue(AppName, $"\"{executablePath}\" --background", RegistryValueKind.String);
+            key.SetValue(
+                AppName,
+                WindowsStartupCommand.Create(executablePath),
+                RegistryValueKind.String);
         }
         else
         {
@@ -107,24 +109,7 @@ public sealed class PlatformStartupManager : IStartupManager
         }
 
         Directory.CreateDirectory(Path.GetDirectoryName(path)!);
-        var escapedExecutable = SecurityElement.Escape(executablePath) ?? executablePath;
-        var content = $"""
-            <?xml version="1.0" encoding="UTF-8"?>
-            <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-            <plist version="1.0">
-              <dict>
-                <key>Label</key>
-                <string>com.sanskar.chronodesk</string>
-                <key>ProgramArguments</key>
-                <array>
-                  <string>{escapedExecutable}</string>
-                  <string>--background</string>
-                </array>
-                <key>RunAtLoad</key>
-                <true/>
-              </dict>
-            </plist>
-            """;
+        var content = MacLaunchAgentPlist.Create(executablePath);
         await File.WriteAllTextAsync(path, content, cancellationToken);
     }
 
@@ -142,17 +127,7 @@ public sealed class PlatformStartupManager : IStartupManager
         }
 
         Directory.CreateDirectory(Path.GetDirectoryName(path)!);
-        var quotedExecutable = QuoteDesktopExec(executablePath);
-        var content = $"""
-            [Desktop Entry]
-            Type=Application
-            Version=1.0
-            Name=ChronoDesk
-            Comment=Start ChronoDesk with the desktop session
-            Exec={quotedExecutable} --background
-            Terminal=false
-            X-GNOME-Autostart-enabled=true
-            """;
+        var content = LinuxDesktopEntry.Create(executablePath);
         await File.WriteAllTextAsync(path, content, cancellationToken);
     }
 
@@ -174,7 +149,4 @@ public sealed class PlatformStartupManager : IStartupManager
 
         return Path.Combine(configHome, "autostart", "chronodesk.desktop");
     }
-
-    private static string QuoteDesktopExec(string value) =>
-        $"\"{value.Replace("\\", "\\\\", StringComparison.Ordinal).Replace("\"", "\\\"", StringComparison.Ordinal)}\"";
 }

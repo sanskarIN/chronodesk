@@ -10,13 +10,10 @@ public sealed record QuietHours
 
     public bool Contains(TimeOnly time)
     {
-        if (!Enabled || Start == End)
-        {
-            return false;
-        }
-
-        return Start < End
-            ? time >= Start && time < End
-            : time >= Start || time < End;
+        return Enabled
+            && Start != End
+            && (Start < End
+                ? time >= Start && time < End
+                : time >= Start || time < End);
     }
 }

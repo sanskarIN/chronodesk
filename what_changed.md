@@ -2,175 +2,167 @@
 
 ## Current milestone
 
-**Phase 7 — version `2.6.0.2` final source/repository/release hardening, merged 2026-08-19.**
+**Phase 8 — cross-platform startup and CPU-architecture hardening for version `2.6.0.2`, under review in PR #20.**
 
-The product/source baseline is explicitly versioned as `2.6.0.2`. The final source, reliability, release-automation, test, security/privacy, and open-source documentation hardening pass has been merged into `main`. Native desktop validation and repository settings remain release-evidence gates; they are not fabricated by source inspection.
+This pass continues after the merged Phase 7 release/source hardening. The temporary 2026-08-20 migration-marker commits on `main` (`614115b` / `d56f21e`) did not implement platform changes; Phase 8 contains the actual Windows/macOS/Linux startup hardening, deterministic regression coverage, ARM64 release expansion, and synchronized documentation.
+
+The product version remains **`2.6.0.2`**. The `v2.6.0.2` release tag remains intentionally uncreated until native desktop and release-evidence gates are satisfied.
 
 ## Source of truth
 
 - Repository: `https://github.com/sanskarIN/chronodesk`
 - Default branch: `main`
-- Version-hardening branch: `release-version-2.6.0.2`
-- Pull request: `#18` — `release: finalize ChronoDesk version 2.6.0.2 hardening`
-- `main` baseline before this pass: `acadb0e3861721bf72d90bdbb2c0282ef96b847d`
-- Final PR head merged: `011711503703c7cdc64120cafe9dbb5fdc11e0f5`
-- Merge commit: `d8179bdcac162059968c1700711e09e6ce904f63`
+- Phase 8 branch: `hardening/cross-platform-startup`
+- Pull request: `#20` — `fix: harden cross-platform startup and arm64 releases`
+- PR URL: `https://github.com/sanskarIN/chronodesk/pull/20`
+- Phase 8 base commit: `d56f21e17cf4b4723bce62b1d942947ed0660ebb`
 - Canonical product version source: `src/ChronoDesk.App/ChronoDesk.App.csproj`
 - Required version: `2.6.0.2`
-- Product requirements: `10_chronodesk_master_prompt.md` supplied for the project plus the checked-in repository documentation.
+- Product requirements: `10_chronodesk_master_prompt.md` supplied for the project plus checked-in repository documentation.
 
-## Merge result
+## Phase 8 source hardening
 
-PR #18 was reviewed and merged successfully into `main` using a normal merge commit, preserving the 24 atomic commits from the version-hardening branch. GitHub reports the PR as closed/merged with 21 changed files.
+### Windows startup command detection
 
-The merge commit is GitHub-verified and records the author as **Sanskar `<sanskarin@outlook.in>`**.
+`PlatformStartupManager.IsWindowsStartupEnabled` previously treated startup as enabled whenever the Run-key value merely contained the current executable path. A different command such as an `.old` executable or a command with unrelated extra arguments could therefore be misclassified as the ChronoDesk startup registration.
 
-The `v2.6.0.2` tag was intentionally **not** created. A release tag is still gated on the release evidence listed below.
+The new internal `WindowsStartupCommand` helper now owns canonical Run-key command generation and matching:
 
-## Version state
+- executable path is quoted;
+- `--background` remains the canonical argument;
+- matching is case-insensitive and tolerates harmless outer whitespace;
+- matching requires the complete canonical command rather than a substring;
+- quote, CR, and LF characters are rejected in supplied executable-path strings.
 
-The application project declares all of these as exactly `2.6.0.2`:
+`PlatformStartupManager` now uses this helper for both writing and detecting the Windows Run-key value.
 
-- `Version`
-- `PackageVersion`
-- `AssemblyVersion`
-- `FileVersion`
+`WindowsStartupCommandTests` cover canonical generation, case-insensitive matching, substring lookalikes, unexpected extra arguments, and invalid path strings without mutating the real Windows registry.
 
-The old `0.1.0-preview` metadata and three-component release guidance have been removed from the active release path.
+### Linux XDG autostart generation
 
-The About window renders all four assembly-version components. A headless Avalonia regression test requires `2.6.0.2` to be present so the revision component cannot silently disappear again.
+The previous inline Linux `Exec` quoting helper only escaped backslashes and double quotes. Desktop-entry `Exec` parsing has additional escaping and field-code semantics.
 
-## Final code/reliability fixes in this pass
+The new internal `LinuxDesktopEntry` formatter:
 
-### Full four-part About version
+- serializes the executable as one quoted `Exec` token;
+- applies the required escaping layer for double quotes, dollar signs, backticks, and backslashes;
+- doubles `%` as `%%` so literal percent characters cannot become desktop-entry field codes;
+- rejects executable paths containing `=`, CR, or LF where a safe executable token cannot be emitted;
+- keeps `--background` as an explicit argument.
 
-`AboutWindow` previously used `Version.ToString(3)`, which would display `2.6.0` even when assembly metadata was `2.6.0.2`. It now uses all four components and the UI smoke test verifies the exact value. The final assertion uses the basic xUnit string-containment overload to minimize test-framework compatibility risk.
+`LinuxDesktopEntryTests` cover paths with spaces and all handled special characters plus rejected path forms.
 
-### Non-destructive transient settings fallback
+### macOS LaunchAgent generation
 
-`JsonSettingsStore.LoadAsync` previously grouped `IOException` with malformed/schema-invalid settings and then attempted corrupt-file quarantine. That could convert a temporary availability/read problem into an unnecessary rename attempt against potentially valid data.
+The LaunchAgent XML previously lived inline inside `PlatformStartupManager`. It is now generated by `MacLaunchAgentPlist`, allowing deterministic validation without writing to `~/Library/LaunchAgents`.
 
-The loader now separates the cases:
+The formatter:
 
-- malformed/schema-invalid settings: safe defaults plus timestamped corrupt-file preservation where possible;
-- transient `IOException`: safe defaults without renaming/deleting the original settings file;
-- permission failures remain application-level local-data availability errors and are not bypassed.
+- XML-escapes the executable path;
+- preserves the executable as its own `ProgramArguments` element;
+- includes `--background` separately;
+- keeps the stable `com.sanskar.chronodesk` label;
+- keeps `RunAtLoad` enabled.
 
-A regression test locks a valid settings file, verifies safe fallback without a `.corrupt-*` rename, releases the lock, and verifies normal settings loading resumes.
+`MacLaunchAgentPlistTests` parse the generated XML with DTD processing disabled and verify XML-sensitive executable paths, label, background argument, and `RunAtLoad`.
 
-## Release/version tooling added
+### Test-only infrastructure visibility
 
-### `scripts/check-version.ps1`
+`ChronoDesk.Infrastructure` grants `ChronoDesk.Tests` internal visibility through `InternalsVisibleTo`. This keeps the platform serialization helpers internal to production code while allowing deterministic serializer tests.
 
-The verifier enforces:
+### Release CPU-architecture coverage
 
-- exactly four numeric version components (`MAJOR.MINOR.PATCH.REVISION`);
-- matching `Version`, `PackageVersion`, `AssemblyVersion`, and `FileVersion`;
-- valid assembly-version component bounds;
-- no conflicting `VersionPrefix` / `VersionSuffix` values;
-- exact `v<version>` tag matching when `-Tag` is supplied.
+The tagged release workflow previously generated four self-contained ZIP targets:
 
-### CI
+- `win-x64`
+- `linux-x64`
+- `osx-x64`
+- `osx-arm64`
 
-The three-platform CI matrix runs `scripts/check-version.ps1` before restore/build/test work, in addition to formatting, Markdown-link verification, tests, coverage collection, and vulnerability inspection.
+Phase 8 expands the matrix to six targets:
 
-### Tagged release workflow
+- `win-x64`
+- `win-arm64`
+- `linux-x64`
+- `linux-arm64`
+- `osx-x64`
+- `osx-arm64`
 
-Release workflow hardening includes:
+Existing exact tag/version verification, self-contained single-file publishing, bundled documentation, artifact upload, checksum generation, and GitHub Release publication remain intact.
 
-- four-component tag trigger: `v*.*.*.*`;
-- exact tag/project-version verification before packaging;
-- self-contained packages for `win-x64`, `linux-x64`, `osx-x64`, and `osx-arm64`;
-- release ZIP copies of `LICENSE`, `README.md`, `CHANGELOG.md`, `PRIVACY.md`, `SECURITY.md`, and `SUPPORT.md`;
-- generated `SHA256SUMS.txt` for all release ZIPs;
-- checksum publication with the GitHub Release.
+ARM64 package generation is now configured in source, but matching-hardware launch validation remains a release gate rather than a fabricated claim.
 
-## Documentation synchronized in this pass
+## Documentation synchronized
 
-The following now consistently describe `2.6.0.2`, four-component release tags, the version verifier, persistence behavior, bundled release documents, and checksums:
+- `README.md` — Windows/Linux ARM64 support and all six release RIDs.
+- `ROADMAP.md` — Windows canonical startup matching, Linux XDG serialization hardening, macOS plist isolation, startup serializer tests, six-target artifact matrix.
+- `docs/testing.md` — Windows/Linux/macOS deterministic startup-artifact test coverage and explicit native-testing boundary.
+- `docs/release.md` — matching OS/CPU-architecture validation and six release RIDs.
+- `CHANGELOG.md` — startup fixes/tests and x64/ARM64 release expansion.
+- `what_changed.md` — this Phase 8 handoff.
 
-- `README.md`
-- `CHANGELOG.md`
-- `ROADMAP.md`
-- `CONTRIBUTING.md`
-- `PRIVACY.md`
-- `SECURITY.md`
-- `docs/testing.md`
-- `docs/release.md`
-- `docs/final-audit.md`
-- `docs/release-notes-template.md`
-- `docs/github-maintenance.md`
-- `.github/pull_request_template.md`
-- this handoff file
+## Phase 8 commits
 
-## Files changed by PR #18
+- `f8a2e4c` — `test: expose infrastructure internals to test assembly`
+- `d14bf28` — `fix: generate spec-compliant Linux autostart Exec entries`
+- `1aaedc7` — `refactor: isolate macOS LaunchAgent generation`
+- `59b5182` — `refactor: use platform startup artifact formatters`
+- `9534966` — initial Linux startup serializer regression tests
+- `bc6b960` — `test: validate macOS LaunchAgent plist generation`
+- `2ccb1df` — `test: make Linux Exec escaping assertions explicit`
+- `f5678ea` — `ci: add Windows and Linux arm64 release artifacts`
+- `54b80ed` — `docs: document x64 and arm64 desktop release support`
+- `ebbc8eb` — `docs: record cross-platform startup test coverage`
+- `39dbedc` — `docs: expand release guide for arm64 desktop packages`
+- `c8ead2e` — `docs: record startup and arm64 release hardening`
+- `749d338` — `docs: record Phase 8 cross-platform hardening handoff`
+- `e6982d1` — `test: parse LaunchAgent XML with DTD disabled`
+- `eac4869` — `docs: document platform startup serializer tests`
+- `d12fab1` — `fix: match Windows startup command exactly`
+- `b2e86d8` — `refactor: use canonical Windows startup commands`
+- `ffb37af` — `test: cover canonical Windows startup command matching`
+- `aeec50f` — `docs: record Windows startup matching hardening`
+- `7559a6d` — `docs: document Windows startup command tests`
+- `ba9d59e` — `docs: record Windows startup command hardening`
+- this handoff synchronization commit.
 
-PR #18 reports exactly 21 changed files:
+## Phase 7 baseline retained
 
-- `.github/pull_request_template.md`
-- `.github/workflows/ci.yml`
-- `.github/workflows/release.yml`
-- `CHANGELOG.md`
-- `CONTRIBUTING.md`
-- `PRIVACY.md`
-- `README.md`
-- `ROADMAP.md`
-- `SECURITY.md`
-- `docs/final-audit.md`
-- `docs/github-maintenance.md`
-- `docs/release-notes-template.md`
-- `docs/release.md`
-- `docs/testing.md`
-- `scripts/check-version.ps1`
-- `src/ChronoDesk.App/ChronoDesk.App.csproj`
-- `src/ChronoDesk.App/Views/AboutWindow.axaml.cs`
-- `src/ChronoDesk.Infrastructure/Persistence/JsonSettingsStore.cs`
-- `tests/ChronoDesk.Tests/HeadlessUiSmokeTests.cs`
-- `tests/ChronoDesk.Tests/JsonSettingsStoreTests.cs`
-- `what_changed.md`
+Phase 7 was merged through PR #18 (`release: finalize ChronoDesk version 2.6.0.2 hardening`) with merge commit `d8179bdcac162059968c1700711e09e6ce904f63`.
 
-## Verification status
+That pass established `2.6.0.2` version metadata, full four-component About rendering, transient-settings-read safety, version/tag verification, three-platform CI, release checksums, and the release/privacy/security documentation baseline. Phase 8 builds on that work.
 
-### Completed by repository/source inspection
+## Verification status for Phase 8
 
-- Required version metadata changed to `2.6.0.2`: **completed**.
-- About four-component rendering defect identified and fixed: **completed**.
-- Regression coverage for About version rendering added: **completed**.
-- Transient settings-read quarantine risk identified and fixed: **completed**.
-- Regression coverage for locked valid settings added: **completed**.
-- Version consistency/tag verifier added: **completed**.
-- CI integration for version verification added: **completed**.
-- Four-component release tag policy implemented: **completed**.
-- Release ZIP policy/support docs bundling added: **completed**.
-- SHA-256 checksum generation/publishing added: **completed**.
-- Release/testing/security/privacy/contributor/maintenance documentation synchronized: **completed**.
-- Complete PR #18 changed-file list reviewed: **completed**.
-- Complete PR #18 unified diff reviewed for version drift, workflow/script issues, test compile risk, persistence behavior, and documentation contradictions: **completed**.
-- PR #18 mergeability before merge: **PASS**.
-- PR #18 merge to `main`: **PASS**.
-- Merge commit present at `main`: **PASS**, `d8179bdcac162059968c1700711e09e6ce904f63` before this post-merge handoff commit.
+### Completed by repository/source review
 
-### Automated workflow state observed for the final PR head
+- startup implementations reviewed across Windows/macOS/Linux: **completed**;
+- existing `--background` behavior reviewed: **completed** — `MainWindow` already recognizes the argument, so no duplicate command-line handling was introduced;
+- Windows substring-match defect identified and fixed: **completed**;
+- deterministic Windows startup command tests added: **completed**;
+- Linux XDG serialization weakness identified and fixed: **completed**;
+- deterministic Linux serializer tests added: **completed**;
+- macOS plist generation extracted and tested: **completed**;
+- plist test parsing hardened with DTD processing disabled: **completed**;
+- Windows/Linux ARM64 release RIDs added: **completed**;
+- README/roadmap/testing/release/changelog synchronized: **completed**;
+- PR #20 opened and currently mergeable according to GitHub: **completed**.
 
-For final PR head `011711503703c7cdc64120cafe9dbb5fdc11e0f5`, GitHub created these pull-request workflow runs:
+### Workflow evidence observed during this pass
 
-- CI run `333` / run id `32252935771` — **queued** when last observed before merge;
-- CodeQL run `332` / run id `32252936297` — **queued** when last observed before merge;
-- Dependency Review run `270` / run id `32252935476` — **queued** when last observed before merge.
+For earlier PR head `eac486900fadd1923539e1c339b59dd198855cff` before the subsequent Windows-hardening commits:
 
-Queued is not passing evidence. These conclusions must not be rewritten as successful unless GitHub later reports success.
+- Dependency Review run `32468873621`: **success**;
+- CodeQL run `32468873600`: was **in progress** when observed;
+- CI run `32468873588`: had started its Windows/Ubuntu/macOS jobs when observed.
 
-### Repository settings observed
-
-The actual GitHub `main` branch was observed as **not protected** both before and immediately after PR #18 was merged (`protected: false`). Branch protection/rulesets are GitHub repository settings rather than files in the source tree.
-
-The available GitHub connector in this pass exposes branch/ref operations but does not expose a branch-protection/ruleset mutation action. Therefore the source documentation is prepared, but an administrator must enable/verify the desired `main` ruleset in GitHub settings before release.
+Those workflow results do **not** certify the final Phase 8 head because later commits supersede that SHA. The final head must receive its own GitHub checks before a green claim or merge decision is recorded.
 
 ### Local execution limitation
 
-This chat execution environment did not provide `dotnet` or `pwsh` for an authoritative local build/test/script run. Therefore no local PASS claim is invented.
+This chat environment does not provide an authoritative local .NET/PowerShell toolchain for this repository. No local `dotnet build`, `dotnet test`, `dotnet format`, or PowerShell-script PASS is claimed.
 
-The expected automated verification for the exact release commit is:
+The expected checks remain:
 
 ```text
 ./scripts/check-version.ps1
@@ -182,65 +174,24 @@ dotnet test ChronoDesk.sln --configuration Release --no-build --collect:"XPlat C
 dotnet list ChronoDesk.sln package --vulnerable --include-transitive
 ```
 
-For the actual tag, additionally:
+## Remaining release evidence
 
-```text
-./scripts/check-version.ps1 -Tag "v2.6.0.2"
-```
-
-## Remaining release evidence (not source-code omissions)
-
-- Green CI/CodeQL/dependency-security results for the exact release commit.
-- Windows 11 tray/minimize/startup/chime/keyboard/accessibility validation.
-- macOS Intel/Apple Silicon tray/startup/chime/VoiceOver/lifecycle validation.
-- Linux GNOME/KDE tray/XDG-autostart/chime/accessibility validation.
-- Real screenshots from verified release builds.
-- Clean-checkout publish/launch validation for every advertised RID.
-- Actual GitHub `main` branch ruleset/protection and required-status-check configuration.
-- Exact tagged-tree secret/private-data/documentation review.
-- Downloaded ZIP SHA-256 verification against `SHA256SUMS.txt`.
-- Packaged About/file metadata confirmation of `2.6.0.2`.
-- A real prior-version migration fixture when a prior tagged build exists.
-
-These are deliberately left open until evidence exists.
-
-## Commits created in the `2.6.0.2` branch pass
-
-- `b117e95` — `build: set ChronoDesk version to 2.6.0.2`
-- `7e068de` — `fix: display full four-part application version`
-- `2ffa7bd` — `test: verify full four-part About version`
-- `a574306` — `chore: add release version consistency verifier`
-- `e8c3319` — `ci: verify four-part version metadata`
-- `0c24b92` — `ci: harden four-part release packaging`
-- `5cad868` — `fix: preserve settings on transient read failures`
-- `2c59f27` — `test: preserve valid settings across transient read failures`
-- `41c71cf` — `test: make About version assertion nullable-safe`
-- `4b5d305` — `docs: adopt ChronoDesk 2.6.0.2 release versioning`
-- `ccd3d53` — `docs: document version and persistence regression gates`
-- `2a158f2` — `docs: align roadmap with version 2.6.0.2`
-- `5e4c1a4` — `docs: record 2.6.0.2 final hardening changes`
-- `8ab45bb` — `docs: publish 2.6.0.2 source version guidance`
-- `f132c80` — `docs: clarify transient settings read privacy behavior`
-- `ef2638e` — `docs: finalize 2.6.0.2 audit criteria`
-- `ec53bdc` — `docs: update release notes for four-part versions`
-- `54dde6d` — `docs: align GitHub maintenance with 2.6.0.2 releases`
-- `aed97cc` — `docs: add version verification to contributor workflow`
-- `8e121ec` — `docs: add version checks to pull request template`
-- `7dafcf5` — `docs: align security policy with 2.6.0.2 hardening`
-- `2b2b2cc` — `docs: record 2.6.0.2 final release hardening handoff`
-- `b6d35c1` — `test: simplify About version assertion`
-- `0117115` — `docs: record final 2.6.0.2 pull request review state`
-- `d8179bd` — `merge: finalize ChronoDesk 2.6.0.2 source hardening`
-- post-merge handoff: this commit on `main`.
+- green CI, CodeQL, and dependency-security checks for the exact release candidate;
+- Windows x64 and ARM64 launch/startup/tray/chime/accessibility validation on matching environments;
+- macOS x64 and ARM64 launch/startup/tray/chime/VoiceOver/lifecycle validation;
+- Linux x64 and ARM64 package validation plus GNOME/KDE tray/XDG-autostart/chime/accessibility checks where practical;
+- real screenshots from verified release builds;
+- clean-checkout publish/launch validation for every advertised RID;
+- actual GitHub `main` branch ruleset/protection and required-status-check configuration;
+- exact tagged-tree secret/private-data/documentation review;
+- downloaded ZIP SHA-256 verification against `SHA256SUMS.txt`;
+- packaged About/file metadata confirmation of `2.6.0.2`;
+- a real prior-version migration fixture when a prior tagged build exists.
 
 ## Next exact tasks
 
-No additional source-code or repository-file change was identified as required by this final pass. The remaining work is release evidence and GitHub repository configuration:
-
-1. require green CI/CodeQL/dependency-security results for the exact release candidate;
-2. enable/verify the intended `main` branch protection/ruleset and exact required status-check contexts in GitHub settings;
-3. perform the documented Windows/macOS/Linux and accessibility checks;
-4. capture verified release screenshots;
-5. perform clean-checkout publish/launch validation for every advertised RID;
-6. create `v2.6.0.2` only after those gates pass;
-7. verify the generated release ZIPs and `SHA256SUMS.txt` after publication.
+1. Observe CI, CodeQL, and Dependency Review for the final PR #20 head.
+2. Fix any final-head build/test/format/security failure that is actionable in source.
+3. Merge PR #20 only when the observed repository evidence is sufficient; do not fabricate green checks.
+4. Record the final PR head/check/merge state in this handoff after merge or if the PR must remain open.
+5. Keep `v2.6.0.2` untagged until native desktop and release-evidence gates are completed.
