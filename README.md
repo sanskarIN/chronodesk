@@ -104,11 +104,11 @@ ChronoDesk targets desktop systems supported by Avalonia and .NET 9:
 
 | Platform | Target | Notes |
 |---|---|---|
-| Windows | x64 | User-level startup registration through the current-user Run key. |
+| Windows | x64 / arm64 | User-level startup registration through the current-user Run key. |
 | macOS | x64 / arm64 | User LaunchAgent startup integration. |
-| Linux | x64 | XDG autostart integration; tray/chime behavior can vary by desktop environment. |
+| Linux | x64 / arm64 | XDG autostart integration; tray/chime behavior can vary by desktop environment. |
 
-Release automation produces self-contained ZIP artifacts for `win-x64`, `linux-x64`, `osx-x64`, and `osx-arm64` when a verified four-component tag such as `v2.6.0.2` is pushed.
+Release automation produces self-contained ZIP artifacts for `win-x64`, `win-arm64`, `linux-x64`, `linux-arm64`, `osx-x64`, and `osx-arm64` when a verified four-component tag such as `v2.6.0.2` is pushed.
 
 ## Technology stack
 
@@ -209,6 +209,7 @@ The current automated suite covers:
 - JSON settings round-trip, backup/export/import, malformed-data recovery, and transient read failure behavior.
 - timezone catalog discovery/search/fallback behavior.
 - startup preference rollback/import behavior.
+- Linux XDG autostart `Exec` quoting/escaping and macOS LaunchAgent plist generation.
 - malformed import fuzzing and settings property invariants.
 - Avalonia headless window smoke coverage including focus/mini transitions and exact `2.6.0.2` About version rendering.
 
@@ -239,7 +240,7 @@ dotnet publish src/ChronoDesk.App/ChronoDesk.App.csproj \
   -p:IncludeNativeLibrariesForSelfExtract=true
 ```
 
-Equivalent RIDs used by release automation are `linux-x64`, `osx-x64`, and `osx-arm64`.
+Equivalent RIDs used by release automation are `win-arm64`, `linux-x64`, `linux-arm64`, `osx-x64`, and `osx-arm64`.
 
 Tagged release ZIPs include the application plus `LICENSE`, `README.md`, `CHANGELOG.md`, `PRIVACY.md`, `SECURITY.md`, and `SUPPORT.md`. The release workflow also publishes `SHA256SUMS.txt` so downloaded ZIPs can be integrity-checked.
 
