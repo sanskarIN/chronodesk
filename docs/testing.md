@@ -94,6 +94,14 @@ Tests must not read or write the developer's real ChronoDesk data folder.
 
 ### Platform startup artifact serialization
 
+`WindowsStartupCommandTests` verifies deterministic Run-key command generation/matching without mutating the registry. Coverage includes:
+
+- quoting executable paths containing spaces;
+- keeping `--background` as the canonical argument;
+- case-insensitive canonical command matching with harmless outer whitespace;
+- rejecting substring lookalikes and commands with unexpected extra arguments;
+- rejecting executable path strings containing quotes, carriage returns, or newlines.
+
 `LinuxDesktopEntryTests` verifies deterministic XDG autostart `Exec` generation without touching a real desktop session. Coverage includes:
 
 - executable paths containing spaces;
