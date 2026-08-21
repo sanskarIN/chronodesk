@@ -5,6 +5,11 @@ public sealed record WorldClock(
     string DisplayName,
     string TimeZoneId)
 {
-    public static WorldClock Create(string displayName, string timeZoneId) =>
-        new(Guid.NewGuid().ToString("N"), displayName.Trim(), timeZoneId.Trim());
+    public static WorldClock Create(string displayName, string timeZoneId)
+    {
+        return new WorldClock(
+            Guid.NewGuid().ToString("N"),
+            displayName.Trim(),
+            timeZoneId.Trim());
+    }
 }
