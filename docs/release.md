@@ -117,7 +117,8 @@ Minimum release-candidate coverage:
 - settings import/export;
 - optional chime;
 - keyboard-only navigation;
-- high contrast and text scaling.
+- high contrast and text scaling;
+- x64 and arm64 packaged-target launch validation where matching hardware is available.
 
 ### macOS
 
@@ -135,6 +136,7 @@ Test at least one GNOME-family and, when practical, one KDE-family session. Reco
 
 - distribution/version;
 - desktop environment;
+- CPU architecture and matching x64/arm64 package;
 - tray/status notifier result;
 - XDG autostart result;
 - which optional sound helper, if any, supplied chime playback.
@@ -171,13 +173,15 @@ dotnet publish src/ChronoDesk.App/ChronoDesk.App.csproj \
 Equivalent release-workflow RIDs:
 
 - `win-x64`
+- `win-arm64`
 - `linux-x64`
+- `linux-arm64`
 - `osx-x64`
 - `osx-arm64`
 
 The release workflow also copies `LICENSE`, `README.md`, `CHANGELOG.md`, `PRIVACY.md`, `SECURITY.md`, and `SUPPORT.md` into every ZIP so distributed artifacts remain self-describing.
 
-Launch the produced executable on the matching platform before tagging whenever possible.
+Launch the produced executable on the matching platform and CPU architecture before tagging whenever possible.
 
 ## 7. Create the tag
 
@@ -207,7 +211,7 @@ For each release ZIP:
 - inspect the archive contents;
 - confirm the bundled license/privacy/security/support documents are present;
 - extract to a fresh folder;
-- verify the application launches;
+- verify the application launches on the matching OS/architecture;
 - confirm About displays the exact four-part version;
 - repeat a clock/settings smoke test;
 - check that no settings/log/test-result files were packaged accidentally.
@@ -272,6 +276,7 @@ A release candidate is not ready to tag until:
 - clean restore/build/test/format checks pass;
 - dependency/security checks are reviewed;
 - core user journeys are manually exercised on target desktops;
+- x64/arm64 packages are validated on matching hardware where advertised;
 - accessibility basics are manually reviewed;
 - startup/tray/chime platform differences are documented accurately;
 - real release screenshots contain no private data;
