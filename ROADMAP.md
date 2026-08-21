@@ -53,6 +53,7 @@ Status: **Source implementation present; manual validation required**
 - [x] User-level Windows startup adapter.
 - [x] User-level macOS LaunchAgent adapter.
 - [x] User-level Linux XDG autostart adapter.
+- [x] Windows Run-key command generation/detection uses a canonical exact command rather than substring matching.
 - [x] Linux XDG `Exec` generation follows freedesktop quoting/field-code rules for executable paths.
 - [x] macOS LaunchAgent XML generation isolated from filesystem mutation.
 - [x] OS timezone database strategy.
@@ -77,6 +78,7 @@ Status: **Implemented for domain/persistence/headless UI and startup-artifact fo
 - [x] Transient settings-read failures preserve the original settings file and recover after the lock clears.
 - [x] Timezone catalog tests.
 - [x] Startup-persistence rollback and unreadable-settings initialization regression tests.
+- [x] Windows startup command generation/matching tests.
 - [x] Linux XDG autostart `Exec` quoting/escaping tests.
 - [x] macOS LaunchAgent plist generation tests.
 - [x] Deterministic property-style tests for quiet hours/settings invariants.
