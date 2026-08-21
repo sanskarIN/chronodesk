@@ -32,6 +32,7 @@ All notable ChronoDesk changes are documented here. ChronoDesk uses four-compone
 - Deterministic malformed-import fuzz coverage and oversized-import rejection.
 - Avalonia headless XUnit smoke tests for primary windows and focus/mini transitions.
 - Headless regression coverage for the full four-part About version.
+- Windows startup command generation/matching regression coverage.
 - Linux XDG autostart `Exec` quoting/escaping regression coverage.
 - macOS LaunchAgent plist-generation regression coverage.
 - Three-platform CI for version validation, formatting, local Markdown-link verification, build, tests, and NuGet vulnerability inspection.
@@ -54,7 +55,7 @@ All notable ChronoDesk changes are documented here. ChronoDesk uses four-compone
 - Set `Version`, `PackageVersion`, `AssemblyVersion`, and `FileVersion` to `2.6.0.2`.
 - Release tags now use four components and must exactly match the application version.
 - Release packaging now targets `win-x64`, `win-arm64`, `linux-x64`, `linux-arm64`, `osx-x64`, and `osx-arm64`.
-- macOS LaunchAgent and Linux desktop-entry generation are isolated from startup filesystem mutation so their serialized platform artifacts can be tested deterministically.
+- Windows startup command generation, macOS LaunchAgent generation, and Linux desktop-entry generation are isolated from OS mutation so their serialized platform artifacts can be tested deterministically.
 - Imported world clocks now use case-insensitive ID and timezone-ID uniqueness, matching interactive world-clock behavior.
 
 ### Fixed
@@ -67,6 +68,7 @@ All notable ChronoDesk changes are documented here. ChronoDesk uses four-compone
 - Temporary settings read failures no longer attempt to quarantine/rename a potentially valid settings file as corrupt.
 - Exiting focus mode now restores the pre-focus window state instead of always forcing a normal window.
 - Unix chime helper processes no longer redirect unconsumed output streams, removing an avoidable pipe-stall risk.
+- Windows startup detection now requires the canonical ChronoDesk Run-key command instead of accepting any registry command that merely contains the current executable path as a substring.
 - Linux XDG autostart executable paths now escape backslashes, quotes, dollar signs, backticks, and literal percent characters according to desktop-entry `Exec` parsing rules, while rejecting path forms that cannot be represented safely.
 
 ### Security
