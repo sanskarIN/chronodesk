@@ -53,6 +53,8 @@ Status: **Source implementation present; manual validation required**
 - [x] User-level Windows startup adapter.
 - [x] User-level macOS LaunchAgent adapter.
 - [x] User-level Linux XDG autostart adapter.
+- [x] Linux XDG `Exec` generation follows freedesktop quoting/field-code rules for executable paths.
+- [x] macOS LaunchAgent XML generation isolated from filesystem mutation.
 - [x] OS timezone database strategy.
 - [x] Best-effort local system chime adapters.
 - [x] Chime helper process execution avoids unconsumed redirected output streams.
@@ -65,7 +67,7 @@ Status: **Source implementation present; manual validation required**
 
 ## Phase 4 — Automated quality depth
 
-Status: **Implemented for domain/persistence/headless UI; native-desktop validation remains**
+Status: **Implemented for domain/persistence/headless UI and startup-artifact formatting; native-desktop validation remains**
 
 - [x] Clock formatting tests.
 - [x] Quiet-hour boundary tests.
@@ -75,6 +77,8 @@ Status: **Implemented for domain/persistence/headless UI; native-desktop validat
 - [x] Transient settings-read failures preserve the original settings file and recover after the lock clears.
 - [x] Timezone catalog tests.
 - [x] Startup-persistence rollback and unreadable-settings initialization regression tests.
+- [x] Linux XDG autostart `Exec` quoting/escaping tests.
+- [x] macOS LaunchAgent plist generation tests.
 - [x] Deterministic property-style tests for quiet hours/settings invariants.
 - [x] Deterministic malformed-import fuzz coverage and oversized-input rejection.
 - [x] Avalonia headless XUnit smoke tests for primary windows and focus/mini transitions.
@@ -83,7 +87,7 @@ Status: **Implemented for domain/persistence/headless UI; native-desktop validat
 - [x] Imported world-clock uniqueness tests.
 - [x] Multi-OS CI.
 - [x] Four-part version consistency verification in CI.
-- [ ] Add startup-adapter tests through isolated fake filesystem/registry abstractions if platform regressions justify the extra abstraction.
+- [ ] Add isolated Windows registry startup-adapter mutation tests if a platform regression justifies the extra abstraction.
 - [ ] Add deeper headless interaction tests for file-picker-independent settings flows after the first full CI pass establishes stable baseline behavior.
 
 ## Phase 5 — Release readiness
@@ -91,7 +95,7 @@ Status: **Implemented for domain/persistence/headless UI; native-desktop validat
 Status: **Version `2.6.0.2` metadata prepared; native release validation still required**
 
 - [x] Tagged release workflow.
-- [x] Self-contained artifact matrix.
+- [x] Self-contained x64/arm64 artifact matrix for Windows, macOS, and Linux.
 - [x] Release documentation baseline.
 - [x] README screenshot placeholder clearly identified as a placeholder.
 - [x] Application, package, assembly, and file metadata set to `2.6.0.2`.
