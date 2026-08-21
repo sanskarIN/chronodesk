@@ -9,10 +9,16 @@ public sealed class LinuxDesktopEntryTests
     {
         var content = LinuxDesktopEntry.Create("/opt/Chrono Desk/$clock`100%/chrono\\desk");
         var execLine = GetExecLine(content);
+        var expected =
+            "Exec=\"/opt/Chrono Desk/"
+            + new string('\\', 2)
+            + "$clock"
+            + new string('\\', 2)
+            + "`100%%/chrono"
+            + new string('\\', 4)
+            + "desk\" --background";
 
-        Assert.Equal(
-            "Exec=\"/opt/Chrono Desk/\\\\$clock\\\\`100%%/chrono\\\\\\\\desk\" --background",
-            execLine);
+        Assert.Equal(expected, execLine);
     }
 
     [Fact]
@@ -20,10 +26,14 @@ public sealed class LinuxDesktopEntryTests
     {
         var content = LinuxDesktopEntry.Create("/opt/Chrono \"Desk\"/chronodesk");
         var execLine = GetExecLine(content);
+        var expected =
+            "Exec=\"/opt/Chrono "
+            + new string('\\', 2)
+            + "\"Desk"
+            + new string('\\', 2)
+            + "\"/chronodesk\" --background";
 
-        Assert.Equal(
-            "Exec=\"/opt/Chrono \\\\"Desk\\\\\"/chronodesk\" --background",
-            execLine);
+        Assert.Equal(expected, execLine);
     }
 
     [Theory]
