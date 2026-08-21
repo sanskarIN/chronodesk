@@ -100,7 +100,7 @@ public sealed partial class App : Application
         }
         catch (Exception exception)
         {
-            Services.Logger.Error("tray.initialize_failed", exception, "System tray integration could not be initialized.");
+            Services.Logger.LogError("tray.initialize_failed", exception, "System tray integration could not be initialized.");
         }
     }
 
