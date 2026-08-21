@@ -73,7 +73,7 @@ public sealed class PlatformStartupManager : IStartupManager
     {
         using var key = Registry.CurrentUser.OpenSubKey(WindowsRunKey, writable: false);
         return key?.GetValue(AppName) is string value
-            && value.Contains(executablePath, StringComparison.OrdinalIgnoreCase);
+            && WindowsStartupCommand.Matches(value, executablePath);
     }
 
     [SupportedOSPlatform("windows")]
@@ -84,7 +84,10 @@ public sealed class PlatformStartupManager : IStartupManager
 
         if (enabled)
         {
-            key.SetValue(AppName, $"\"{executablePath}\" --background", RegistryValueKind.String);
+            key.SetValue(
+                AppName,
+                WindowsStartupCommand.Create(executablePath),
+                RegistryValueKind.String);
         }
         else
         {
