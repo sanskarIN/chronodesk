@@ -218,7 +218,7 @@ public sealed class MainWindowViewModelTests
         {
         }
 
-        public void Error(string eventName, Exception exception, string safeMessage)
+        public void LogError(string eventName, Exception exception, string safeMessage)
         {
         }
     }
