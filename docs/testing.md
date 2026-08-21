@@ -92,6 +92,24 @@ Tests must not read or write the developer's real ChronoDesk data folder.
 - portable imports cannot silently change the machine startup preference;
 - unreadable settings fall back to defaults while the clock, world clocks, and timezone search still initialize.
 
+### Platform startup artifact serialization
+
+`LinuxDesktopEntryTests` verifies deterministic XDG autostart `Exec` generation without touching a real desktop session. Coverage includes:
+
+- executable paths containing spaces;
+- escaping for backslashes, double quotes, dollar signs, and backticks inside a quoted `Exec` token;
+- literal percent escaping as `%%` so a path cannot accidentally create a desktop-entry field code;
+- rejection of executable paths containing `=`, carriage returns, or newlines where a safe executable token cannot be emitted.
+
+`MacLaunchAgentPlistTests` verifies deterministic LaunchAgent generation without touching a real `~/Library/LaunchAgents` directory. Coverage includes:
+
+- XML-safe preservation of an executable path containing `&`, `<`, and `>`;
+- the stable `com.sanskar.chronodesk` label;
+- `--background` as a distinct `ProgramArguments` entry;
+- `RunAtLoad` enabled.
+
+The plist tests parse generated XML with DTD processing disabled. These serializer tests reduce platform-regression risk, but they intentionally do **not** claim that Registry, LaunchAgent, or XDG startup enable/disable behavior has been validated in a native desktop session.
+
 ### Timezone catalog
 
 `SystemTimeZoneCatalogTests` verifies:
