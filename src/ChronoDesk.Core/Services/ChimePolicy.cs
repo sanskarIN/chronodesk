@@ -1,9 +1,14 @@
+using System.Diagnostics.CodeAnalysis;
 using ChronoDesk.Core.Models;
 
 namespace ChronoDesk.Core.Services;
 
 public sealed class ChimePolicy
 {
+    [SuppressMessage(
+        "Performance",
+        "CA1822:Mark members as static",
+        Justification = "The policy is intentionally an instance service so it can remain an injectable application dependency.")]
     public bool ShouldChime(
         DateTimeOffset instant,
         TimeZoneInfo timeZone,
@@ -43,17 +48,13 @@ public sealed class ChimePolicy
 
     private static bool IsIntervalBoundary(DateTimeOffset local, ChimeInterval interval)
     {
-        if (local.Second != 0)
-        {
-            return false;
-        }
-
-        return interval switch
-        {
-            ChimeInterval.Hourly => local.Minute == 0,
-            ChimeInterval.HalfHourly => local.Minute is 0 or 30,
-            ChimeInterval.QuarterHourly => local.Minute % 15 == 0,
-            _ => false,
-        };
+        return local.Second == 0
+            && (interval switch
+            {
+                ChimeInterval.Hourly => local.Minute == 0,
+                ChimeInterval.HalfHourly => local.Minute is 0 or 30,
+                ChimeInterval.QuarterHourly => local.Minute % 15 == 0,
+                _ => false,
+            });
     }
 }
