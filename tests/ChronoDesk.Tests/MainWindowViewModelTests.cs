@@ -77,6 +77,54 @@ public sealed class MainWindowViewModelTests
     }
 
     [Fact]
+    public async Task RenameWorldClockAsync_PersistsTrimmedLabelWithoutChangingIdentity()
+    {
+        var originalClock = new WorldClock("clock-1", "Office", "UTC");
+        var store = new MemorySettingsStore(new AppSettings
+        {
+            IsFirstRun = false,
+            WorldClocks =
+            [
+                originalClock,
+                new WorldClock("clock-2", "Backup", "Etc/UTC"),
+            ],
+        });
+        var startup = new RecordingStartupManager();
+        var viewModel = CreateViewModel(store, startup);
+        await viewModel.InitializeAsync();
+
+        await viewModel.RenameWorldClockAsync(originalClock.Id, "  Team HQ  ");
+
+        Assert.NotNull(store.LastSaved);
+        var renamed = Assert.Single(
+            store.LastSaved!.WorldClocks,
+            clock => string.Equals(clock.Id, originalClock.Id, StringComparison.Ordinal));
+        Assert.Equal("Team HQ", renamed.DisplayName);
+        Assert.Equal(originalClock.TimeZoneId, renamed.TimeZoneId);
+        Assert.Contains(viewModel.WorldClocks, clock =>
+            clock.Id == originalClock.Id && clock.DisplayName == "Team HQ");
+    }
+
+    [Fact]
+    public async Task RenameWorldClockAsync_IgnoresBlankLabel()
+    {
+        var originalClock = new WorldClock("clock-1", "Office", "UTC");
+        var store = new MemorySettingsStore(new AppSettings
+        {
+            IsFirstRun = false,
+            WorldClocks = [originalClock],
+        });
+        var startup = new RecordingStartupManager();
+        var viewModel = CreateViewModel(store, startup);
+        await viewModel.InitializeAsync();
+
+        await viewModel.RenameWorldClockAsync(originalClock.Id, "   ");
+
+        Assert.Null(store.LastSaved);
+        Assert.Equal("Office", Assert.Single(viewModel.Settings.WorldClocks).DisplayName);
+    }
+
+    [Fact]
     public async Task UpdateSettingsAsync_AppliesStartupOnceAfterExplicitPreferenceChange()
     {
         var store = new MemorySettingsStore(new AppSettings
