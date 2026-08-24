@@ -29,13 +29,14 @@ Behavior:
 
 - each saved world clock shows an editable label field;
 - `Save changes` persists the label through the existing settings store;
-- Enter saves the current label from the keyboard;
+- Enter saves the current label from the keyboard and is handled before asynchronous persistence begins;
 - Escape cancels the edit and restores the persisted label;
 - surrounding whitespace is trimmed;
 - existing settings normalization enforces the 160-character single-line label limit and removes control characters;
 - blank submissions restore/retain the existing label instead of causing a settings write;
 - user-visible rename status is generated from the normalized persisted label rather than raw editor input;
 - renaming does not change the world-clock ID or timezone ID;
+- editor and action controls use separate rows so cards remain usable at narrower desktop widths;
 - settings remain local and offline, consistent with the existing privacy model.
 
 ### Regression coverage
@@ -73,10 +74,10 @@ dotnet list ChronoDesk.sln package --vulnerable --include-transitive
 Priority order for the next slice:
 
 1. add deeper headless UI coverage for the inline world-clock editor when reliable templated-control interaction is established in the headless harness;
-2. improve world-clock card responsiveness at narrow desktop widths;
-3. continue runtime-localization work only after a reliable live-refresh strategy is defined;
-4. consider richer offline calendar details without adding accounts, tracking, or mandatory network services;
-5. evaluate installer signing/notarization only when real signing infrastructure is available.
+2. continue runtime-localization work only after a reliable live-refresh strategy is defined;
+3. consider richer offline calendar details without adding accounts, tracking, or mandatory network services;
+4. evaluate installer signing/notarization only when real signing infrastructure is available;
+5. strengthen automated desktop accessibility checks where tooling produces stable cross-platform evidence.
 
 ## Release relationship
 
