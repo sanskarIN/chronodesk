@@ -81,7 +81,8 @@
                         Text="{Binding EditableDisplayName}"
                         MinWidth="120"
                         MaxLength="160"
-                        VerticalContentAlignment="Center" />
+                        VerticalContentAlignment="Center"
+                        KeyDown="WorldClockLabel_OnKeyDown" />
                     <Button
                         Grid.Column="1"
                         Content="{x:Static loc:Strings.ActionSaveChanges}"
