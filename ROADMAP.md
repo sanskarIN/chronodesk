@@ -141,8 +141,8 @@ Status: **Development started in draft PR #21; intentionally isolated from `main
 - [x] Add rename persistence/normalization/blank-input regression coverage.
 - [x] Make About version smoke coverage resilient to future version bumps.
 - [x] Separate next-version changelog and development handoff from the `2.6.0.2` release-candidate record.
+- [x] Improve world-clock card responsiveness at narrow desktop widths by separating the editor and action rows.
 - [ ] Add deeper headless templated-control interaction coverage for world-clock editing when the harness can exercise it reliably.
-- [ ] Improve world-clock card responsiveness at narrow desktop widths.
 - [ ] Confirm CI, CodeQL, and Dependency Review are green for the final 2.7 development slice before marking PR #21 ready for review.
 - [ ] Merge next-version work only after the `2.6.0.2` release/tag decision is complete.
 
