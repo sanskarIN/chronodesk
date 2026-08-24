@@ -2,7 +2,33 @@
 
 All notable ChronoDesk changes are documented here. ChronoDesk uses four-component release versions (`MAJOR.MINOR.PATCH.REVISION`) and does not claim a published release before its verification gates are complete.
 
-## [Unreleased — target 2.6.0.2]
+## [Unreleased — target 2.7.0.0]
+
+### Added
+
+- Inline editable labels for saved world-clock cards while preserving each clock's ID and timezone identity.
+- Keyboard world-clock label editing: Enter saves and Escape restores the persisted label.
+- Regression coverage for world-clock rename persistence, normalization, identity preservation, normalized status text, and blank-label rejection.
+- `docs/next-version.md` as the dedicated next-version development and validation handoff.
+
+### Changed
+
+- Set next-version branch `Version`, `PackageVersion`, `AssemblyVersion`, and `FileVersion` metadata to `2.7.0.0`.
+- World-clock rename status now uses the normalized persisted label rather than raw editor input.
+- The About headless smoke test derives the expected four-part version from the application assembly instead of embedding a release-specific version literal.
+
+### Fixed
+
+- Blank world-clock label submissions no longer leave an empty editor value; the persisted label is restored without a settings write.
+- A version bump no longer makes the About smoke test fail solely because a previous release version was hardcoded in the assertion.
+
+### Validation
+
+- Development is isolated on `next-version-2.7.0.0` in draft PR #21.
+- PR #21 must remain unmerged until the `2.6.0.2` release/tag decision is complete.
+- Local build/test success is not claimed from the chat environment; CI, CodeQL, and Dependency Review remain authoritative automated evidence for the branch head.
+
+## [Unreleased release candidate — target 2.6.0.2]
 
 ### Added
 
@@ -89,4 +115,4 @@ All notable ChronoDesk changes are documented here. ChronoDesk uses four-compone
 
 ## Release policy
 
-A final `## [2.6.0.2] - YYYY-MM-DD` section will replace the target header only when the clean-checkout verification in `docs/release.md` has been completed and the corresponding `v2.6.0.2` Git tag is ready to publish.
+The `2.6.0.2` release candidate remains gated by the clean-checkout and native release verification in `docs/release.md`; its final `## [2.6.0.2] - YYYY-MM-DD` section and `v2.6.0.2` tag must not be created until those gates pass. The `2.7.0.0` development line is intentionally isolated from `main` until that release decision is complete.
