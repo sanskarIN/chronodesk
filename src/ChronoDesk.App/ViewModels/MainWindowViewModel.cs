@@ -192,6 +192,36 @@ public sealed class MainWindowViewModel : ObservableObject
         StatusMessage = $"{Strings.AddedPrefix} {label}";
     }
 
+    public async Task RenameWorldClockAsync(
+        string id,
+        string? displayName,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(id);
+
+        var label = displayName?.Trim();
+        if (string.IsNullOrWhiteSpace(label))
+        {
+            return;
+        }
+
+        var clocks = Settings.WorldClocks
+            .Select(clock => string.Equals(clock.Id, id, StringComparison.OrdinalIgnoreCase)
+                ? clock with { DisplayName = label }
+                : clock)
+            .ToList();
+
+        var changedClock = clocks.FirstOrDefault(clock =>
+            string.Equals(clock.Id, id, StringComparison.OrdinalIgnoreCase));
+        if (changedClock is null)
+        {
+            return;
+        }
+
+        await UpdateSettingsAsync(Settings with { WorldClocks = clocks }, cancellationToken);
+        StatusMessage = $"{Strings.WorldClocksTitle}: {changedClock.DisplayName}";
+    }
+
     public async Task RemoveWorldClockAsync(
         string id,
         CancellationToken cancellationToken = default)
