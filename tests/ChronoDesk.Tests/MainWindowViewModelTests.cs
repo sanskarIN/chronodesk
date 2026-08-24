@@ -77,7 +77,7 @@ public sealed class MainWindowViewModelTests
     }
 
     [Fact]
-    public async Task RenameWorldClockAsync_PersistsTrimmedLabelWithoutChangingIdentity()
+    public async Task RenameWorldClockAsync_PersistsNormalizedLabelWithoutChangingIdentity()
     {
         var originalClock = new WorldClock("clock-1", "Office", "UTC");
         var store = new MemorySettingsStore(new AppSettings
@@ -93,7 +93,7 @@ public sealed class MainWindowViewModelTests
         var viewModel = CreateViewModel(store, startup);
         await viewModel.InitializeAsync();
 
-        await viewModel.RenameWorldClockAsync(originalClock.Id, "  Team HQ  ");
+        await viewModel.RenameWorldClockAsync(originalClock.Id, "  Team\nHQ  ");
 
         Assert.NotNull(store.LastSaved);
         var renamed = Assert.Single(
@@ -103,6 +103,7 @@ public sealed class MainWindowViewModelTests
         Assert.Equal(originalClock.TimeZoneId, renamed.TimeZoneId);
         Assert.Contains(viewModel.WorldClocks, clock =>
             clock.Id == originalClock.Id && clock.DisplayName == "Team HQ");
+        Assert.Equal($"{Strings.WorldClocksTitle}: Team HQ", viewModel.StatusMessage);
     }
 
     [Fact]
