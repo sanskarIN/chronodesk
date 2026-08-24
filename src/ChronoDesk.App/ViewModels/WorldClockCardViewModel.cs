@@ -7,6 +7,7 @@ public sealed class WorldClockCardViewModel : ObservableObject
 {
     private readonly ClockFormatter formatter;
     private readonly TimeZoneInfo timeZone;
+    private string editableDisplayName;
     private string timeText = string.Empty;
     private string dateText = string.Empty;
     private string zoneText = string.Empty;
@@ -19,6 +20,7 @@ public sealed class WorldClockCardViewModel : ObservableObject
         Model = model ?? throw new ArgumentNullException(nameof(model));
         this.timeZone = timeZone ?? throw new ArgumentNullException(nameof(timeZone));
         this.formatter = formatter ?? throw new ArgumentNullException(nameof(formatter));
+        editableDisplayName = model.DisplayName;
     }
 
     public WorldClock Model { get; }
@@ -26,6 +28,12 @@ public sealed class WorldClockCardViewModel : ObservableObject
     public string Id => Model.Id;
 
     public string DisplayName => Model.DisplayName;
+
+    public string EditableDisplayName
+    {
+        get => editableDisplayName;
+        set => SetProperty(ref editableDisplayName, value);
+    }
 
     public string TimeZoneId => Model.TimeZoneId;
 
