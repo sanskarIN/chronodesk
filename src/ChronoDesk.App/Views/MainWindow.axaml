@@ -75,30 +75,28 @@
             </ItemsControl.ItemsPanel>
             <ItemsControl.ItemTemplate>
               <DataTemplate DataType="vm:WorldClockCardViewModel">
-                <Border Classes="softCard" MinWidth="300" Margin="0,0,10,10">
-                  <Grid RowDefinitions="Auto,Auto,Auto" ColumnDefinitions="*,Auto,Auto">
+                <Border Classes="softCard" MinWidth="250" MaxWidth="360" Margin="0,0,10,10">
+                  <Grid RowDefinitions="Auto,Auto,Auto,Auto">
                     <TextBox
                         Text="{Binding EditableDisplayName}"
-                        MinWidth="120"
+                        MinWidth="200"
                         MaxLength="160"
                         VerticalContentAlignment="Center"
-                        KeyDown="WorldClockLabel_OnKeyDown" />
-                    <Button
-                        Grid.Column="1"
-                        Content="{x:Static loc:Strings.ActionSaveChanges}"
-                        Classes="compact"
-                        Tag="{Binding Id}"
-                        Margin="8,0,0,0"
-                        Click="RenameWorldClock_OnClick" />
-                    <Button
-                        Grid.Column="2"
-                        Content="{x:Static loc:Strings.ActionRemove}"
-                        Classes="compact"
-                        Tag="{Binding Id}"
-                        Margin="6,0,0,0"
-                        Click="RemoveWorldClock_OnClick" />
-                    <TextBlock Grid.Row="1" Grid.ColumnSpan="3" Text="{Binding TimeText}" FontSize="30" FontWeight="SemiBold" Margin="0,8,0,0" />
-                    <StackPanel Grid.Row="2" Grid.ColumnSpan="3" Spacing="2" Margin="0,4,0,0">
+                        KeyDown="WorldClockLabel_OnKeyDown"
+                        AutomationProperties.Name="{Binding DisplayName}" />
+                    <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="6" Margin="0,8,0,0">
+                      <Button
+                          Content="{x:Static loc:Strings.ActionSaveChanges}"
+                          Classes="compact"
+                          Click="RenameWorldClock_OnClick" />
+                      <Button
+                          Content="{x:Static loc:Strings.ActionRemove}"
+                          Classes="compact"
+                          Tag="{Binding Id}"
+                          Click="RemoveWorldClock_OnClick" />
+                    </StackPanel>
+                    <TextBlock Grid.Row="2" Text="{Binding TimeText}" FontSize="30" FontWeight="SemiBold" Margin="0,8,0,0" />
+                    <StackPanel Grid.Row="3" Spacing="2" Margin="0,4,0,0">
                       <TextBlock Text="{Binding DateText}" Classes="muted" />
                       <TextBlock Text="{Binding TimeZoneId}" Classes="muted" TextTrimming="CharacterEllipsis" />
                     </StackPanel>
