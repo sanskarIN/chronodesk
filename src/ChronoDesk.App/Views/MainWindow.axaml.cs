@@ -336,8 +336,8 @@ public sealed partial class MainWindow : Window
 
         if (e.Key == Key.Enter)
         {
-            await SaveWorldClockLabelAsync(card);
             e.Handled = true;
+            await SaveWorldClockLabelAsync(card);
         }
     }
 
