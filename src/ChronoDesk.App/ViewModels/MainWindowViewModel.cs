@@ -211,15 +211,18 @@ public sealed class MainWindowViewModel : ObservableObject
                 : clock)
             .ToList();
 
-        var changedClock = clocks.FirstOrDefault(clock =>
-            string.Equals(clock.Id, id, StringComparison.OrdinalIgnoreCase));
-        if (changedClock is null)
+        if (!clocks.Any(clock => string.Equals(clock.Id, id, StringComparison.OrdinalIgnoreCase)))
         {
             return;
         }
 
         await UpdateSettingsAsync(Settings with { WorldClocks = clocks }, cancellationToken);
-        StatusMessage = $"{Strings.WorldClocksTitle}: {changedClock.DisplayName}";
+        var persistedClock = Settings.WorldClocks.FirstOrDefault(clock =>
+            string.Equals(clock.Id, id, StringComparison.OrdinalIgnoreCase));
+        if (persistedClock is not null)
+        {
+            StatusMessage = $"{Strings.WorldClocksTitle}: {persistedClock.DisplayName}";
+        }
     }
 
     public async Task RemoveWorldClockAsync(
