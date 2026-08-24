@@ -1,5 +1,160 @@
 # ChronoDesk — Work Handoff
 
+## Current continuation — 2026-08-24
+
+**Phase 7 — version `2.7.0.0` next-version development is active in draft PR #21.**
+
+This continuation deliberately keeps the unreleased `2.6.0.2` release candidate on `main` intact while next-version work proceeds on a separate development branch.
+
+### Current source of truth
+
+- Repository: `https://github.com/sanskarIN/chronodesk`
+- Default/release-candidate branch: `main`
+- Next-version branch: `next-version-2.7.0.0`
+- Next-version baseline: `d56f21e17cf4b4723bce62b1d942947ed0660ebb`
+- Draft pull request: `#21` — `feat: prepare ChronoDesk 2.7.0.0 development`
+- PR state when last inspected before this handoff update: **open, draft, mergeable**
+- PR head before this handoff update: `af231b78e83d96062f64e73d28c269e425201450`
+- PR snapshot before this handoff update: 21 commits, 10 changed files, 294 additions, 17 deletions
+- Canonical version source: `src/ChronoDesk.App/ChronoDesk.App.csproj`
+- Next-version metadata on the development branch: `2.7.0.0`
+
+PR #21 must remain unmerged until the `2.6.0.2` release/tag decision is complete. The branch exists so next-version implementation and CI review can continue without overwriting the release-candidate state on `main`.
+
+## Work completed in this continuation
+
+### Prepared the `2.7.0.0` development line
+
+- Created `next-version-2.7.0.0` from the current `main` baseline.
+- Set `Version`, `PackageVersion`, `AssemblyVersion`, and `FileVersion` to `2.7.0.0` on that branch only.
+- Opened draft PR #21 against `main` for review and automated validation.
+- Added `docs/next-version.md` as the dedicated next-version development handoff.
+- Added a separate `2.7.0.0` section to `CHANGELOG.md` while retaining the `2.6.0.2` release-candidate history.
+- Added Phase 7 to `ROADMAP.md` so implemented and remaining next-version work is explicit.
+
+### Added editable world-clock labels
+
+Saved world-clock cards now support local label editing without changing the clock identity or timezone association.
+
+Implemented behavior:
+
+- each world-clock card has an editable label field;
+- `Save changes` persists through the existing settings store;
+- Enter saves from the keyboard;
+- Escape cancels and restores the persisted label;
+- blank submissions restore/retain the prior value and do not cause a settings write;
+- leading/trailing whitespace is trimmed;
+- existing `AppSettings.Normalize()` safeguards continue to enforce single-line, length-bounded labels;
+- world-clock IDs and timezone IDs remain unchanged during rename;
+- user-visible rename status is generated from the normalized persisted value rather than raw editor input;
+- Enter is marked handled before asynchronous persistence begins so the keystroke does not bubble during the save;
+- editor and action controls were split into separate rows with bounded card widths to improve narrow desktop layout behavior;
+- the label editor carries an automation name derived from the saved clock label.
+
+### Added and hardened regression coverage
+
+`MainWindowViewModelTests` now verifies:
+
+- normalized label persistence;
+- unchanged world-clock identity/timezone during rename;
+- rebuilt in-memory world-clock state after persistence;
+- normalized rename status text;
+- blank-label rejection without persistence.
+
+The About headless smoke test no longer embeds the previous release literal `2.6.0.2`. It derives the expected four-part version from the application assembly, so ordinary version bumps do not create a stale-test failure.
+
+### Source review defects caught during the continuation
+
+The following issues were found and fixed before the branch was treated as ready for CI evidence:
+
+1. The About smoke test still hardcoded `2.6.0.2` after the project version moved to `2.7.0.0`.
+2. A blank label could leave an empty editor value even though persistence correctly rejected it.
+3. Rename status initially used pre-normalized editor text instead of the saved normalized label.
+4. Enter was initially marked handled only after awaiting persistence, allowing the key event to remain unhandled during the asynchronous gap.
+5. The first inline editor layout forced the text field and both action buttons into one narrow row; the card was restructured for better responsive behavior.
+
+## Current automated validation state
+
+For PR head `af231b78e83d96062f64e73d28c269e425201450`, GitHub created these pull-request workflow runs immediately before this handoff update:
+
+- CI run `419` / run id `32732716632` — **queued** when observed;
+- CodeQL run `418` / run id `32732716841` — **queued** when observed;
+- Dependency Review run `352` / run id `32732716731` — **queued** when observed.
+
+Queued is not passing evidence. This `what_changed.md` commit changes the branch head again, so final automated evidence must be taken from the newest PR head after the documentation commit, not from these superseded runs.
+
+This chat environment still does not provide the .NET SDK, so no local build/test PASS is invented. The repository CI remains the authoritative automated build/test/security evidence.
+
+Expected validation remains:
+
+```text
+./scripts/check-version.ps1
+./scripts/check-markdown-links.ps1
+dotnet restore ChronoDesk.sln
+dotnet format ChronoDesk.sln --verify-no-changes --no-restore
+dotnet build ChronoDesk.sln --configuration Release --no-restore
+dotnet test ChronoDesk.sln --configuration Release --no-build --collect:"XPlat Code Coverage"
+dotnet list ChronoDesk.sln package --vulnerable --include-transitive
+```
+
+## Commits created for the current `2.7.0.0` continuation before this handoff update
+
+- `2fc0f58` — `build: prepare ChronoDesk version 2.7.0.0`
+- `614284d` — `feat: add editable world clock labels`
+- `382e39c` — `feat: persist world clock label changes`
+- `2b8495b` — `feat: add inline world clock label editor`
+- `b049276` — `feat: wire world clock label save action`
+- `cc359bd` — `test: cover world clock label editing`
+- `2c213ee` — `fix: restore blank world clock labels in editor`
+- `302fe2d` — `docs: add 2.7.0.0 development handoff`
+- `283a8b8` — `test: derive About version from app assembly`
+- `afa3419` — `fix: report normalized world clock labels`
+- `0249423` — `test: verify normalized world clock rename status`
+- `aaa8c01` — `feat: add keyboard handling to world clock labels`
+- `1259a44` — `feat: save or cancel world clock labels by keyboard`
+- `c7edd06` — `docs: update 2.7.0.0 feature and validation handoff`
+- `8ee8c19` — `docs: separate 2.7.0.0 development changelog`
+- `5cb2ce5` — `docs: add 2.7.0.0 development roadmap phase`
+- `d6f174b` — `fix: handle Enter before asynchronous label save`
+- `714ec61` — `ui: improve responsive world clock editor cards`
+- `0813ce1` — `docs: mark responsive world clock cards complete`
+- `c51eecf` — `docs: record responsive editor and keyboard hardening`
+- `af231b7` — `docs: record responsive world clock editor changes`
+
+## Next exact `2.7.0.0` work
+
+The next-version source slice is substantially prepared. Remaining next-version work should proceed in this order:
+
+1. obtain green CI, CodeQL, and Dependency Review evidence for the final branch head;
+2. add deeper headless interaction coverage for templated world-clock editing only if the Avalonia headless harness can exercise the template reliably without brittle implementation coupling;
+3. continue runtime-language switching only after a reliable live-resource refresh architecture is defined;
+4. consider richer offline calendar details without introducing accounts, tracking, or mandatory network dependencies;
+5. strengthen automated accessibility checks where tooling produces stable cross-platform evidence;
+6. evaluate signed/notarized installers only when real signing infrastructure exists;
+7. keep PR #21 draft/unmerged until the `2.6.0.2` release/tag decision is complete.
+
+## `2.6.0.2` release gates remain unchanged
+
+Starting `2.7.0.0` development does **not** satisfy or remove the `2.6.0.2` release gates. The release candidate still requires:
+
+- green CI/CodeQL/dependency-security evidence for the exact release commit;
+- Windows 11 tray/minimize/startup/chime/keyboard/accessibility validation;
+- macOS Intel/Apple Silicon tray/startup/chime/VoiceOver/lifecycle validation;
+- Linux GNOME/KDE tray/XDG-autostart/chime/accessibility validation;
+- real screenshots from verified release builds;
+- clean-checkout publish/launch validation for every advertised RID;
+- actual GitHub `main` branch protection/ruleset and required-status-check configuration;
+- exact tagged-tree secret/private-data/documentation review;
+- downloaded ZIP checksum verification against `SHA256SUMS.txt`;
+- packaged About/file metadata confirmation;
+- a real prior-version migration fixture when one exists.
+
+The `v2.6.0.2` tag remains intentionally uncreated until those gates have real evidence.
+
+---
+
+# Historical `2.6.0.2` Handoff — retained for release continuity
+
 ## Current milestone
 
 **Phase 7 — version `2.6.0.2` final source/repository/release hardening, merged 2026-08-19.**
@@ -231,11 +386,11 @@ These are deliberately left open until evidence exists.
 - `b6d35c1` — `test: simplify About version assertion`
 - `0117115` — `docs: record final 2.6.0.2 pull request review state`
 - `d8179bd` — `merge: finalize ChronoDesk 2.6.0.2 source hardening`
-- post-merge handoff: this commit on `main`.
+- post-merge handoff: historical commit on `main`.
 
-## Next exact tasks
+## Historical next exact tasks
 
-No additional source-code or repository-file change was identified as required by this final pass. The remaining work is release evidence and GitHub repository configuration:
+The remaining `2.6.0.2` work is release evidence and GitHub repository configuration:
 
 1. require green CI/CodeQL/dependency-security results for the exact release candidate;
 2. enable/verify the intended `main` branch protection/ruleset and exact required status-check contexts in GitHub settings;
