@@ -15,6 +15,8 @@ All notable ChronoDesk changes are documented here. ChronoDesk uses four-compone
 
 - Set next-version branch `Version`, `PackageVersion`, `AssemblyVersion`, and `FileVersion` metadata to `2.7.0.0`.
 - World-clock rename status now uses the normalized persisted label rather than raw editor input.
+- World-clock cards separate label editing and action controls into responsive rows with bounded card widths for narrower desktop layouts.
+- Enter key handling is marked complete before asynchronous label persistence begins so the edit keystroke does not bubble during the save.
 - The About headless smoke test derives the expected four-part version from the application assembly instead of embedding a release-specific version literal.
 
 ### Fixed
