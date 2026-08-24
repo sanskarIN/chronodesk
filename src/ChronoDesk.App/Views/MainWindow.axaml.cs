@@ -268,6 +268,17 @@ public sealed partial class MainWindow : Window
         await aboutWindow.ShowDialog(this);
     }
 
+    private async Task SaveWorldClockLabelAsync(WorldClockCardViewModel card)
+    {
+        if (string.IsNullOrWhiteSpace(card.EditableDisplayName))
+        {
+            card.EditableDisplayName = card.DisplayName;
+            return;
+        }
+
+        await viewModel.RenameWorldClockAsync(card.Id, card.EditableDisplayName);
+    }
+
     private void FocusButton_OnClick(object? sender, RoutedEventArgs e) => ToggleFocusMode();
 
     private void MiniButton_OnClick(object? sender, RoutedEventArgs e) => ToggleMiniMode();
@@ -303,18 +314,31 @@ public sealed partial class MainWindow : Window
 
     private async void RenameWorldClock_OnClick(object? sender, RoutedEventArgs e)
     {
-        if (sender is not Button { Tag: string id, DataContext: WorldClockCardViewModel card })
+        if (sender is Button { DataContext: WorldClockCardViewModel card })
+        {
+            await SaveWorldClockLabelAsync(card);
+        }
+    }
+
+    private async void WorldClockLabel_OnKeyDown(object? sender, KeyEventArgs e)
+    {
+        if (sender is not TextBox { DataContext: WorldClockCardViewModel card })
         {
             return;
         }
 
-        if (string.IsNullOrWhiteSpace(card.EditableDisplayName))
+        if (e.Key == Key.Escape)
         {
             card.EditableDisplayName = card.DisplayName;
+            e.Handled = true;
             return;
         }
 
-        await viewModel.RenameWorldClockAsync(id, card.EditableDisplayName);
+        if (e.Key == Key.Enter)
+        {
+            await SaveWorldClockLabelAsync(card);
+            e.Handled = true;
+        }
     }
 
     private async void RemoveWorldClock_OnClick(object? sender, RoutedEventArgs e)
