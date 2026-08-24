@@ -88,13 +88,13 @@ Status: **Implemented for domain/persistence/headless UI; native-desktop validat
 
 ## Phase 5 — Release readiness
 
-Status: **Version `2.6.0.2` metadata prepared; native release validation still required**
+Status: **Version `2.6.0.2` metadata prepared on `main`; native release validation still required**
 
 - [x] Tagged release workflow.
 - [x] Self-contained artifact matrix.
 - [x] Release documentation baseline.
 - [x] README screenshot placeholder clearly identified as a placeholder.
-- [x] Application, package, assembly, and file metadata set to `2.6.0.2`.
+- [x] Application, package, assembly, and file metadata set to `2.6.0.2` on the release-candidate baseline.
 - [x] About UI preserves all four version components.
 - [x] Repository-local version verifier added and integrated into CI.
 - [x] Release tags are required to match the application version exactly.
@@ -128,11 +128,28 @@ Status: **Source/repository hardening complete for this pass; native GUI release
 - [ ] Confirm no real credentials/private data are present in the release tag.
 - [ ] Publish/tag `v2.6.0.2` only when the above gates pass.
 
-## Post-2.6.0.2 candidates
+## Phase 7 — 2.7.0.0 next-version development
+
+Status: **Development started in draft PR #21; intentionally isolated from `main`**
+
+- [x] Create dedicated `next-version-2.7.0.0` branch.
+- [x] Set four-component next-version metadata to `2.7.0.0` on that branch.
+- [x] Add user-editable world-clock card labels.
+- [x] Preserve saved clock ID/timezone identity during label changes.
+- [x] Reuse settings normalization for label length and single-line safety.
+- [x] Add Enter-to-save and Escape-to-cancel keyboard behavior.
+- [x] Add rename persistence/normalization/blank-input regression coverage.
+- [x] Make About version smoke coverage resilient to future version bumps.
+- [x] Separate next-version changelog and development handoff from the `2.6.0.2` release-candidate record.
+- [ ] Add deeper headless templated-control interaction coverage for world-clock editing when the harness can exercise it reliably.
+- [ ] Improve world-clock card responsiveness at narrow desktop widths.
+- [ ] Confirm CI, CodeQL, and Dependency Review are green for the final 2.7 development slice before marking PR #21 ready for review.
+- [ ] Merge next-version work only after the `2.6.0.2` release/tag decision is complete.
+
+## Later candidates
 
 These are candidates, not promises:
 
-- user-editable world-clock card labels after adding a timezone;
 - optional additional bundled chime tones that can be licensed and played reliably cross-platform;
 - runtime language switching using the established resource catalog and a reliable live-refresh strategy;
 - richer calendar detail options that remain offline;
