@@ -97,10 +97,12 @@ public sealed class HeadlessUiSmokeTests
         var onboarding = new OnboardingWindow(viewModel);
         var about = new AboutWindow();
         var versionText = about.FindControl<TextBlock>("VersionText");
+        var expectedVersion = typeof(AboutWindow).Assembly.GetName().Version?.ToString(4);
 
         Assert.Equal(Strings.OnboardingTitle, onboarding.Title);
         Assert.Equal(Strings.AboutTitle, about.Title);
         Assert.NotNull(versionText);
-        Assert.Contains("2.6.0.2", versionText.Text ?? string.Empty);
+        Assert.False(string.IsNullOrWhiteSpace(expectedVersion));
+        Assert.Contains(expectedVersion!, versionText.Text ?? string.Empty);
     }
 }
