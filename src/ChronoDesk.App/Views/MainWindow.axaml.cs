@@ -303,10 +303,18 @@ public sealed partial class MainWindow : Window
 
     private async void RenameWorldClock_OnClick(object? sender, RoutedEventArgs e)
     {
-        if (sender is Button { Tag: string id, DataContext: WorldClockCardViewModel card })
+        if (sender is not Button { Tag: string id, DataContext: WorldClockCardViewModel card })
         {
-            await viewModel.RenameWorldClockAsync(id, card.EditableDisplayName);
+            return;
         }
+
+        if (string.IsNullOrWhiteSpace(card.EditableDisplayName))
+        {
+            card.EditableDisplayName = card.DisplayName;
+            return;
+        }
+
+        await viewModel.RenameWorldClockAsync(id, card.EditableDisplayName);
     }
 
     private async void RemoveWorldClock_OnClick(object? sender, RoutedEventArgs e)
